@@ -6,6 +6,7 @@ import { SatelliteLayer } from "./layers/satellites.js";
 import { FlightLayer } from "./layers/flights.js";
 import { ShippingLayer } from "./layers/shipping.js";
 import { WikiPanel } from "./wiki-panel.js";
+import { getAisKey, setAisKey } from "./ais.js";
 
 // OSM tiles fade in below FADE_START camera height and are fully opaque by FADE_END.
 const FADE_START = 2.6e6;
@@ -47,6 +48,23 @@ function boot() {
     destination: Cesium.Cartesian3.fromDegrees(10, 22, 2.3e7),
   });
 
+  // Real-time solar illumination: the clock runs at 1x so the terminator
+  // tracks the actual sun. The day texture sits above the night texture and
+  // fades out on the night side (nightAlpha), blending at the terminator.
+  viewer.clock.currentTime = Cesium.JulianDate.now();
+  viewer.clock.multiplier = 1;
+  viewer.clock.clockStep = Cesium.ClockStep.SYSTEM_CLOCK; // hard real time, no drift
+  viewer.clock.shouldAnimate = true;
+  scene.globe.enableLighting = true;
+  scene.globe.dynamicAtmosphereLighting = true;
+  scene.globe.dynamicAtmosphereLightingFromSun = true;
+
+  const dayLayer = Cesium.ImageryLayer.fromProviderAsync(
+    Cesium.SingleTileImageryProvider.fromUrl("assets/earth-day.jpg")
+  );
+  dayLayer.nightAlpha = 0;
+  viewer.imageryLayers.add(dayLayer);
+
   // OSM detail layer, transparent until the camera comes down
   const osmLayer = viewer.imageryLayers.addImageryProvider(
     new Cesium.OpenStreetMapImageryProvider({ url: "https://tile.openstreetmap.org/" })
@@ -84,6 +102,13 @@ function boot() {
     const height = viewer.camera.positionCartographic.height;
     osmLayer.alpha = Cesium.Math.clamp((FADE_START - height) / (FADE_START - FADE_END), 0, 1);
 
+    // keep the street map readable at night: drop sun lighting once the
+    // camera is in map territory
+    const wantLighting = osmLayer.alpha < 0.8;
+    if (scene.globe.enableLighting !== wantLighting) {
+      scene.globe.enableLighting = wantLighting;
+    }
+
     if (
       rotateEnabled && dt > 0 &&
       now - lastInteraction > AUTOROTATE_IDLE_MS &&
@@ -113,9 +138,7 @@ function boot() {
       const prev = hovered;
       hovered = id;
       if (prev?.kind === "flight") flights.clearHoverRoute();
-      if (prev?.kind === "vessel" && hovered?.kind !== "vessel") ships.highlightVessel(null);
       if (hovered?.kind === "flight") flights.showRouteFor(hovered.flight, false);
-      if (hovered?.kind === "vessel") ships.highlightVessel(hovered.vessel);
     }
 
     if (hovered) {
@@ -144,10 +167,7 @@ function boot() {
       flights.showRouteFor(id.flight, true);
       return;
     }
-    if (id?.kind === "vessel") {
-      ships.highlightVessel(id.vessel);
-      return;
-    }
+    if (id?.kind === "vessel") return; // details are in the hover tooltip
 
     // empty globe (or a lane — lanes blanket the oceans): open the wiki panel
     sats.select(null);
@@ -166,8 +186,21 @@ function boot() {
   bind("chk-flights", (v) => flights.setVisible(v));
   bind("chk-flight-routes", (v) => flights.setRoutesVisible(v));
   bind("chk-ships", (v) => ships.setVisible(v));
-  bind("chk-vessel-routes", (v) => ships.setVesselRoutesVisible(v));
+  bind("chk-vessel-routes", (v) => ships.setRoutesVisible(v));
   bind("chk-rotate", (v) => { rotateEnabled = v; });
+
+  // optional aisstream.io key for global live ship coverage
+  document.getElementById("ais-key-link").addEventListener("click", (e) => {
+    e.preventDefault();
+    const key = prompt(
+      "aisstream.io API key for global live ship tracking\n" +
+      "(free at aisstream.io — leave blank for regional/demo data):",
+      getAisKey() ?? ""
+    );
+    if (key === null) return;
+    setAisKey(key.trim());
+    location.reload();
+  });
 
   // --- status indicators ----------------------------------------------------------
   const badgeEls = {
@@ -204,7 +237,7 @@ function boot() {
 
     const shc = ships.counts();
     setBadge(badgeEls.ships, shc.source);
-    countEls.ships.textContent = shc.count ? shc.count + ships.vessels.length : 0;
+    countEls.ships.textContent = shc.count;
     countEls.ships.title = shc.detail;
   }, 1000);
 
@@ -234,9 +267,13 @@ function tooltipHtml(id) {
   }
   if (id.kind === "vessel") {
     const v = id.vessel;
-    return `<div class="tt-title">${esc(v.name)}</div>
-      <div class="tt-line">${esc(v.lane.endpoints || v.lane.name)}</div>
-      <div class="tt-note">${v.speedKn} kn · simulated vessel</div>`;
+    const name = v.name || `MMSI ${v.mmsi}`;
+    const speed = v.sogKn != null ? `${v.sogKn.toFixed(1)} kn` : "— kn";
+    const hdg = v.headingDeg != null ? `${Math.round(v.headingDeg)}°` : "—";
+    return `<div class="tt-title">${esc(name)}</div>
+      <div class="tt-line">${esc(v.typeName || "Vessel")}${v.flag ? " · " + esc(v.flag) : ""}</div>
+      <div class="tt-line">${speed} · heading ${hdg}${v.destination ? " · → " + esc(v.destination) : ""}</div>
+      <div class="tt-note">${v.live ? "live AIS" : "simulated vessel"}</div>`;
   }
   if (id.kind === "lane") {
     return `<div class="tt-title">${esc(id.lane.name)}</div>

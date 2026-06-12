@@ -125,6 +125,11 @@ html, body {
   line-height: 1.5;
   color: var(--text-dim);
 }
+.attrib a {
+  color: #7da7d9;
+  text-decoration: none;
+}
+.attrib a:hover { text-decoration: underline; }
 
 /* ---------- tooltip ---------- */
 

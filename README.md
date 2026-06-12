@@ -26,7 +26,13 @@ won't work — the texture and module fetches need an HTTP origin.)
 |---|---|---|
 | Satellites | [CelesTrak](https://celestrak.org) TLEs ("visual" group), propagated client-side with SGP4 via satellite.js | Synthetic orbits (LEO constellation, sun-sync, MEO nav, GEO) |
 | Flights | [OpenSky Network](https://opensky-network.org) anonymous state vectors, refreshed every 2 min and dead-reckoned in between; routes per callsign via [adsbdb](https://www.adsbdb.com) | ~200 great-circle flights between major world airports |
-| Shipping | Curated waypoints for 17 major corridors (Pacific, Atlantic, Indian Ocean, Mediterranean, Suez/Cape, and both polar routes), animated flow pulses + simulated vessels | Always available (static data) |
+| Shipping | Live AIS: [aisstream.io](https://aisstream.io) WebSocket (global; paste a free API key via the "key" link or `?aiskey=`) or [Digitraffic Finland](https://www.digitraffic.fi/en/marine-traffic/) open REST data (no key, Baltic coverage), dead-reckoned between reports. Hover shows name, type, flag state, speed, heading. "Destination routes" resolves each vessel's reported AIS destination against a built-in port gazetteer and draws the path. | Simulated vessels along 17 curated corridors (which stay visible as a dim reference layer in live mode) |
+
+The globe is lit by the real sun: the day texture shows on the daylit side, the
+night texture past the terminator, blended at the actual day/night boundary for
+the current UTC time and moving at real-time rate (the scene clock runs at 1x).
+Sun lighting is suspended once you zoom into street-level OSM so the map stays
+readable on the night side.
 
 - **Layer controls** (top-left): each layer toggles independently; orbit paths /
   flight routes / vessel routes toggle separately; per-layer count and a

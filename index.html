@@ -48,13 +48,13 @@
       <label class="row main">
         <input type="checkbox" id="chk-ships" checked />
         <span class="dot dot-ship"></span>
-        <span class="name">Shipping lanes</span>
-        <span class="badge static" id="badge-ships">ROUTES</span>
+        <span class="name">Shipping</span>
+        <span class="badge loading" id="badge-ships">…</span>
         <span class="count" id="count-ships">0</span>
       </label>
       <label class="row sub">
         <input type="checkbox" id="chk-vessel-routes" />
-        <span class="name">Vessel routes (hover a vessel)</span>
+        <span class="name">Destination routes</span>
       </label>
     </div>
 
@@ -66,7 +66,9 @@
     </div>
 
     <div class="attrib">
-      CelesTrak · OpenSky · adsbdb · Wikipedia<br />© OpenStreetMap contributors
+      CelesTrak · OpenSky · adsbdb · AIS: aisstream / Digitraffic
+      (<a href="#" id="ais-key-link" title="Set an aisstream.io API key for global live ship coverage">key</a>)<br />
+      Wikipedia · © OpenStreetMap contributors
     </div>
   </div>
 
