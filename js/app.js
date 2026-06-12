@@ -1,0 +1,260 @@
+// Wiki Globe — entry point.
+// Night-texture globe with three movement layers (satellites / flights /
+// shipping), an OSM detail crossfade on zoom, and a click-to-Wikipedia panel.
+
+import { SatelliteLayer } from "./layers/satellites.js";
+import { FlightLayer } from "./layers/flights.js";
+import { ShippingLayer } from "./layers/shipping.js";
+import { WikiPanel } from "./wiki-panel.js";
+
+// OSM tiles fade in below FADE_START camera height and are fully opaque by FADE_END.
+const FADE_START = 2.6e6;
+const FADE_END = 5.5e5;
+const AUTOROTATE_RATE = 0.006;        // rad/s
+const AUTOROTATE_IDLE_MS = 8000;
+const AUTOROTATE_MIN_HEIGHT = 1.2e6;  // stop spinning once zoomed into the map
+
+function boot() {
+  const viewer = new Cesium.Viewer("cesiumContainer", {
+    baseLayer: Cesium.ImageryLayer.fromProviderAsync(
+      Cesium.SingleTileImageryProvider.fromUrl("assets/earth-night.jpg")
+    ),
+    baseLayerPicker: false,
+    geocoder: false,
+    homeButton: false,
+    sceneModePicker: false,
+    navigationHelpButton: false,
+    animation: false,
+    timeline: false,
+    fullscreenButton: false,
+    selectionIndicator: false,
+    infoBox: false,
+  });
+
+  const scene = viewer.scene;
+  scene.globe.enableLighting = false;
+  scene.globe.showGroundAtmosphere = true;
+  scene.globe.baseColor = Cesium.Color.fromCssColorString("#06090f");
+  scene.screenSpaceCameraController.minimumZoomDistance = 120;
+  scene.screenSpaceCameraController.maximumZoomDistance = 4.5e7;
+
+  // double-click otherwise zooms to an entity and fights the wiki-click UX
+  viewer.cesiumWidget.screenSpaceEventHandler.removeInputAction(
+    Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK
+  );
+
+  viewer.camera.setView({
+    destination: Cesium.Cartesian3.fromDegrees(10, 22, 2.3e7),
+  });
+
+  // OSM detail layer, transparent until the camera comes down
+  const osmLayer = viewer.imageryLayers.addImageryProvider(
+    new Cesium.OpenStreetMapImageryProvider({ url: "https://tile.openstreetmap.org/" })
+  );
+  osmLayer.alpha = 0;
+
+  // --- layers ---------------------------------------------------------------
+  const sats = new SatelliteLayer(viewer);
+  const flights = new FlightLayer(viewer);
+  const ships = new ShippingLayer(viewer);
+  const wiki = new WikiPanel(viewer);
+
+  ships.init();
+  sats.init();
+  flights.init();
+
+  // --- per-frame loop ---------------------------------------------------------
+  let lastFrame = 0;
+  let lastInteraction = Date.now();
+  let rotateEnabled = document.getElementById("chk-rotate").checked;
+
+  for (const evt of ["pointerdown", "wheel", "touchstart"]) {
+    viewer.canvas.addEventListener(evt, () => { lastInteraction = Date.now(); }, { passive: true });
+  }
+
+  scene.preUpdate.addEventListener(() => {
+    const now = Date.now();
+    const dt = lastFrame ? Math.min((now - lastFrame) / 1000, 0.25) : 0;
+    lastFrame = now;
+
+    sats.tick(now);
+    flights.tick(now);
+    ships.tick(now);
+
+    const height = viewer.camera.positionCartographic.height;
+    osmLayer.alpha = Cesium.Math.clamp((FADE_START - height) / (FADE_START - FADE_END), 0, 1);
+
+    if (
+      rotateEnabled && dt > 0 &&
+      now - lastInteraction > AUTOROTATE_IDLE_MS &&
+      !wiki.isOpen() &&
+      height > AUTOROTATE_MIN_HEIGHT
+    ) {
+      viewer.camera.rotate(Cesium.Cartesian3.UNIT_Z, -AUTOROTATE_RATE * dt);
+    }
+  });
+
+  // --- hover tooltips & route-on-hover ----------------------------------------
+  const tooltip = document.getElementById("tooltip");
+  let hovered = null;
+  let lastMove = 0;
+
+  const handler = new Cesium.ScreenSpaceEventHandler(viewer.canvas);
+
+  handler.setInputAction((movement) => {
+    const now = performance.now();
+    if (now - lastMove < 30) return;
+    lastMove = now;
+
+    const picked = scene.pick(movement.endPosition);
+    const id = picked?.id?.kind ? picked.id : null;
+
+    if (id !== hovered) {
+      const prev = hovered;
+      hovered = id;
+      if (prev?.kind === "flight") flights.clearHoverRoute();
+      if (prev?.kind === "vessel" && hovered?.kind !== "vessel") ships.highlightVessel(null);
+      if (hovered?.kind === "flight") flights.showRouteFor(hovered.flight, false);
+      if (hovered?.kind === "vessel") ships.highlightVessel(hovered.vessel);
+    }
+
+    if (hovered) {
+      tooltip.innerHTML = tooltipHtml(hovered);
+      tooltip.hidden = false;
+      const x = movement.endPosition.x;
+      const y = movement.endPosition.y;
+      tooltip.style.left = `${Math.min(x + 16, window.innerWidth - 280)}px`;
+      tooltip.style.top = `${Math.min(y + 14, window.innerHeight - 110)}px`;
+      viewer.canvas.style.cursor = "pointer";
+    } else {
+      tooltip.hidden = true;
+      viewer.canvas.style.cursor = "default";
+    }
+  }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+  handler.setInputAction((click) => {
+    const picked = scene.pick(click.position);
+    const id = picked?.id?.kind ? picked.id : null;
+
+    if (id?.kind === "sat") {
+      sats.select(id.sat);
+      return;
+    }
+    if (id?.kind === "flight") {
+      flights.showRouteFor(id.flight, true);
+      return;
+    }
+    if (id?.kind === "vessel") {
+      ships.highlightVessel(id.vessel);
+      return;
+    }
+
+    // empty globe (or a lane — lanes blanket the oceans): open the wiki panel
+    sats.select(null);
+    flights.deselect();
+    const cart = viewer.camera.pickEllipsoid(click.position, scene.globe.ellipsoid);
+    if (cart) {
+      const c = Cesium.Cartographic.fromCartesian(cart);
+      wiki.open(Cesium.Math.toDegrees(c.latitude), Cesium.Math.toDegrees(c.longitude));
+    }
+  }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+  // --- control panel wiring -----------------------------------------------------
+  const bind = (idStr, fn) => document.getElementById(idStr).addEventListener("change", (e) => fn(e.target.checked));
+  bind("chk-sats", (v) => sats.setVisible(v));
+  bind("chk-sat-paths", (v) => sats.setPathsVisible(v));
+  bind("chk-flights", (v) => flights.setVisible(v));
+  bind("chk-flight-routes", (v) => flights.setRoutesVisible(v));
+  bind("chk-ships", (v) => ships.setVisible(v));
+  bind("chk-vessel-routes", (v) => ships.setVesselRoutesVisible(v));
+  bind("chk-rotate", (v) => { rotateEnabled = v; });
+
+  // --- status indicators ----------------------------------------------------------
+  const badgeEls = {
+    sats: document.getElementById("badge-sats"),
+    flights: document.getElementById("badge-flights"),
+    ships: document.getElementById("badge-ships"),
+  };
+  const countEls = {
+    sats: document.getElementById("count-sats"),
+    flights: document.getElementById("count-flights"),
+    ships: document.getElementById("count-ships"),
+  };
+
+  function setBadge(el, source) {
+    const map = {
+      live: ["LIVE", "live"],
+      demo: ["DEMO", "demo"],
+      static: ["ROUTES", "static"],
+      loading: ["…", "loading"],
+    };
+    const [label, cls] = map[source] ?? map.loading;
+    el.textContent = label;
+    el.className = `badge ${cls}`;
+  }
+
+  setInterval(() => {
+    const sc = sats.counts();
+    setBadge(badgeEls.sats, sc.source);
+    countEls.sats.textContent = sc.count;
+
+    const fc = flights.counts();
+    setBadge(badgeEls.flights, fc.source);
+    countEls.flights.textContent = fc.count;
+
+    const shc = ships.counts();
+    setBadge(badgeEls.ships, shc.source);
+    countEls.ships.textContent = shc.count ? shc.count + ships.vessels.length : 0;
+    countEls.ships.title = shc.detail;
+  }, 1000);
+
+  // fade the onboarding hint after a while
+  setTimeout(() => document.getElementById("hint").classList.add("faded"), 15000);
+
+  // handy for debugging from the console
+  window.__globe = { viewer, sats, flights, ships, wiki };
+}
+
+function tooltipHtml(id) {
+  if (id.kind === "sat") {
+    const s = id.sat;
+    return `<div class="tt-title">${esc(s.name)}</div>
+      <div class="tt-line">Altitude ${s.altKm != null ? Math.round(s.altKm).toLocaleString() : "—"} km</div>
+      <div class="tt-note">${s.demo ? "Demo orbit" : "Live TLE · SGP4 propagation"} · click for orbit path</div>`;
+  }
+  if (id.kind === "flight") {
+    const f = id.flight;
+    const speed = f.live ? Math.round(f.velMs * 3.6) : f.speedKmh;
+    const route = f.live
+      ? (f.routeLabel ? esc(f.routeLabel) : esc(f.country ?? ""))
+      : `${esc(f.from.c)} ${esc(f.from.name)} → ${esc(f.to.c)} ${esc(f.to.name)}`;
+    return `<div class="tt-title">${esc(f.callsign)}</div>
+      <div class="tt-line">Alt ${(Math.max(f.altM, 0) / 1000).toFixed(1)} km · ${speed} km/h</div>
+      <div class="tt-note">${route}${f.live ? "" : " · demo flight"}</div>`;
+  }
+  if (id.kind === "vessel") {
+    const v = id.vessel;
+    return `<div class="tt-title">${esc(v.name)}</div>
+      <div class="tt-line">${esc(v.lane.endpoints || v.lane.name)}</div>
+      <div class="tt-note">${v.speedKn} kn · simulated vessel</div>`;
+  }
+  if (id.kind === "lane") {
+    return `<div class="tt-title">${esc(id.lane.name)}</div>
+      <div class="tt-note">Major shipping corridor · ${Math.round(id.lane.lengthKm).toLocaleString()} km</div>`;
+  }
+  return "";
+}
+
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+try {
+  boot();
+} catch (e) {
+  const el = document.getElementById("error");
+  el.hidden = false;
+  el.textContent = `Could not start the globe (${e.message}). WebGL is required.`;
+  console.error(e);
+}

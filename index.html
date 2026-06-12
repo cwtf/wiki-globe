@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wiki Globe — live satellites, flights &amp; shipping</title>
+  <link rel="stylesheet" href="https://cesium.com/downloads/cesiumjs/releases/1.120/Build/Cesium/Widgets/widgets.css" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.120/Build/Cesium/Cesium.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/satellite.js@5.0.0/dist/satellite.min.js"></script>
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+
+  <!-- Layer control panel -->
+  <div id="panel">
+    <div class="panel-title">WIKI GLOBE<span>satellites · flights · shipping</span></div>
+
+    <div class="layer">
+      <label class="row main">
+        <input type="checkbox" id="chk-sats" checked />
+        <span class="dot dot-sat"></span>
+        <span class="name">Satellites</span>
+        <span class="badge loading" id="badge-sats">…</span>
+        <span class="count" id="count-sats">0</span>
+      </label>
+      <label class="row sub">
+        <input type="checkbox" id="chk-sat-paths" />
+        <span class="name">Orbit paths ahead</span>
+      </label>
+    </div>
+
+    <div class="layer">
+      <label class="row main">
+        <input type="checkbox" id="chk-flights" checked />
+        <span class="dot dot-flight"></span>
+        <span class="name">Flights</span>
+        <span class="badge loading" id="badge-flights">…</span>
+        <span class="count" id="count-flights">0</span>
+      </label>
+      <label class="row sub">
+        <input type="checkbox" id="chk-flight-routes" />
+        <span class="name">Flight routes</span>
+      </label>
+    </div>
+
+    <div class="layer">
+      <label class="row main">
+        <input type="checkbox" id="chk-ships" checked />
+        <span class="dot dot-ship"></span>
+        <span class="name">Shipping lanes</span>
+        <span class="badge static" id="badge-ships">ROUTES</span>
+        <span class="count" id="count-ships">0</span>
+      </label>
+      <label class="row sub">
+        <input type="checkbox" id="chk-vessel-routes" />
+        <span class="name">Vessel routes (hover a vessel)</span>
+      </label>
+    </div>
+
+    <div class="layer">
+      <label class="row main">
+        <input type="checkbox" id="chk-rotate" checked />
+        <span class="name">Auto-rotate</span>
+      </label>
+    </div>
+
+    <div class="attrib">
+      CelesTrak · OpenSky · adsbdb · Wikipedia<br />© OpenStreetMap contributors
+    </div>
+  </div>
+
+  <!-- Hover tooltip -->
+  <div id="tooltip" hidden></div>
+
+  <!-- Wikipedia location panel -->
+  <div id="wiki-panel">
+    <div class="wp-head">
+      <div class="wp-title">Nearby on Wikipedia</div>
+      <button id="wp-close" title="Close (Esc)">&times;</button>
+    </div>
+    <div class="wp-coords" id="wp-coords"></div>
+    <div class="wp-radius">
+      <label for="wp-radius">Search radius <span id="wp-radius-label">25 km</span></label>
+      <input type="range" id="wp-radius" min="0" max="100" value="55" />
+      <div class="wp-radius-ends"><span>hyperlocal</span><span>regional / national</span></div>
+    </div>
+    <div id="wp-results"></div>
+  </div>
+
+  <div id="hint">Drag to rotate &nbsp;·&nbsp; Scroll to zoom into the map &nbsp;·&nbsp; Click anywhere to explore Wikipedia</div>
+
+  <div id="error" hidden></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
