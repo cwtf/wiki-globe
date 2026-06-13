@@ -168,6 +168,10 @@ function boot() {
       return;
     }
     if (id?.kind === "vessel") return; // details are in the hover tooltip
+    if (id?.kind === "wiki") {
+      wiki.focusArticle(id.article); // highlight the matching result row
+      return;
+    }
 
     // empty globe (or a lane — lanes blanket the oceans): open the wiki panel
     sats.select(null);
@@ -278,6 +282,15 @@ function tooltipHtml(id) {
   if (id.kind === "lane") {
     return `<div class="tt-title">${esc(id.lane.name)}</div>
       <div class="tt-note">Major shipping corridor · ${Math.round(id.lane.lengthKm).toLocaleString()} km</div>`;
+  }
+  if (id.kind === "wiki") {
+    const a = id.article;
+    const dist = a.distKm != null
+      ? (a.distKm < 1 ? `${Math.round(a.distKm * 1000)} m` : `${a.distKm.toFixed(a.distKm < 20 ? 1 : 0)} km`) + " away"
+      : (a.badge ?? "Wikipedia");
+    return `<div class="tt-title">${esc(a.title)}</div>
+      <div class="tt-line">${esc(dist)}</div>
+      <div class="tt-note">Wikipedia · click to open in the panel</div>`;
   }
   return "";
 }
