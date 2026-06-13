@@ -3,18 +3,81 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Wiki Globe — live satellites, flights &amp; shipping</title>
+  <title>Wiki Globe | 3D Earth: Satellites, Flights &amp; Ships</title>
+  <meta
+    name="description"
+    content="Explore a real-time 3D globe with live satellite orbits, flight tracking, shipping routes, OpenStreetMap detail, and nearby Wikipedia articles for any point on Earth."
+  />
+  <meta
+    name="keywords"
+    content="interactive globe, 3D earth, satellite tracker, flight tracker, shipping routes, Wikipedia map, CesiumJS, OpenStreetMap"
+  />
+  <meta name="author" content="Wiki Globe" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="theme-color" content="#05070c" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Wiki Globe" />
+  <meta property="og:title" content="Wiki Globe | Live Satellites, Flights, Ships &amp; Wikipedia" />
+  <meta
+    property="og:description"
+    content="An interactive 3D Earth for exploring live global movement and discovering nearby Wikipedia articles from any point on the globe."
+  />
+  <meta property="og:image" content="assets/earth-day.jpg" />
+  <meta property="og:image:alt" content="A daylit Earth texture used by the Wiki Globe interactive map." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Wiki Globe | Interactive 3D Earth Explorer" />
+  <meta
+    name="twitter:description"
+    content="Track satellites, flights, and shipping routes on a 3D globe, then click anywhere to discover nearby Wikipedia articles."
+  />
+  <meta name="twitter:image" content="assets/earth-day.jpg" />
+  <link rel="preconnect" href="https://cesium.com" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="dns-prefetch" href="https://tile.openstreetmap.org" />
+  <link rel="preload" href="assets/earth-night.jpg" as="image" />
+  <link rel="preload" href="assets/earth-day.jpg" as="image" />
   <link rel="stylesheet" href="https://cesium.com/downloads/cesiumjs/releases/1.120/Build/Cesium/Widgets/widgets.css" />
   <link rel="stylesheet" href="css/style.css" />
   <script src="https://cesium.com/downloads/cesiumjs/releases/1.120/Build/Cesium/Cesium.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/satellite.js@5.0.0/dist/satellite.min.js"></script>
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Wiki Globe",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "Any modern web browser",
+      "description": "A real-time interactive 3D globe for visualising satellite orbits, flights, shipping routes, OpenStreetMap detail, and nearby Wikipedia articles.",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "featureList": [
+        "3D CesiumJS Earth viewer",
+        "Satellite orbit visualisation",
+        "Flight tracking and route arcs",
+        "Shipping lanes and AIS vessel positions",
+        "OpenStreetMap zoom transition",
+        "Nearby Wikipedia article discovery"
+      ]
+    }
+  </script>
 </head>
 <body>
+  <main id="app" aria-label="Wiki Globe interactive 3D Earth explorer">
+    <p class="sr-only">
+      Wiki Globe is an interactive map for exploring satellite orbits, flight
+      paths, shipping routes, OpenStreetMap detail, and Wikipedia articles near
+      any selected location on Earth.
+    </p>
+
   <div id="cesiumContainer"></div>
 
   <!-- Layer control panel -->
   <div id="panel">
-    <div class="panel-title">WIKI GLOBE<span>satellites · flights · shipping</span></div>
+    <h1 class="panel-title">WIKI GLOBE<span>satellites · flights · shipping</span></h1>
 
     <div class="layer">
       <label class="row main">
@@ -104,6 +167,18 @@
   <div id="hint">Drag to rotate &nbsp;·&nbsp; Scroll to zoom into the map &nbsp;·&nbsp; Click anywhere to explore Wikipedia</div>
 
   <div id="error" hidden></div>
+  </main>
+
+  <noscript>
+    <section class="noscript-summary">
+      <h2>Wiki Globe needs JavaScript</h2>
+      <p>
+        Wiki Globe is a CesiumJS-powered 3D Earth explorer for live satellite
+        orbits, flight tracking, shipping routes, OpenStreetMap detail, and
+        nearby Wikipedia article discovery.
+      </p>
+    </section>
+  </noscript>
 
   <script type="module" src="js/app.js"></script>
 </body>
