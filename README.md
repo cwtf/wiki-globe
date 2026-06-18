@@ -7,6 +7,8 @@ view as you zoom in. Click anywhere to browse Wikipedia articles near that point
 Built on [CesiumJS](https://cesium.com/platform/cesiumjs/) with no build step:
 plain HTML/CSS/ES modules served statically.
 
+Live demo: [https://cwtf.github.io/wiki-globe/](https://cwtf.github.io/wiki-globe/)
+
 ## Run it
 
 Any static file server works. From this folder:
