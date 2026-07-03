@@ -142,7 +142,10 @@
       <label class="row main" for="sel-heatmap">
         <span class="dot dot-heat"></span>
         <span class="name">Heat map</span>
-        <select id="sel-heatmap">
+        <span class="badge loading" id="badge-heat">…</span>
+        <span class="count" id="count-heat">0</span>
+      </label>
+      <select id="sel-heatmap" class="heat-select">
           <option value="" selected>None</option>
           <optgroup label="Weather — live">
             <option value="wetbulb">Wet-bulb temp</option>
@@ -156,10 +159,7 @@
             <option value="ihdi">IHDI</option>
             <option value="gni">GNI per capita (PPP)</option>
           </optgroup>
-        </select>
-        <span class="badge loading" id="badge-heat">…</span>
-        <span class="count" id="count-heat">0</span>
-      </label>
+      </select>
       <div class="wb-controls" id="wb-controls" hidden>
         <div class="wb-bar"></div>
         <div class="wb-ticks"></div>
