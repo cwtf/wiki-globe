@@ -107,10 +107,25 @@ html, body {
 .dot-sat    { background: var(--cyan);  box-shadow: 0 0 6px var(--cyan); }
 .dot-flight { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
 .dot-ship   { background: var(--teal);  box-shadow: 0 0 6px var(--teal); }
-.dot-wetbulb {
+.dot-heat {
   background: linear-gradient(135deg, #4fc3f7, #facc15, #ef4444);
   box-shadow: 0 0 6px #fb923c;
 }
+
+.row select {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--stroke);
+  color: var(--text);
+  border-radius: 6px;
+  font-size: 11px;
+  font-family: inherit;
+  padding: 2px 4px;
+  cursor: pointer;
+  color-scheme: dark;
+}
+.row select:focus { outline: 1px solid #4aa3ff; }
 
 .wb-controls { margin: 4px 0 2px 24px; }
 .wb-controls[hidden] { display: none; }

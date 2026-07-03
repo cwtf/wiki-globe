@@ -1,16 +1,19 @@
-// Wet-bulb temperature layer: a global heat-map overlay derived from
-// Open-Meteo hourly data (2 m air temperature + relative humidity, combined
-// via Stull's 2011 approximation). Wet-bulb temperature is the key
-// heat-stress metric — around 35 °C sustained is the theoretical limit of
-// human survivability, and harm starts well below that.
-// A sample grid (resolution user-adjustable via setResolution) is fetched
-// lazily on first enable together with the past PAST_DAYS of hourly history,
-// so a timeline slider can scrub into the past without refetching. The grid
-// is bilinearly interpolated onto an equirectangular canvas and draped over
-// the globe as a single-tile imagery layer. valueAt() serves the tooltip.
-// Chunks are fetched sequentially with one retry: firing them in parallel
-// can trip Open-Meteo's per-minute rate limit, which used to silently drop
-// whole bands of the grid.
+// Heat-map overlay layer: one dropdown-selected metric at a time.
+// Weather metrics (wet-bulb temperature / air temperature / relative
+// humidity) come from Open-Meteo hourly data on an adjustable sample grid
+// with a scrubbable past-days timeline; the wet-bulb value is derived via
+// Stull's 2011 approximation (~35 °C sustained is the theoretical limit of
+// human survivability). Country metrics (GDP per capita, HDI, IHDI, GNI)
+// are drawn as a choropleth from public-domain country polygons coloured by
+// the bundled dataset in country-data.js.
+// Either way the overlay renders to an equirectangular canvas draped over
+// the globe as a single-tile imagery layer, and valueAt() serves the
+// cursor tooltip.
+// Open-Meteo chunks are fetched sequentially with one retry: firing them in
+// parallel can trip the per-minute rate limit; hourly/daily quota errors
+// abort the load, back off, and fall back to the localStorage cache.
+
+import { COUNTRY_STATS, GEOJSON_URL } from "../country-data.js";
 
 const LAT_MIN = -60;
 const LAT_MAX = 80;
@@ -23,32 +26,132 @@ const QUOTA_COOLDOWN_MS = 15 * 60 * 1000; // back-off after hourly/daily 429
 const CHUNK = 60;                     // locations per batched API request
 const CACHE_KEY = "wetbulb-cache-v1"; // last good dataset, for rate-limited sessions
 const CACHE_MAX_AGE_MS = 24 * 3600 * 1000;
-const CANVAS_W = 720;                 // 0.5°/px equirectangular overlay
+const CANVAS_W = 720;                 // 0.5°/px weather overlay
 const CANVAS_H = 360;
+const COUNTRY_W = 1440;               // 0.25°/px choropleth (crisper borders)
+const COUNTRY_H = 720;
 const OVERLAY_ALPHA = 160;            // 0-255 baked into the overlay pixels
 const EDGE_FADE_DEG = 7.5;            // fade to transparent at grid edges
-
-// colour stops for the wet-bulb scale (°C → rgb)
-const STOPS = [
-  [-20, [122, 165, 255]],  // #7aa5ff
-  [0, [79, 195, 247]],     // #4fc3f7
-  [10, [63, 217, 143]],    // #3fd98f
-  [18, [168, 221, 78]],    // #a8dd4e
-  [24, [250, 204, 21]],    // #facc15
-  [28, [251, 146, 60]],    // #fb923c
-  [31, [239, 68, 68]],     // #ef4444
-  [35, [217, 70, 239]],    // #d946ef
-];
+const NO_DATA_FILL = "rgba(125, 135, 150, 0.16)";
 
 const TIME_FMT = new Intl.DateTimeFormat("en", {
   month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
   hour12: false, timeZone: "UTC",
 });
 
-export class WetBulbLayer {
+const money = (x) => `$${Math.round(x).toLocaleString("en-US")}`;
+const degC = (x) => `${x.toFixed(1)} °C`;
+
+// Metric definitions. stops: [value, [r,g,b]] colour ramp (piecewise-linear);
+// legend: evenly spaced [label, css] ticks for the panel gradient bar.
+// Weather metrics read interpolated grid samples via value(); country
+// metrics index the COUNTRY_STATS rows via statIdx.
+export const METRICS = {
+  wetbulb: {
+    label: "Wet-bulb temp", kind: "weather",
+    value: (v) => v.tw, fmt: degC,
+    stops: [
+      [-20, [122, 165, 255]], [0, [79, 195, 247]], [10, [63, 217, 143]],
+      [18, [168, 221, 78]], [24, [250, 204, 21]], [28, [251, 146, 60]],
+      [31, [239, 68, 68]], [35, [217, 70, 239]],
+    ],
+    legend: [
+      ["0°", "#4fc3f7"], ["15°", "#43d98c"], ["24°", "#facc15"],
+      ["28°", "#fb923c"], ["31°", "#ef4444"], ["35°C", "#d946ef"],
+    ],
+  },
+  temp: {
+    label: "Temperature", kind: "weather",
+    value: (v) => v.t, fmt: degC,
+    stops: [
+      [-40, [110, 90, 220]], [-20, [122, 165, 255]], [0, [79, 195, 247]],
+      [12, [63, 217, 143]], [22, [250, 204, 21]], [32, [251, 146, 60]],
+      [40, [239, 68, 68]], [48, [217, 70, 239]],
+    ],
+    legend: [
+      ["-40°", "#6e5adc"], ["-20°", "#7aa5ff"], ["0°", "#4fc3f7"],
+      ["12°", "#3fd98f"], ["22°", "#facc15"], ["32°", "#fb923c"], ["48°C", "#ef4444"],
+    ],
+  },
+  humidity: {
+    label: "Humidity", kind: "weather",
+    value: (v) => v.rh, fmt: (x) => `${Math.round(x)}%`,
+    stops: [
+      [0, [217, 119, 6]], [25, [250, 204, 21]], [50, [63, 217, 143]],
+      [75, [79, 195, 247]], [100, [74, 125, 255]],
+    ],
+    legend: [
+      ["0%", "#d97706"], ["25%", "#facc15"], ["50%", "#3fd98f"],
+      ["75%", "#4fc3f7"], ["100%", "#4a7dff"],
+    ],
+  },
+  gdpNominal: {
+    label: "GDP per capita (nominal)", kind: "country",
+    statIdx: 1, fmt: money,
+    stops: [
+      [500, [239, 68, 68]], [2000, [251, 146, 60]], [6000, [250, 204, 21]],
+      [15000, [168, 221, 78]], [40000, [63, 217, 143]], [90000, [79, 195, 247]],
+    ],
+    legend: [
+      ["$500", "#ef4444"], ["$2k", "#fb923c"], ["$6k", "#facc15"],
+      ["$15k", "#a8dd4e"], ["$40k", "#3fd98f"], ["$90k+", "#4fc3f7"],
+    ],
+  },
+  gdpPpp: {
+    label: "GDP per capita (PPP)", kind: "country",
+    statIdx: 2, fmt: money,
+    stops: [
+      [1000, [239, 68, 68]], [4000, [251, 146, 60]], [12000, [250, 204, 21]],
+      [25000, [168, 221, 78]], [60000, [63, 217, 143]], [120000, [79, 195, 247]],
+    ],
+    legend: [
+      ["$1k", "#ef4444"], ["$4k", "#fb923c"], ["$12k", "#facc15"],
+      ["$25k", "#a8dd4e"], ["$60k", "#3fd98f"], ["$120k+", "#4fc3f7"],
+    ],
+  },
+  hdi: {
+    label: "HDI", kind: "country",
+    statIdx: 3, fmt: (x) => x.toFixed(3),
+    stops: [
+      [0.40, [239, 68, 68]], [0.55, [251, 146, 60]], [0.70, [250, 204, 21]],
+      [0.80, [168, 221, 78]], [0.90, [63, 217, 143]], [0.97, [79, 195, 247]],
+    ],
+    legend: [
+      ["0.40", "#ef4444"], ["0.55", "#fb923c"], ["0.70", "#facc15"],
+      ["0.80", "#a8dd4e"], ["0.90", "#3fd98f"], ["0.97", "#4fc3f7"],
+    ],
+  },
+  ihdi: {
+    label: "IHDI", kind: "country",
+    statIdx: 4, fmt: (x) => x.toFixed(3),
+    stops: [
+      [0.25, [239, 68, 68]], [0.40, [251, 146, 60]], [0.55, [250, 204, 21]],
+      [0.68, [168, 221, 78]], [0.80, [63, 217, 143]], [0.92, [79, 195, 247]],
+    ],
+    legend: [
+      ["0.25", "#ef4444"], ["0.40", "#fb923c"], ["0.55", "#facc15"],
+      ["0.68", "#a8dd4e"], ["0.80", "#3fd98f"], ["0.92", "#4fc3f7"],
+    ],
+  },
+  gni: {
+    label: "GNI per capita (PPP)", kind: "country",
+    statIdx: 5, fmt: money,
+    stops: [
+      [800, [239, 68, 68]], [3000, [251, 146, 60]], [9000, [250, 204, 21]],
+      [22000, [168, 221, 78]], [50000, [63, 217, 143]], [100000, [79, 195, 247]],
+    ],
+    legend: [
+      ["$800", "#ef4444"], ["$3k", "#fb923c"], ["$9k", "#facc15"],
+      ["$22k", "#a8dd4e"], ["$50k", "#3fd98f"], ["$100k+", "#4fc3f7"],
+    ],
+  },
+};
+
+export class HeatmapLayer {
   constructor(viewer) {
     this.viewer = viewer;
     this.layer = null;                // current overlay ImageryLayer
+    this.mode = null;                 // METRICS key, or null = off
     this.step = DEFAULT_STEP;
     this._buildGrid();
     this.visible = false;
@@ -61,9 +164,19 @@ export class WetBulbLayer {
     this.timeIdx = -1;                // index into times currently displayed
     this.selTime = null;              // pinned timestamp; null = follow latest
     this.onDataChanged = null;        // app hook: timeline bounds changed
+    this.geo = null;                  // country polygons (lazy)
+    this._geoLoading = false;
     this._retryTimer = null;
     this._rebuildTimer = null;
     this._gen = 0;                    // overlay rebuild generation (latest wins)
+  }
+
+  get metric() {
+    return this.mode ? METRICS[this.mode] : null;
+  }
+
+  get _weatherActive() {
+    return this.metric?.kind === "weather";
   }
 
   _buildGrid() {
@@ -83,15 +196,24 @@ export class WetBulbLayer {
     this.maxLat = LAT_MIN + (this.rows - 1) * this.step;
   }
 
-  setVisible(v) {
-    this.visible = v;
-    if (this.layer) this.layer.show = v;
-    if (v) {
-      if (Date.now() - this.lastFetch > REFRESH_MS) this._load();
-      this.timer ??= setInterval(() => this._load(), REFRESH_MS);
-    } else {
+  setMode(mode) {
+    this.mode = METRICS[mode] ? mode : null;
+    this.visible = this.mode !== null;
+    if (this.layer) this.layer.show = this.visible;
+    if (!this._weatherActive) {
+      // no periodic refresh needed while off or showing country statistics
       if (this.timer) { clearInterval(this.timer); this.timer = null; }
       if (this._retryTimer) { clearTimeout(this._retryTimer); this._retryTimer = null; }
+    }
+    if (!this.mode) return;
+    if (this._weatherActive) {
+      if (Date.now() - this.lastFetch > REFRESH_MS) this._load();
+      this.timer ??= setInterval(() => this._load(), REFRESH_MS);
+      if (this.okCount > 0) this._scheduleRebuild();
+    } else if (!this.geo) {
+      this._loadCountries();
+    } else {
+      this._scheduleRebuild();
     }
   }
 
@@ -106,7 +228,7 @@ export class WetBulbLayer {
     this.timeIdx = -1;
     this.lastFetch = 0;
     this.source = "loading";
-    if (this.visible) this._load();
+    if (this._weatherActive) this._load();
   }
 
   // i indexes this.times (0 = oldest, last = current hour)
@@ -116,9 +238,7 @@ export class WetBulbLayer {
     this.timeIdx = i;
     this.selTime = i === this.times.length - 1 ? null : this.times[i];
     this._applyTimeIdx();
-    // debounce the canvas/layer rebuild while the slider is being dragged
-    clearTimeout(this._rebuildTimer);
-    this._rebuildTimer = setTimeout(() => this._rebuildOverlay(), 90);
+    if (this._weatherActive) this._scheduleRebuild();
   }
 
   timeLabel(i = this.timeIdx) {
@@ -141,7 +261,16 @@ export class WetBulbLayer {
     }
   }
 
+  _scheduleRebuild() {
+    // debounced: collapses slider scrubbing into one canvas/layer rebuild
+    clearTimeout(this._rebuildTimer);
+    this._rebuildTimer = setTimeout(() => this._rebuildOverlay(), 90);
+  }
+
+  // --- weather data ----------------------------------------------------------
+
   async _load() {
+    if (!this._weatherActive) return;
     if (this.loading || Date.now() < (this.cooldownUntil ?? 0)) return;
     this.loading = true;
     clearTimeout(this._retryTimer);
@@ -165,7 +294,7 @@ export class WetBulbLayer {
           } catch (e2) {
             if (isQuotaError(e2)) { quotaHit = true; break; }
             failures++;
-            console.warn("[wetbulb] chunk failed:", e2.message);
+            console.warn("[heatmap] chunk failed:", e2.message);
           }
         }
       }
@@ -185,12 +314,12 @@ export class WetBulbLayer {
         this.source = "limited";
       }
       if (quotaHit) {
-        console.warn("[wetbulb] Open-Meteo request quota exceeded; backing off");
+        console.warn("[heatmap] Open-Meteo request quota exceeded; backing off");
         this.cooldownUntil = Date.now() + QUOTA_COOLDOWN_MS;
       }
       if (failures > 0 || quotaHit || this.okCount === 0) {
         this._retryTimer = setTimeout(() => {
-          if (this.visible) { this.lastFetch = 0; this._load(); }
+          if (this._weatherActive) { this.lastFetch = 0; this._load(); }
         }, quotaHit ? QUOTA_COOLDOWN_MS : RETRY_MS);
       }
     } finally {
@@ -267,9 +396,71 @@ export class WetBulbLayer {
     }
   }
 
-  // Bilinear interpolation over the sample grid (longitude wraps). Returns
-  // { tw, t, rh, when } or null outside the covered latitudes / missing data.
+  // --- country data ------------------------------------------------------------
+
+  async _loadCountries() {
+    if (this._geoLoading) return;
+    this._geoLoading = true;
+    try {
+      const resp = await fetch(GEOJSON_URL);
+      if (!resp.ok) throw new Error(`geojson ${resp.status}`);
+      const gj = await resp.json();
+      this.geo = gj.features.map((f) => {
+        const g = f.geometry;
+        const polys = g.type === "Polygon" ? [g.coordinates]
+          : g.type === "MultiPolygon" ? g.coordinates : [];
+        const rings = polys.flat(); // outer rings + holes; even-odd fill sorts them out
+        let w = 180, e = -180, s = 90, n = -90;
+        for (const ring of rings) {
+          for (const [lon, lat] of ring) {
+            if (lon < w) w = lon;
+            if (lon > e) e = lon;
+            if (lat < s) s = lat;
+            if (lat > n) n = lat;
+          }
+        }
+        return { id: f.id, name: f.properties?.name ?? f.id, rings, bbox: [w, s, e, n] };
+      });
+      if (this.metric?.kind === "country") {
+        this._rebuildOverlay();
+        this.onDataChanged?.();
+      }
+    } catch (e) {
+      console.warn("[heatmap] country boundaries failed to load:", e.message);
+      this.geo = null;
+    } finally {
+      this._geoLoading = false;
+    }
+  }
+
+  _countryAt(lat, lon) {
+    if (!this.geo) return null;
+    for (const f of this.geo) {
+      const [w, s, e, n] = f.bbox;
+      if (lat < s || lat > n || lon < w || lon > e) continue;
+      let inside = false;
+      for (const ring of f.rings) {
+        if (pointInRing(lon, lat, ring)) inside = !inside; // even-odd (handles holes)
+      }
+      if (inside) return f;
+    }
+    return null;
+  }
+
+  // --- shared: tooltip lookup, canvas, overlay ------------------------------------
+
+  // Weather modes: bilinear interpolation over the sample grid (longitude
+  // wraps). Country modes: polygon lookup. Returns null where there is no
+  // coverage under the cursor.
   valueAt(lat, lon) {
+    const m = this.metric;
+    if (!m) return null;
+    if (m.kind === "country") {
+      const f = this._countryAt(lat, lon);
+      if (!f) return null;
+      const value = COUNTRY_STATS[f.id]?.[m.statIdx] ?? null;
+      return { kind: "country", metric: this.mode, name: f.name, value };
+    }
     if (lat < LAT_MIN || lat > this.maxLat) return null;
     lon = ((lon + 180) % 360 + 360) % 360 - 180;
     const fr = (lat - LAT_MIN) / this.step;
@@ -292,10 +483,20 @@ export class WetBulbLayer {
       tw += s.tw * wt; t += s.t * wt; rh += s.rh * wt; w += wt;
     }
     if (w < 0.25) return null; // mostly missing data around this point
-    return { tw: tw / w, t: t / w, rh: rh / w, when: this.timeLabel() };
+    return {
+      kind: "weather", metric: this.mode,
+      tw: tw / w, t: t / w, rh: rh / w, when: this.timeLabel(),
+    };
   }
 
   _renderCanvas() {
+    return this.metric?.kind === "country"
+      ? this._renderCountryCanvas()
+      : this._renderWeatherCanvas();
+  }
+
+  _renderWeatherCanvas() {
+    const m = this.metric;
     const canvas = document.createElement("canvas");
     canvas.width = CANVAS_W;
     canvas.height = CANVAS_H;
@@ -314,7 +515,9 @@ export class WetBulbLayer {
         const lon = -180 + ((x + 0.5) * 360) / CANVAS_W;
         const v = this.valueAt(lat, lon);
         if (!v) continue;
-        const [r, g, b] = colorFor(v.tw);
+        const val = m.value(v);
+        if (val == null) continue;
+        const [r, g, b] = colorFor(m.stops, val);
         const i = (y * CANVAS_W + x) * 4;
         d[i] = r; d[i + 1] = g; d[i + 2] = b;
         d[i + 3] = Math.round(OVERLAY_ALPHA * fade);
@@ -324,7 +527,37 @@ export class WetBulbLayer {
     return canvas;
   }
 
+  _renderCountryCanvas() {
+    const m = this.metric;
+    const canvas = document.createElement("canvas");
+    canvas.width = COUNTRY_W;
+    canvas.height = COUNTRY_H;
+    const ctx = canvas.getContext("2d");
+    const X = (lon) => ((lon + 180) * COUNTRY_W) / 360;
+    const Y = (lat) => ((90 - lat) * COUNTRY_H) / 180;
+    for (const f of this.geo ?? []) {
+      const value = COUNTRY_STATS[f.id]?.[m.statIdx];
+      if (value == null) {
+        ctx.fillStyle = NO_DATA_FILL;
+      } else {
+        const [r, g, b] = colorFor(m.stops, value);
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${OVERLAY_ALPHA / 255})`;
+      }
+      ctx.beginPath();
+      for (const ring of f.rings) {
+        ctx.moveTo(X(ring[0][0]), Y(ring[0][1]));
+        for (let i = 1; i < ring.length; i++) {
+          ctx.lineTo(X(ring[i][0]), Y(ring[i][1]));
+        }
+        ctx.closePath();
+      }
+      ctx.fill("evenodd");
+    }
+    return canvas;
+  }
+
   async _rebuildOverlay() {
+    if (!this.mode) return;
     const gen = ++this._gen;
     const url = this._renderCanvas().toDataURL("image/png");
     const provider = await Cesium.SingleTileImageryProvider.fromUrl(url);
@@ -337,6 +570,14 @@ export class WetBulbLayer {
 
   counts() {
     if (!this.visible) return { count: 0, detail: "", source: this.source };
+    const m = this.metric;
+    if (m.kind === "country") {
+      if (!this.geo) {
+        return { count: 0, detail: "loading country boundaries…", source: "loading" };
+      }
+      const count = this.geo.filter((f) => COUNTRY_STATS[f.id]?.[m.statIdx] != null).length;
+      return { count, detail: `${count} countries · bundled IMF/UNDP 2022-23 estimates`, source: "data" };
+    }
     const note = {
       limited: " · API rate-limited, retrying later",
       cache: " · cached data (API rate-limited)",
@@ -361,13 +602,13 @@ function stullWetBulb(t, rh) {
   );
 }
 
-function colorFor(tw) {
-  if (tw <= STOPS[0][0]) return STOPS[0][1];
-  for (let i = 1; i < STOPS.length; i++) {
-    if (tw <= STOPS[i][0]) {
-      const [t0, c0] = STOPS[i - 1];
-      const [t1, c1] = STOPS[i];
-      const f = (tw - t0) / (t1 - t0);
+function colorFor(stops, v) {
+  if (v <= stops[0][0]) return stops[0][1];
+  for (let i = 1; i < stops.length; i++) {
+    if (v <= stops[i][0]) {
+      const [t0, c0] = stops[i - 1];
+      const [t1, c1] = stops[i];
+      const f = (v - t0) / (t1 - t0);
       return [
         Math.round(c0[0] + (c1[0] - c0[0]) * f),
         Math.round(c0[1] + (c1[1] - c0[1]) * f),
@@ -375,10 +616,10 @@ function colorFor(tw) {
       ];
     }
   }
-  return STOPS[STOPS.length - 1][1];
+  return stops[stops.length - 1][1];
 }
 
-// Human heat-stress context for the tooltip.
+// Human heat-stress context for the wet-bulb tooltip.
 export function heatStressLabel(tw) {
   if (tw >= 35) return "Beyond the theoretical human survivability limit";
   if (tw >= 31) return "Extremely dangerous — heat stroke risk even at rest";
@@ -392,6 +633,19 @@ export function heatStressLabel(tw) {
 // (The *minutely* limit is transient and worth a short-pause retry instead.)
 function isQuotaError(e) {
   return e.status === 429 && !/minutely/i.test(e.reason ?? "");
+}
+
+// ray-casting point-in-ring test (lon/lat degrees)
+function pointInRing(x, y, ring) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i];
+    const [xj, yj] = ring[j];
+    if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) {
+      inside = !inside;
+    }
+  }
+  return inside;
 }
 
 function round1(x) {

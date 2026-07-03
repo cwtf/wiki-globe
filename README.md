@@ -28,7 +28,7 @@ won't work — the texture and module fetches need an HTTP origin.)
 |---|---|---|
 | Satellites | [CelesTrak](https://celestrak.org) TLEs ("visual" group), propagated client-side with SGP4 via satellite.js | Synthetic orbits (LEO constellation, sun-sync, MEO nav, GEO) |
 | Flights | [OpenSky Network](https://opensky-network.org) anonymous state vectors, refreshed every 2 min and dead-reckoned in between; routes per callsign via [adsbdb](https://www.adsbdb.com) | ~200 great-circle flights between major world airports |
-| Wet-bulb temp | [Open-Meteo](https://open-meteo.com) hourly 2 m temperature + relative humidity on a global grid (resolution slider: 20° down to 7.5°), combined with Stull's (2011) wet-bulb approximation. Off by default; toggling it on fetches the past 3 days of hourly data and drapes a bilinearly interpolated heat-map overlay over the globe, from cool blue to magenta (35 °C — the theoretical human survivability limit). Day + hour sliders scrub through the fetched history (a "Viewing …" readout shows the selected UTC time); hover anywhere for the local reading and a heat-stress rating. | — (layer hides if the API is unreachable) |
+| Heat map | A dropdown of overlay modes, off by default. **Weather** (live): wet-bulb temperature (Stull 2011 approximation; ~35 °C is the theoretical human survivability limit), air temperature, or relative humidity — [Open-Meteo](https://open-meteo.com) hourly data on a global grid (resolution slider: 20° down to 7.5°) with the past 3 days scrubbable via day + hour sliders (a "Viewing …" readout shows the selected UTC time), bilinearly interpolated and draped over the globe; hover anywhere for the local reading. **Country statistics** (choropleth): GDP per capita (nominal / PPP), HDI, IHDI, GNI per capita — bundled IMF/UNDP 2022-23 estimates coloured over country polygons; hover a country for its value. | Weather falls back to a localStorage cache of the last good fetch when rate-limited |
 | Shipping | Live AIS: [aisstream.io](https://aisstream.io) WebSocket (global; paste a free API key via the "key" link or `?aiskey=`) or [Digitraffic Finland](https://www.digitraffic.fi/en/marine-traffic/) open REST data (no key, Baltic coverage), dead-reckoned between reports. Hover shows name, type, flag state, speed, heading. "Destination routes" resolves each vessel's reported AIS destination against a built-in port gazetteer and draws the path. | Simulated vessels along 17 curated corridors (which stay visible as a dim reference layer in live mode) |
 
 The globe is lit by the real sun: the day texture shows on the daylit side, the
@@ -74,7 +74,8 @@ js/app.js               viewer setup, zoom crossfade, picking, tooltips, UI wiri
 js/layers/satellites.js TLE fetch + SGP4 propagation + orbit paths
 js/layers/flights.js    OpenSky states, dead reckoning, route arcs, adsbdb lookup
 js/layers/shipping.js   lane rendering, flow pulses, simulated vessels
-js/layers/wetbulb.js    Open-Meteo grid fetch, Stull wet-bulb calc, heat-map overlay
+js/layers/heatmap.js    heat-map overlays: Open-Meteo weather grid + country choropleths
+js/country-data.js      bundled per-country GDP/HDI/IHDI/GNI estimates
 js/shipping-lanes.js    hand-plotted corridor waypoints
 js/demo-data.js         demo flights/satellites generators, airports
 js/wiki-panel.js        geosearch + Nominatim context articles, radius slider

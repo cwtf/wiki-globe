@@ -5,7 +5,7 @@
 import { SatelliteLayer } from "./layers/satellites.js";
 import { FlightLayer } from "./layers/flights.js";
 import { ShippingLayer } from "./layers/shipping.js";
-import { WetBulbLayer, heatStressLabel, RES_STEPS } from "./layers/wetbulb.js";
+import { HeatmapLayer, METRICS, heatStressLabel, RES_STEPS } from "./layers/heatmap.js";
 import { WikiPanel } from "./wiki-panel.js";
 import { getAisKey, setAisKey } from "./ais.js";
 
@@ -76,7 +76,7 @@ function boot() {
   const sats = new SatelliteLayer(viewer);
   const flights = new FlightLayer(viewer);
   const ships = new ShippingLayer(viewer);
-  const wetbulb = new WetBulbLayer(viewer); // lazy: fetches on first enable
+  const heat = new HeatmapLayer(viewer); // lazy: fetches when a mode is selected
   const wiki = new WikiPanel(viewer);
 
   ships.init();
@@ -105,9 +105,9 @@ function boot() {
     osmLayer.alpha = Cesium.Math.clamp((FADE_START - height) / (FADE_START - FADE_END), 0, 1);
 
     // keep the street map readable at night: drop sun lighting once the
-    // camera is in map territory (or while the wet-bulb overlay is shown,
-    // so the heat map isn't dimmed on the night side)
-    const wantLighting = osmLayer.alpha < 0.8 && !wetbulb.visible;
+    // camera is in map territory (or while a heat-map overlay is shown,
+    // so the overlay isn't dimmed on the night side)
+    const wantLighting = osmLayer.alpha < 0.8 && !heat.visible;
     if (scene.globe.enableLighting !== wantLighting) {
       scene.globe.enableLighting = wantLighting;
     }
@@ -147,16 +147,16 @@ function boot() {
     let html = null;
     if (hovered) {
       html = tooltipHtml(hovered);
-    } else if (wetbulb.visible) {
-      // nothing under the cursor: read the wet-bulb heat map instead
+    } else if (heat.visible) {
+      // nothing under the cursor: read the heat-map overlay instead
       const cart = viewer.camera.pickEllipsoid(movement.endPosition, scene.globe.ellipsoid);
       if (cart) {
         const c = Cesium.Cartographic.fromCartesian(cart);
-        const v = wetbulb.valueAt(
+        const v = heat.valueAt(
           Cesium.Math.toDegrees(c.latitude),
           Cesium.Math.toDegrees(c.longitude)
         );
-        if (v) html = tooltipHtml({ kind: "wetbulb", sample: v });
+        if (v) html = tooltipHtml({ kind: "heat", sample: v });
       }
     }
 
@@ -209,21 +209,37 @@ function boot() {
   bind("chk-flight-routes", (v) => flights.setRoutesVisible(v));
   bind("chk-ships", (v) => ships.setVisible(v));
   bind("chk-vessel-routes", (v) => ships.setRoutesVisible(v));
-  bind("chk-wetbulb", (v) => {
-    wetbulb.setVisible(v);
-    document.getElementById("wb-controls").hidden = !v;
+  // heat-map mode dropdown: weather modes show the resolution/timeline rows,
+  // country modes only the legend
+  const selHeat = document.getElementById("sel-heatmap");
+  const wbControls = document.getElementById("wb-controls");
+  const wbWeatherRows = document.getElementById("wb-weather-rows");
+  const wbBar = wbControls.querySelector(".wb-bar");
+  const wbTicks = wbControls.querySelector(".wb-ticks");
+  selHeat.addEventListener("change", () => {
+    const mode = selHeat.value || null;
+    heat.setMode(mode);
+    wbControls.hidden = !mode;
+    if (mode) {
+      wbWeatherRows.hidden = METRICS[mode].kind !== "weather";
+      const legend = METRICS[mode].legend;
+      wbBar.style.background = `linear-gradient(to right, ${legend
+        .map(([, c], i) => `${c} ${Math.round((i / (legend.length - 1)) * 100)}%`)
+        .join(", ")})`;
+      wbTicks.innerHTML = legend.map(([l]) => `<span>${esc(l)}</span>`).join("");
+    }
   });
 
-  // wet-bulb resolution & timeline sliders
+  // heat-map resolution slider (weather modes)
   const wbRes = document.getElementById("wb-res");
   const wbResLabel = document.getElementById("wb-res-label");
   wbRes.addEventListener("input", () => {
     const step = RES_STEPS[Number(wbRes.value)];
     wbResLabel.textContent = `${step}°`;
-    wetbulb.setResolution(step);
+    heat.setResolution(step);
   });
 
-  // Day + hour sliders address wetbulb.times, which is hourly UTC data
+  // Day + hour sliders address heat.times, which is hourly UTC data
   // starting at midnight of the oldest fetched day: index = day * 24 + hour.
   const wbDay = document.getElementById("wb-day");
   const wbHour = document.getElementById("wb-hour");
@@ -238,16 +254,16 @@ function boot() {
   });
 
   function wbSyncTimeUI() {
-    const n = wetbulb.times.length;
+    const n = heat.times.length;
     if (n === 0) return;
-    const idx = wetbulb.timeIdx;
+    const idx = heat.timeIdx;
     const lastDay = Math.floor((n - 1) / 24);
     const day = Math.floor(idx / 24);
     wbDay.max = lastDay;
     wbDay.value = day;
     wbHour.max = day === lastDay ? (n - 1) - lastDay * 24 : 23; // today ends at the current hour
     wbHour.value = idx % 24;
-    const d = new Date(wetbulb.times[idx]);
+    const d = new Date(heat.times[idx]);
     const hh = `${String(d.getUTCHours()).padStart(2, "0")}:00`;
     wbDayLabel.textContent = day === lastDay ? "today" : WB_DAY_FMT.format(d);
     wbHourLabel.textContent = hh;
@@ -256,16 +272,16 @@ function boot() {
   }
 
   function wbApplyTimeUI() {
-    const n = wetbulb.times.length;
+    const n = heat.times.length;
     if (n === 0) return;
     const idx = Math.min(Number(wbDay.value) * 24 + Number(wbHour.value), n - 1);
-    wetbulb.setTimeIndex(idx);
+    heat.setTimeIndex(idx);
     wbSyncTimeUI();
   }
 
   wbDay.addEventListener("input", wbApplyTimeUI);
   wbHour.addEventListener("input", wbApplyTimeUI);
-  wetbulb.onDataChanged = wbSyncTimeUI;
+  heat.onDataChanged = wbSyncTimeUI;
   bind("chk-rotate", (v) => { rotateEnabled = v; });
 
   // optional aisstream.io key for global live ship coverage
@@ -286,13 +302,13 @@ function boot() {
     sats: document.getElementById("badge-sats"),
     flights: document.getElementById("badge-flights"),
     ships: document.getElementById("badge-ships"),
-    wetbulb: document.getElementById("badge-wetbulb"),
+    heat: document.getElementById("badge-heat"),
   };
   const countEls = {
     sats: document.getElementById("count-sats"),
     flights: document.getElementById("count-flights"),
     ships: document.getElementById("count-ships"),
-    wetbulb: document.getElementById("count-wetbulb"),
+    heat: document.getElementById("count-heat"),
   };
 
   function setBadge(el, source) {
@@ -303,6 +319,7 @@ function boot() {
       loading: ["…", "loading"],
       limited: ["LIMIT", "demo"],   // API quota hit, backing off
       cache: ["CACHED", "static"],  // serving the last good dataset
+      data: ["DATA", "static"],     // bundled statistics, not a live feed
     };
     const [label, cls] = map[source] ?? map.loading;
     el.textContent = label;
@@ -323,17 +340,17 @@ function boot() {
     countEls.ships.textContent = shc.count;
     countEls.ships.title = shc.detail;
 
-    const wc = wetbulb.counts();
-    setBadge(badgeEls.wetbulb, wc.source);
-    countEls.wetbulb.textContent = wc.count;
-    countEls.wetbulb.title = wc.detail;
+    const hc = heat.counts();
+    setBadge(badgeEls.heat, hc.source);
+    countEls.heat.textContent = hc.count;
+    countEls.heat.title = hc.detail;
   }, 1000);
 
   // fade the onboarding hint after a while
   setTimeout(() => document.getElementById("hint").classList.add("faded"), 15000);
 
   // handy for debugging from the console
-  window.__globe = { viewer, sats, flights, ships, wetbulb, wiki };
+  window.__globe = { viewer, sats, flights, ships, heat, wiki };
 }
 
 function tooltipHtml(id) {
@@ -363,11 +380,23 @@ function tooltipHtml(id) {
       <div class="tt-line">${speed} · heading ${hdg}${v.destination ? " · → " + esc(v.destination) : ""}</div>
       <div class="tt-note">${v.live ? "live AIS" : "simulated vessel"}</div>`;
   }
-  if (id.kind === "wetbulb") {
+  if (id.kind === "heat") {
     const s = id.sample;
-    return `<div class="tt-title">Wet-bulb ${s.tw.toFixed(1)} °C</div>
-      <div class="tt-line">Air ${s.t.toFixed(1)} °C · humidity ${Math.round(s.rh)}%</div>
-      <div class="tt-note">${esc(heatStressLabel(s.tw))} · ${esc(s.when ?? "now")} · Open-Meteo</div>`;
+    const m = METRICS[s.metric];
+    if (s.kind === "country") {
+      return `<div class="tt-title">${esc(s.name)}</div>
+        <div class="tt-line">${esc(m.label)}: ${s.value != null ? esc(m.fmt(s.value)) : "no data"}</div>
+        <div class="tt-note">Bundled IMF / UNDP 2022–23 estimates</div>`;
+    }
+    const others = {
+      wetbulb: `Air ${s.t.toFixed(1)} °C · humidity ${Math.round(s.rh)}%`,
+      temp: `Wet-bulb ${s.tw.toFixed(1)} °C · humidity ${Math.round(s.rh)}%`,
+      humidity: `Air ${s.t.toFixed(1)} °C · wet-bulb ${s.tw.toFixed(1)} °C`,
+    }[s.metric];
+    const stress = s.metric === "wetbulb" ? `${esc(heatStressLabel(s.tw))} · ` : "";
+    return `<div class="tt-title">${esc(m.label)} ${esc(m.fmt(m.value(s)))}</div>
+      <div class="tt-line">${others}</div>
+      <div class="tt-note">${stress}${esc(s.when ?? "now")} · Open-Meteo</div>`;
   }
   if (id.kind === "lane") {
     return `<div class="tt-title">${esc(id.lane.name)}</div>
