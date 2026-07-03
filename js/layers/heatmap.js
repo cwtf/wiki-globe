@@ -13,7 +13,8 @@
 // parallel can trip the per-minute rate limit; hourly/daily quota errors
 // abort the load, back off, and fall back to the localStorage cache.
 
-import { COUNTRY_STATS, GEOJSON_URL } from "../country-data.js";
+import { COUNTRY_STATS } from "../country-data.js";
+import { loadCountryGeo, countryAt } from "../country-geo.js";
 
 const LAT_MIN = -60;
 const LAT_MAX = 80;
@@ -402,25 +403,7 @@ export class HeatmapLayer {
     if (this._geoLoading) return;
     this._geoLoading = true;
     try {
-      const resp = await fetch(GEOJSON_URL);
-      if (!resp.ok) throw new Error(`geojson ${resp.status}`);
-      const gj = await resp.json();
-      this.geo = gj.features.map((f) => {
-        const g = f.geometry;
-        const polys = g.type === "Polygon" ? [g.coordinates]
-          : g.type === "MultiPolygon" ? g.coordinates : [];
-        const rings = polys.flat(); // outer rings + holes; even-odd fill sorts them out
-        let w = 180, e = -180, s = 90, n = -90;
-        for (const ring of rings) {
-          for (const [lon, lat] of ring) {
-            if (lon < w) w = lon;
-            if (lon > e) e = lon;
-            if (lat < s) s = lat;
-            if (lat > n) n = lat;
-          }
-        }
-        return { id: f.id, name: f.properties?.name ?? f.id, rings, bbox: [w, s, e, n] };
-      });
+      this.geo = await loadCountryGeo(); // shared with search / true-size compare
       if (this.metric?.kind === "country") {
         this._rebuildOverlay();
         this.onDataChanged?.();
@@ -434,17 +417,7 @@ export class HeatmapLayer {
   }
 
   _countryAt(lat, lon) {
-    if (!this.geo) return null;
-    for (const f of this.geo) {
-      const [w, s, e, n] = f.bbox;
-      if (lat < s || lat > n || lon < w || lon > e) continue;
-      let inside = false;
-      for (const ring of f.rings) {
-        if (pointInRing(lon, lat, ring)) inside = !inside; // even-odd (handles holes)
-      }
-      if (inside) return f;
-    }
-    return null;
+    return countryAt(this.geo, lat, lon);
   }
 
   // --- shared: tooltip lookup, canvas, overlay ------------------------------------
@@ -633,19 +606,6 @@ export function heatStressLabel(tw) {
 // (The *minutely* limit is transient and worth a short-pause retry instead.)
 function isQuotaError(e) {
   return e.status === 429 && !/minutely/i.test(e.reason ?? "");
-}
-
-// ray-casting point-in-ring test (lon/lat degrees)
-function pointInRing(x, y, ring) {
-  let inside = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const [xi, yi] = ring[i];
-    const [xj, yj] = ring[j];
-    if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) {
-      inside = !inside;
-    }
-  }
-  return inside;
 }
 
 function round1(x) {

@@ -6,6 +6,8 @@ import { SatelliteLayer } from "./layers/satellites.js";
 import { FlightLayer } from "./layers/flights.js";
 import { ShippingLayer } from "./layers/shipping.js";
 import { HeatmapLayer, METRICS, heatStressLabel, RES_STEPS } from "./layers/heatmap.js";
+import { TrueSizeLayer } from "./layers/truesize.js";
+import { CountrySearch } from "./search.js";
 import { WikiPanel } from "./wiki-panel.js";
 import { getAisKey, setAisKey } from "./ais.js";
 
@@ -77,6 +79,7 @@ function boot() {
   const flights = new FlightLayer(viewer);
   const ships = new ShippingLayer(viewer);
   const heat = new HeatmapLayer(viewer); // lazy: fetches when a mode is selected
+  const truesize = new TrueSizeLayer(viewer);
   const wiki = new WikiPanel(viewer);
 
   ships.init();
@@ -91,6 +94,10 @@ function boot() {
   for (const evt of ["pointerdown", "wheel", "touchstart"]) {
     viewer.canvas.addEventListener(evt, () => { lastInteraction = Date.now(); }, { passive: true });
   }
+
+  // country search bar: flying to a country counts as interaction so the
+  // auto-rotate doesn't immediately swing the camera away again
+  const search = new CountrySearch(viewer, truesize, () => { lastInteraction = Date.now(); });
 
   scene.preUpdate.addEventListener(() => {
     const now = Date.now();
@@ -186,6 +193,7 @@ function boot() {
       return;
     }
     if (id?.kind === "vessel") return; // details are in the hover tooltip
+    if (id?.kind === "truesize") return; // drag / right-click handled by the layer
     if (id?.kind === "wiki") {
       wiki.focusArticle(id.article); // highlight the matching result row
       return;
@@ -197,7 +205,11 @@ function boot() {
     const cart = viewer.camera.pickEllipsoid(click.position, scene.globe.ellipsoid);
     if (cart) {
       const c = Cesium.Cartographic.fromCartesian(cart);
-      wiki.open(Cesium.Math.toDegrees(c.latitude), Cesium.Math.toDegrees(c.longitude));
+      const lat = Cesium.Math.toDegrees(c.latitude);
+      const lon = Cesium.Math.toDegrees(c.longitude);
+      // size-compare mode: clicking a country copies it instead of opening wiki
+      if (truesize.enabled && truesize.tryAdd(lat, lon)) return;
+      wiki.open(lat, lon);
     }
   }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
@@ -282,6 +294,21 @@ function boot() {
   wbDay.addEventListener("input", wbApplyTimeUI);
   wbHour.addEventListener("input", wbApplyTimeUI);
   heat.onDataChanged = wbSyncTimeUI;
+
+  // true-size compare: checkbox enables click-to-copy; the help row shows
+  // while the mode is on or overlays exist
+  bind("chk-truesize", (v) => truesize.setEnabled(v));
+  const tsHelp = document.getElementById("ts-help");
+  const tsCount = document.getElementById("count-truesize");
+  document.getElementById("ts-clear").addEventListener("click", (e) => {
+    e.preventDefault();
+    truesize.clear();
+  });
+  truesize.onChanged = () => {
+    tsCount.textContent = truesize.items.length;
+    tsHelp.hidden = !(truesize.enabled || truesize.items.length > 0);
+  };
+
   bind("chk-rotate", (v) => { rotateEnabled = v; });
 
   // optional aisstream.io key for global live ship coverage
@@ -350,7 +377,7 @@ function boot() {
   setTimeout(() => document.getElementById("hint").classList.add("faded"), 15000);
 
   // handy for debugging from the console
-  window.__globe = { viewer, sats, flights, ships, heat, wiki };
+  window.__globe = { viewer, sats, flights, ships, heat, wiki, truesize, search };
 }
 
 function tooltipHtml(id) {
@@ -397,6 +424,12 @@ function tooltipHtml(id) {
     return `<div class="tt-title">${esc(m.label)} ${esc(m.fmt(m.value(s)))}</div>
       <div class="tt-line">${others}</div>
       <div class="tt-note">${stress}${esc(s.when ?? "now")} · Open-Meteo</div>`;
+  }
+  if (id.kind === "truesize") {
+    const c = id.ts;
+    return `<div class="tt-title">${esc(c.name)}</div>
+      <div class="tt-line">${esc(c.areaLabel)} · true-size outline</div>
+      <div class="tt-note">Drag to compare anywhere · right-click to remove</div>`;
   }
   if (id.kind === "lane") {
     return `<div class="tt-title">${esc(id.lane.name)}</div>

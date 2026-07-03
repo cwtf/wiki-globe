@@ -76,6 +76,8 @@
         "Flight tracking and route arcs",
         "Shipping lanes and AIS vessel positions",
         "Live wet-bulb temperature heat-stress overlay",
+        "True-size country comparison with draggable outlines",
+        "Country search with fly-to zoom",
         "OpenStreetMap zoom transition",
         "Nearby Wikipedia article discovery"
       ]
@@ -91,6 +93,19 @@
     </p>
 
   <div id="cesiumContainer"></div>
+
+  <!-- Country search -->
+  <div id="search" role="search">
+    <input
+      id="search-input"
+      type="search"
+      placeholder="Search a country…"
+      autocomplete="off"
+      spellcheck="false"
+      aria-label="Search for a country to fly to"
+    />
+    <div id="search-results" hidden></div>
+  </div>
 
   <!-- Layer control panel -->
   <div id="panel">
@@ -181,6 +196,20 @@
             <span class="wb-val" id="wb-hour-label">—</span>
           </div>
         </div>
+      </div>
+    </div>
+
+    <div class="layer">
+      <label class="row main">
+        <input type="checkbox" id="chk-truesize" />
+        <span class="dot dot-size"></span>
+        <span class="name">True-size compare</span>
+        <span class="count" id="count-truesize">0</span>
+      </label>
+      <div class="ts-help" id="ts-help" hidden>
+        Click a country to copy its outline, then drag the copy anywhere to
+        compare real sizes. Right-click a copy to remove it.
+        <a href="#" id="ts-clear">Clear all</a>
       </div>
     </div>
 

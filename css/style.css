@@ -173,6 +173,18 @@ html, body {
   color: var(--text);
 }
 
+.dot-size { background: #ff5470; box-shadow: 0 0 6px #ff5470; }
+
+.ts-help {
+  margin: 2px 0 4px 24px;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+.ts-help[hidden] { display: none; }
+.ts-help a { color: #7da7d9; text-decoration: none; }
+.ts-help a:hover { text-decoration: underline; }
+
 .badge {
   font-size: 9px;
   font-weight: 700;
@@ -283,6 +295,88 @@ html, body {
   text-decoration: none;
 }
 .attrib a:hover { text-decoration: underline; }
+
+/* ---------- country search ---------- */
+
+#search {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  z-index: 7;
+}
+#search-input {
+  width: 100%;
+  background: var(--bg-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--stroke);
+  border-radius: 18px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 8px 14px;
+  outline: none;
+  color-scheme: dark;
+}
+#search-input::placeholder { color: var(--text-dim); }
+#search-input:focus { border-color: rgba(110, 243, 255, 0.45); }
+
+#search-results {
+  margin-top: 6px;
+  background: var(--bg-glass-2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  overflow: hidden auto;
+  max-height: 320px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+}
+#search-results[hidden] { display: none; }
+.sr-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 12.5px;
+}
+.sr-item:hover, .sr-item.active { background: rgba(255, 255, 255, 0.07); }
+.sr-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sr-area {
+  flex: 0 0 auto;
+  color: var(--text-dim);
+  font-family: Consolas, "Cascadia Mono", monospace;
+  font-size: 10px;
+}
+.sr-add {
+  flex: 0 0 auto;
+  background: rgba(110, 243, 255, 0.1);
+  border: 1px solid rgba(110, 243, 255, 0.35);
+  border-radius: 9px;
+  color: var(--cyan);
+  font-family: inherit;
+  font-size: 9.5px;
+  font-weight: 650;
+  padding: 2px 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.sr-add:hover:not(:disabled) { background: rgba(110, 243, 255, 0.22); }
+.sr-add:disabled { opacity: 0.7; cursor: default; }
+.sr-empty {
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
 
 /* ---------- tooltip ---------- */
 
@@ -497,4 +591,12 @@ html, body {
   #panel { width: 232px; padding: 10px 12px 8px; }
   .row { font-size: 12px; }
   #hint { display: none; }
+  /* keep the search clear of the control panel on narrow screens */
+  #search {
+    left: auto;
+    right: 16px;
+    transform: none;
+    width: calc(100vw - 272px);
+    min-width: 130px;
+  }
 }
