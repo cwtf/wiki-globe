@@ -107,6 +107,26 @@ html, body {
 .dot-sat    { background: var(--cyan);  box-shadow: 0 0 6px var(--cyan); }
 .dot-flight { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
 .dot-ship   { background: var(--teal);  box-shadow: 0 0 6px var(--teal); }
+.dot-wetbulb {
+  background: linear-gradient(135deg, #4fc3f7, #facc15, #ef4444);
+  box-shadow: 0 0 6px #fb923c;
+}
+
+.wb-legend { margin: 4px 0 2px 24px; }
+.wb-legend[hidden] { display: none; }
+.wb-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(to right,
+    #4fc3f7 0%, #3fd98f 20%, #facc15 40%, #fb923c 60%, #ef4444 80%, #d946ef 100%);
+}
+.wb-ticks {
+  display: flex;
+  justify-content: space-between;
+  font-size: 8.5px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
 
 .badge {
   font-size: 9px;

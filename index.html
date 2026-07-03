@@ -75,6 +75,7 @@
         "Satellite orbit visualisation",
         "Flight tracking and route arcs",
         "Shipping lanes and AIS vessel positions",
+        "Live wet-bulb temperature heat-stress overlay",
         "OpenStreetMap zoom transition",
         "Nearby Wikipedia article discovery"
       ]
@@ -139,6 +140,20 @@
 
     <div class="layer">
       <label class="row main">
+        <input type="checkbox" id="chk-wetbulb" />
+        <span class="dot dot-wetbulb"></span>
+        <span class="name">Wet-bulb temp</span>
+        <span class="badge loading" id="badge-wetbulb">…</span>
+        <span class="count" id="count-wetbulb">0</span>
+      </label>
+      <div class="wb-legend" id="wb-legend" hidden>
+        <div class="wb-bar"></div>
+        <div class="wb-ticks"><span>0°</span><span>15°</span><span>24°</span><span>28°</span><span>31°</span><span>35°C</span></div>
+      </div>
+    </div>
+
+    <div class="layer">
+      <label class="row main">
         <input type="checkbox" id="chk-rotate" checked />
         <span class="name">Auto-rotate</span>
       </label>
@@ -156,7 +171,7 @@
     </details>
 
     <div class="attrib">
-      CelesTrak · OpenSky · adsbdb · AIS: aisstream / Digitraffic
+      CelesTrak · OpenSky · adsbdb · Open-Meteo · AIS: aisstream / Digitraffic
       (<a href="#" id="ais-key-link" title="Set an aisstream.io API key for global live ship coverage">key</a>)<br />
       Wikipedia · © OpenStreetMap contributors
     </div>

@@ -5,6 +5,7 @@
 import { SatelliteLayer } from "./layers/satellites.js";
 import { FlightLayer } from "./layers/flights.js";
 import { ShippingLayer } from "./layers/shipping.js";
+import { WetBulbLayer, heatStressLabel } from "./layers/wetbulb.js";
 import { WikiPanel } from "./wiki-panel.js";
 import { getAisKey, setAisKey } from "./ais.js";
 
@@ -75,6 +76,7 @@ function boot() {
   const sats = new SatelliteLayer(viewer);
   const flights = new FlightLayer(viewer);
   const ships = new ShippingLayer(viewer);
+  const wetbulb = new WetBulbLayer(viewer); // lazy: fetches on first enable
   const wiki = new WikiPanel(viewer);
 
   ships.init();
@@ -103,8 +105,9 @@ function boot() {
     osmLayer.alpha = Cesium.Math.clamp((FADE_START - height) / (FADE_START - FADE_END), 0, 1);
 
     // keep the street map readable at night: drop sun lighting once the
-    // camera is in map territory
-    const wantLighting = osmLayer.alpha < 0.8;
+    // camera is in map territory (or while the wet-bulb overlay is shown,
+    // so the heat map isn't dimmed on the night side)
+    const wantLighting = osmLayer.alpha < 0.8 && !wetbulb.visible;
     if (scene.globe.enableLighting !== wantLighting) {
       scene.globe.enableLighting = wantLighting;
     }
@@ -141,18 +144,33 @@ function boot() {
       if (hovered?.kind === "flight") flights.showRouteFor(hovered.flight, false);
     }
 
+    let html = null;
     if (hovered) {
-      tooltip.innerHTML = tooltipHtml(hovered);
+      html = tooltipHtml(hovered);
+    } else if (wetbulb.visible) {
+      // nothing under the cursor: read the wet-bulb heat map instead
+      const cart = viewer.camera.pickEllipsoid(movement.endPosition, scene.globe.ellipsoid);
+      if (cart) {
+        const c = Cesium.Cartographic.fromCartesian(cart);
+        const v = wetbulb.valueAt(
+          Cesium.Math.toDegrees(c.latitude),
+          Cesium.Math.toDegrees(c.longitude)
+        );
+        if (v) html = tooltipHtml({ kind: "wetbulb", sample: v });
+      }
+    }
+
+    if (html) {
+      tooltip.innerHTML = html;
       tooltip.hidden = false;
       const x = movement.endPosition.x;
       const y = movement.endPosition.y;
       tooltip.style.left = `${Math.min(x + 16, window.innerWidth - 280)}px`;
       tooltip.style.top = `${Math.min(y + 14, window.innerHeight - 110)}px`;
-      viewer.canvas.style.cursor = "pointer";
     } else {
       tooltip.hidden = true;
-      viewer.canvas.style.cursor = "default";
     }
+    viewer.canvas.style.cursor = hovered ? "pointer" : "default";
   }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
   handler.setInputAction((click) => {
@@ -191,6 +209,10 @@ function boot() {
   bind("chk-flight-routes", (v) => flights.setRoutesVisible(v));
   bind("chk-ships", (v) => ships.setVisible(v));
   bind("chk-vessel-routes", (v) => ships.setRoutesVisible(v));
+  bind("chk-wetbulb", (v) => {
+    wetbulb.setVisible(v);
+    document.getElementById("wb-legend").hidden = !v;
+  });
   bind("chk-rotate", (v) => { rotateEnabled = v; });
 
   // optional aisstream.io key for global live ship coverage
@@ -211,11 +233,13 @@ function boot() {
     sats: document.getElementById("badge-sats"),
     flights: document.getElementById("badge-flights"),
     ships: document.getElementById("badge-ships"),
+    wetbulb: document.getElementById("badge-wetbulb"),
   };
   const countEls = {
     sats: document.getElementById("count-sats"),
     flights: document.getElementById("count-flights"),
     ships: document.getElementById("count-ships"),
+    wetbulb: document.getElementById("count-wetbulb"),
   };
 
   function setBadge(el, source) {
@@ -243,13 +267,18 @@ function boot() {
     setBadge(badgeEls.ships, shc.source);
     countEls.ships.textContent = shc.count;
     countEls.ships.title = shc.detail;
+
+    const wc = wetbulb.counts();
+    setBadge(badgeEls.wetbulb, wc.source);
+    countEls.wetbulb.textContent = wc.count;
+    countEls.wetbulb.title = wc.detail;
   }, 1000);
 
   // fade the onboarding hint after a while
   setTimeout(() => document.getElementById("hint").classList.add("faded"), 15000);
 
   // handy for debugging from the console
-  window.__globe = { viewer, sats, flights, ships, wiki };
+  window.__globe = { viewer, sats, flights, ships, wetbulb, wiki };
 }
 
 function tooltipHtml(id) {
@@ -278,6 +307,12 @@ function tooltipHtml(id) {
       <div class="tt-line">${esc(v.typeName || "Vessel")}${v.flag ? " · " + esc(v.flag) : ""}</div>
       <div class="tt-line">${speed} · heading ${hdg}${v.destination ? " · → " + esc(v.destination) : ""}</div>
       <div class="tt-note">${v.live ? "live AIS" : "simulated vessel"}</div>`;
+  }
+  if (id.kind === "wetbulb") {
+    const s = id.sample;
+    return `<div class="tt-title">Wet-bulb ${s.tw.toFixed(1)} °C</div>
+      <div class="tt-line">Air ${s.t.toFixed(1)} °C · humidity ${Math.round(s.rh)}%</div>
+      <div class="tt-note">${esc(heatStressLabel(s.tw))} · interpolated · Open-Meteo</div>`;
   }
   if (id.kind === "lane") {
     return `<div class="tt-title">${esc(id.lane.name)}</div>

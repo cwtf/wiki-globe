@@ -28,6 +28,7 @@ won't work — the texture and module fetches need an HTTP origin.)
 |---|---|---|
 | Satellites | [CelesTrak](https://celestrak.org) TLEs ("visual" group), propagated client-side with SGP4 via satellite.js | Synthetic orbits (LEO constellation, sun-sync, MEO nav, GEO) |
 | Flights | [OpenSky Network](https://opensky-network.org) anonymous state vectors, refreshed every 2 min and dead-reckoned in between; routes per callsign via [adsbdb](https://www.adsbdb.com) | ~200 great-circle flights between major world airports |
+| Wet-bulb temp | [Open-Meteo](https://open-meteo.com) current 2 m temperature + relative humidity on a 15° global grid, combined with Stull's (2011) wet-bulb approximation. Off by default; toggling it on fetches live data and drapes a bilinearly interpolated heat-map overlay over the globe, from cool blue to magenta (35 °C — the theoretical human survivability limit). Hover anywhere for the local reading and a heat-stress rating. | — (layer hides if the API is unreachable) |
 | Shipping | Live AIS: [aisstream.io](https://aisstream.io) WebSocket (global; paste a free API key via the "key" link or `?aiskey=`) or [Digitraffic Finland](https://www.digitraffic.fi/en/marine-traffic/) open REST data (no key, Baltic coverage), dead-reckoned between reports. Hover shows name, type, flag state, speed, heading. "Destination routes" resolves each vessel's reported AIS destination against a built-in port gazetteer and draws the path. | Simulated vessels along 17 curated corridors (which stay visible as a dim reference layer in live mode) |
 
 The globe is lit by the real sun: the day texture shows on the daylit side, the
@@ -73,6 +74,7 @@ js/app.js               viewer setup, zoom crossfade, picking, tooltips, UI wiri
 js/layers/satellites.js TLE fetch + SGP4 propagation + orbit paths
 js/layers/flights.js    OpenSky states, dead reckoning, route arcs, adsbdb lookup
 js/layers/shipping.js   lane rendering, flow pulses, simulated vessels
+js/layers/wetbulb.js    Open-Meteo grid fetch, Stull wet-bulb calc, heat-map overlay
 js/shipping-lanes.js    hand-plotted corridor waypoints
 js/demo-data.js         demo flights/satellites generators, airports
 js/wiki-panel.js        geosearch + Nominatim context articles, radius slider
