@@ -112,8 +112,8 @@ html, body {
   box-shadow: 0 0 6px #fb923c;
 }
 
-.wb-legend { margin: 4px 0 2px 24px; }
-.wb-legend[hidden] { display: none; }
+.wb-controls { margin: 4px 0 2px 24px; }
+.wb-controls[hidden] { display: none; }
 .wb-bar {
   height: 6px;
   border-radius: 3px;
@@ -126,6 +126,35 @@ html, body {
   font-size: 8.5px;
   color: var(--text-dim);
   margin-top: 2px;
+}
+.wb-when {
+  margin-top: 6px;
+  font-size: 10.5px;
+  color: var(--text-dim);
+}
+.wb-when span { color: var(--cyan); font-weight: 650; }
+.wb-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 10px;
+  color: var(--text-dim);
+}
+.wb-row input[type="range"] {
+  flex: 1;
+  min-width: 0;
+  height: 12px;
+  margin: 0;
+  accent-color: #4aa3ff;
+}
+.wb-name { flex: 0 0 34px; }
+.wb-val {
+  flex: 0 0 58px;
+  text-align: right;
+  font-family: Consolas, "Cascadia Mono", monospace;
+  font-size: 9.5px;
+  color: var(--text);
 }
 
 .badge {

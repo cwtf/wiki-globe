@@ -5,7 +5,7 @@
 import { SatelliteLayer } from "./layers/satellites.js";
 import { FlightLayer } from "./layers/flights.js";
 import { ShippingLayer } from "./layers/shipping.js";
-import { WetBulbLayer, heatStressLabel } from "./layers/wetbulb.js";
+import { WetBulbLayer, heatStressLabel, RES_STEPS } from "./layers/wetbulb.js";
 import { WikiPanel } from "./wiki-panel.js";
 import { getAisKey, setAisKey } from "./ais.js";
 
@@ -211,8 +211,61 @@ function boot() {
   bind("chk-vessel-routes", (v) => ships.setRoutesVisible(v));
   bind("chk-wetbulb", (v) => {
     wetbulb.setVisible(v);
-    document.getElementById("wb-legend").hidden = !v;
+    document.getElementById("wb-controls").hidden = !v;
   });
+
+  // wet-bulb resolution & timeline sliders
+  const wbRes = document.getElementById("wb-res");
+  const wbResLabel = document.getElementById("wb-res-label");
+  wbRes.addEventListener("input", () => {
+    const step = RES_STEPS[Number(wbRes.value)];
+    wbResLabel.textContent = `${step}°`;
+    wetbulb.setResolution(step);
+  });
+
+  // Day + hour sliders address wetbulb.times, which is hourly UTC data
+  // starting at midnight of the oldest fetched day: index = day * 24 + hour.
+  const wbDay = document.getElementById("wb-day");
+  const wbHour = document.getElementById("wb-hour");
+  const wbDayLabel = document.getElementById("wb-day-label");
+  const wbHourLabel = document.getElementById("wb-hour-label");
+  const wbWhenVal = document.getElementById("wb-when-val");
+  const WB_WHEN_FMT = new Intl.DateTimeFormat("en", {
+    weekday: "short", month: "short", day: "numeric", timeZone: "UTC",
+  });
+  const WB_DAY_FMT = new Intl.DateTimeFormat("en", {
+    month: "short", day: "numeric", timeZone: "UTC",
+  });
+
+  function wbSyncTimeUI() {
+    const n = wetbulb.times.length;
+    if (n === 0) return;
+    const idx = wetbulb.timeIdx;
+    const lastDay = Math.floor((n - 1) / 24);
+    const day = Math.floor(idx / 24);
+    wbDay.max = lastDay;
+    wbDay.value = day;
+    wbHour.max = day === lastDay ? (n - 1) - lastDay * 24 : 23; // today ends at the current hour
+    wbHour.value = idx % 24;
+    const d = new Date(wetbulb.times[idx]);
+    const hh = `${String(d.getUTCHours()).padStart(2, "0")}:00`;
+    wbDayLabel.textContent = day === lastDay ? "today" : WB_DAY_FMT.format(d);
+    wbHourLabel.textContent = hh;
+    wbWhenVal.textContent =
+      `${WB_WHEN_FMT.format(d)} · ${hh} UTC${idx === n - 1 ? " (now)" : ""}`;
+  }
+
+  function wbApplyTimeUI() {
+    const n = wetbulb.times.length;
+    if (n === 0) return;
+    const idx = Math.min(Number(wbDay.value) * 24 + Number(wbHour.value), n - 1);
+    wetbulb.setTimeIndex(idx);
+    wbSyncTimeUI();
+  }
+
+  wbDay.addEventListener("input", wbApplyTimeUI);
+  wbHour.addEventListener("input", wbApplyTimeUI);
+  wetbulb.onDataChanged = wbSyncTimeUI;
   bind("chk-rotate", (v) => { rotateEnabled = v; });
 
   // optional aisstream.io key for global live ship coverage
@@ -248,6 +301,8 @@ function boot() {
       demo: ["DEMO", "demo"],
       static: ["ROUTES", "static"],
       loading: ["…", "loading"],
+      limited: ["LIMIT", "demo"],   // API quota hit, backing off
+      cache: ["CACHED", "static"],  // serving the last good dataset
     };
     const [label, cls] = map[source] ?? map.loading;
     el.textContent = label;
@@ -312,7 +367,7 @@ function tooltipHtml(id) {
     const s = id.sample;
     return `<div class="tt-title">Wet-bulb ${s.tw.toFixed(1)} °C</div>
       <div class="tt-line">Air ${s.t.toFixed(1)} °C · humidity ${Math.round(s.rh)}%</div>
-      <div class="tt-note">${esc(heatStressLabel(s.tw))} · interpolated · Open-Meteo</div>`;
+      <div class="tt-note">${esc(heatStressLabel(s.tw))} · ${esc(s.when ?? "now")} · Open-Meteo</div>`;
   }
   if (id.kind === "lane") {
     return `<div class="tt-title">${esc(id.lane.name)}</div>

@@ -146,9 +146,25 @@
         <span class="badge loading" id="badge-wetbulb">…</span>
         <span class="count" id="count-wetbulb">0</span>
       </label>
-      <div class="wb-legend" id="wb-legend" hidden>
+      <div class="wb-controls" id="wb-controls" hidden>
         <div class="wb-bar"></div>
         <div class="wb-ticks"><span>0°</span><span>15°</span><span>24°</span><span>28°</span><span>31°</span><span>35°C</span></div>
+        <div class="wb-row" title="Sample grid resolution — finer grids fetch more data">
+          <span class="wb-name">Detail</span>
+          <input type="range" id="wb-res" min="0" max="3" value="2" />
+          <span class="wb-val" id="wb-res-label">10°</span>
+        </div>
+        <div class="wb-when">Viewing <span id="wb-when-val">now</span></div>
+        <div class="wb-row" title="Day (UTC) — back through the past 3 days">
+          <span class="wb-name">Day</span>
+          <input type="range" id="wb-day" min="0" max="0" value="0" />
+          <span class="wb-val" id="wb-day-label">today</span>
+        </div>
+        <div class="wb-row" title="Hour of day (UTC)">
+          <span class="wb-name">Hour</span>
+          <input type="range" id="wb-hour" min="0" max="23" value="0" />
+          <span class="wb-val" id="wb-hour-label">—</span>
+        </div>
       </div>
     </div>
 
