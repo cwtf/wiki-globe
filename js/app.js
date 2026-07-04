@@ -439,7 +439,9 @@ function tooltipHtml(id) {
     }
     if (s.kind === "skyscraper") {
       const place = [s.city, s.country].filter(Boolean).join(" - ") || "Skyscraper city cell";
-      const rank = s.rank ? `Top city rank: #${s.rank}` : "City-count source";
+      const rank = s.rank
+        ? `Top city rank: #${s.rank}`
+        : "Supplemental Wikidata Q11303 city minimum";
       return `<div class="tt-title">${esc(place)}</div>
         <div class="tt-line">${s.count.toLocaleString("en-US")} skyscraper${s.count === 1 ? "" : "s"} - ${esc(m.fmt(s.value))}</div>
         <div class="tt-note">${esc(rank)} - >=${s.minHeightM} m - ${esc(s.source)}</div>`;

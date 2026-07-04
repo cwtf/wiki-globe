@@ -10,7 +10,8 @@
 // density, fertility) colour generated admin-1 polygons where data exists
 // and fall back to the country-level statistic elsewhere. The conflict
 // metric aggregates generated UCDP event points into half-degree cells, while
-// skyscraper density aggregates city counts from Wikidata Q1575895 into half-degree cells.
+// skyscraper density aggregates city counts from Wikidata Q1575895, supplemented
+// by grouped Q11303 records for unlisted cities, into half-degree cells.
 // Either way the overlay renders to an equirectangular canvas draped over
 // the globe as a single-tile imagery layer, and valueAt() serves the
 // cursor tooltip.
@@ -794,10 +795,11 @@ export class HeatmapLayer {
       let totalBuildings = 0;
       let densest = null;
       for (const row of data.cells) {
-        const [x, y, count, density, cityIdx, countryIdx, rank] = row;
+        const [x, y, count, density, cityIdx, countryIdx, rank, sourceFlag] = row;
         if (![x, y, count, density].every(Number.isFinite)) continue;
         const cell = {
           x, y, count, density, rank: rank ?? null,
+          sourceKind: sourceFlag === 1 ? "q11303" : "q1575895",
           city: data.cities?.[cityIdx] ?? null,
           country: data.countries?.[countryIdx] ?? null,
         };
@@ -807,7 +809,7 @@ export class HeatmapLayer {
       }
       this.skyscrapers = { cells, cellDeg, cols, totalBuildings, densest };
       this.skyscrapersMeta = {
-        sourceLabel: data.meta?.sourceLabel ?? "Q1575895 city skyscraper counts",
+        sourceLabel: data.meta?.sourceLabel ?? "Q1575895 + Q11303 skyscraper city counts",
         generatedAt: data.meta?.generatedAt,
         minHeightM: data.minHeightM ?? 150,
       };
@@ -865,8 +867,9 @@ export class HeatmapLayer {
         city: cell.city,
         country: cell.country,
         rank: cell.rank,
+        sourceKind: cell.sourceKind,
         minHeightM: this.skyscrapersMeta?.minHeightM ?? 150,
-        source: this.skyscrapersMeta?.sourceLabel ?? "Q1575895 city skyscraper counts",
+        source: this.skyscrapersMeta?.sourceLabel ?? "Q1575895 + Q11303 skyscraper city counts",
       };
     }
     if (m.kind === "country" || m.kind === "region") {

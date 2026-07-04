@@ -7,6 +7,7 @@ const OUT_FILE = path.join(ROOT, "data/skyscraper-density.latest.json");
 
 const SOURCE_ITEM = "Q1575895"; // List of cities with the most skyscrapers
 const WIKIDATA_ENTITY_URL = `https://www.wikidata.org/wiki/Special:EntityData/${SOURCE_ITEM}.json`;
+const WIKIDATA_SPARQL = "https://query.wikidata.org/sparql";
 const ENWIKI_API = "https://en.wikipedia.org/w/api.php";
 const MIN_HEIGHT_M = 150;
 const CELL_DEG = 0.5;
@@ -35,15 +36,22 @@ async function main() {
       count: row.count,
       lat: round(coord.lat, 5),
       lon: round(coord.lon, 5),
+      qid: coord.qid ?? null,
+      source: "q1575895",
     });
   }
 
+  const sourceKeys = cityKeySet(cities);
+  const sourceQids = cities.map((c) => c.qid).filter(Boolean);
+  const supplements = await fetchSupplementalCities(sourceKeys, sourceQids, warnings);
+  cities.push(...supplements);
+
   const aggregate = aggregateCells(cities);
   const out = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     meta: {
       generatedAt: new Date().toISOString(),
-      sourceLabel: "Wikipedia Q1575895 city skyscraper counts",
+      sourceLabel: "Q1575895 city counts + Wikidata Q11303 supplements",
       sources: [
         {
           name: "Wikidata item Q1575895",
@@ -56,9 +64,16 @@ async function main() {
           license: "CC BY-SA",
           revisionId: parsed.revid ?? null,
         },
+        {
+          name: "Wikidata Query Service Q11303 supplemental city records",
+          url: WIKIDATA_SPARQL,
+          license: "CC0",
+        },
       ],
       counts: {
         cities: cities.length,
+        q1575895Cities: cities.filter((c) => c.source === "q1575895").length,
+        supplementalCities: supplements.length,
         skyscrapers: cities.reduce((sum, c) => sum + c.count, 0),
         cells: aggregate.cells.length,
         tableRows: rows.length,
@@ -67,8 +82,10 @@ async function main() {
       notes: [
         `Counts come from the English Wikipedia page linked from Wikidata ${SOURCE_ITEM}.`,
         `That list defines skyscrapers as completed high-rise buildings taller than ${MIN_HEIGHT_M} m.`,
+        "Cities absent from that list are supplemented by grouping individual Wikidata Q11303 skyscraper records by city.",
+        "Supplemental counts are lower-confidence minimums because Wikidata individual-building coverage is uneven.",
         `Density is city skyscraper count per ${CELL_DEG} degree cell, normalized to skyscrapers per 10,000 km2 using spherical cell area.`,
-        "Counts are city-level totals from the list source, not individual building records; each city's total is placed at that city's article coordinate.",
+        "Each city's total is placed at that city's article or Wikidata coordinate.",
       ],
     },
     sourceItem: SOURCE_ITEM,
@@ -81,7 +98,11 @@ async function main() {
 
   await mkdir(path.dirname(OUT_FILE), { recursive: true });
   await writeFile(OUT_FILE, `${JSON.stringify(out)}\n`, "utf8");
-  console.log(`Wrote ${out.meta.counts.skyscrapers} skyscrapers from ${cities.length} cities across ${aggregate.cells.length} cells`);
+  console.log(
+    `Wrote ${out.meta.counts.skyscrapers} skyscrapers from ${cities.length} cities ` +
+    `(${out.meta.counts.q1575895Cities} Q1575895 + ${out.meta.counts.supplementalCities} supplemental) ` +
+    `across ${aggregate.cells.length} cells`
+  );
 }
 
 async function fetchSourcePage() {
@@ -148,7 +169,7 @@ async function fetchCoordinates(titles, warnings) {
     const chunk = titles.slice(i, i + 50);
     const data = await fetchWiki({
       action: "query",
-      prop: "coordinates",
+      prop: "coordinates|pageprops",
       redirects: "1",
       titles: chunk.join("|"),
       colimit: "max",
@@ -163,7 +184,11 @@ async function fetchCoordinates(titles, warnings) {
         warnings.push(`No coordinates on page: ${page.title}`);
         continue;
       }
-      coords.set(page.title, { lat: Number(c.lat), lon: Number(c.lon) });
+      coords.set(page.title, {
+        lat: Number(c.lat),
+        lon: Number(c.lon),
+        qid: page.pageprops?.wikibase_item ?? null,
+      });
     }
     for (const norm of data?.query?.normalized ?? []) {
       if (coords.has(norm.to) && !coords.has(norm.from)) coords.set(norm.from, coords.get(norm.to));
@@ -173,6 +198,94 @@ async function fetchCoordinates(titles, warnings) {
     }
   }
   return coords;
+}
+
+async function fetchSupplementalCities(sourceKeys, sourceQids, warnings) {
+  const rows = await fetchSparql(supplementQuery());
+  const byCity = new Map();
+  for (const row of rows) {
+    const qid = entityId(row.city?.value);
+    const city = row.cityLabel?.value;
+    const height = Number(row.height?.value);
+    const cityCoord = parsePoint(row.cityCoord?.value);
+    const buildingCoord = parsePoint(row.buildingCoord?.value);
+    if (!qid || !city || !Number.isFinite(height) || !buildingCoord) continue;
+    const key = cityKey({ qid, city });
+    if (sourceKeys.has(key)) continue;
+    let item = byCity.get(qid);
+    if (!item) {
+      item = {
+        rank: null,
+        city,
+        title: city,
+        country: row.countryLabel?.value || "",
+        count: 0,
+        lat: cityCoord?.lat ?? 0,
+        lon: cityCoord?.lon ?? 0,
+        qid,
+        source: "q11303",
+        _latSum: 0,
+        _lonSum: 0,
+      };
+      byCity.set(qid, item);
+    }
+    item.count++;
+    item._latSum += buildingCoord.lat;
+    item._lonSum += buildingCoord.lon;
+    if (!item.country && row.countryLabel?.value) item.country = row.countryLabel.value;
+  }
+
+  let out = [];
+  for (const item of byCity.values()) {
+    if (item.count <= 0) continue;
+    if (!item.lat || !item.lon) {
+      item.lat = item._latSum / item.count;
+      item.lon = item._lonSum / item.count;
+    }
+    delete item._latSum;
+    delete item._lonSum;
+    item.lat = round(item.lat, 5);
+    item.lon = round(item.lon, 5);
+    out.push(item);
+  }
+  const covered = await fetchCoveredSupplementCityQids(out.map((city) => city.qid), sourceQids);
+  if (covered.size) {
+    out = out.filter((city) => !covered.has(city.qid));
+    warnings.push(`Excluded ${covered.size} supplemental cities already contained by Q1575895 cities.`);
+  }
+  out.sort((a, b) => b.count - a.count || a.city.localeCompare(b.city));
+  warnings.push(`Supplemented ${out.length} cities from grouped Wikidata Q11303 records not present in ${SOURCE_ITEM}.`);
+  return out;
+}
+
+function supplementQuery() {
+  return `
+SELECT DISTINCT ?building ?buildingLabel ?height ?buildingCoord ?city ?cityLabel ?cityCoord ?countryLabel WHERE {
+  ?building wdt:P31/wdt:P279* wd:Q11303;
+            wdt:P625 ?buildingCoord;
+            p:P2048/psn:P2048 ?heightNode.
+  ?heightNode wikibase:quantityAmount ?height.
+  FILTER(?height >= ${MIN_HEIGHT_M} && ?height <= 1000)
+  ?building wdt:P131* ?city.
+  ?city wdt:P31/wdt:P279* wd:Q515.
+  OPTIONAL { ?city wdt:P625 ?cityCoord. }
+  OPTIONAL { ?building wdt:P17 ?country. }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+}
+`;
+}
+
+async function fetchCoveredSupplementCityQids(supplementQids, sourceQids) {
+  if (!supplementQids.length || !sourceQids.length) return new Set();
+  const rows = await fetchSparql(`
+SELECT DISTINCT ?city WHERE {
+  VALUES ?city { ${supplementQids.map((qid) => `wd:${qid}`).join(" ")} }
+  VALUES ?listedCity { ${sourceQids.map((qid) => `wd:${qid}`).join(" ")} }
+  FILTER(?city != ?listedCity)
+  ?city wdt:P131* ?listedCity.
+}
+`);
+  return new Set(rows.map((row) => entityId(row.city?.value)).filter(Boolean));
 }
 
 function aggregateCells(cityRows) {
@@ -210,6 +323,7 @@ function aggregateCells(cityRows) {
         intern(cities, cityIdx, cell.top?.city || ""),
         intern(countries, countryIdx, topKey(cell.countries)),
         cell.top?.rank ?? null,
+        cell.top?.source === "q11303" ? 1 : 0,
       ];
     });
 
@@ -233,6 +347,28 @@ async function fetchWiki(params) {
   })}`);
 }
 
+async function fetchSparql(query) {
+  const body = new URLSearchParams({ query, format: "json" });
+  const resp = await fetch(WIKIDATA_SPARQL, {
+    method: "POST",
+    headers: {
+      "accept": "application/sparql-results+json",
+      "content-type": "application/x-www-form-urlencoded",
+      "user-agent": "Wiki Globe data updater/1.0 (https://cwtf.github.io/wiki-globe/)",
+    },
+    body,
+  });
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => "");
+    throw new Error(`Wikidata SPARQL failed ${resp.status}: ${text.slice(0, 240)}`);
+  }
+  const data = await resp.json();
+  if (!Array.isArray(data?.results?.bindings)) {
+    throw new Error("Wikidata SPARQL response missing results.bindings");
+  }
+  return data.results.bindings;
+}
+
 async function fetchJson(url) {
   const resp = await fetch(url, {
     headers: {
@@ -250,6 +386,36 @@ async function fetchJson(url) {
 function wikiTitleFromCell(html) {
   const href = /<a\b[^>]*href="\/wiki\/([^"#?:]+)"/i.exec(html)?.[1];
   return href ? decodeURIComponent(href).replaceAll("_", " ") : "";
+}
+
+function parsePoint(wkt) {
+  const m = /^Point\(([-\d.]+) ([-\d.]+)\)$/i.exec(wkt ?? "");
+  if (!m) return null;
+  const lon = Number(m[1]);
+  const lat = Number(m[2]);
+  if (!Number.isFinite(lon) || !Number.isFinite(lat)) return null;
+  return { lat, lon };
+}
+
+function entityId(url) {
+  return /\/entity\/([^/]+)$/.exec(url ?? "")?.[1] ?? null;
+}
+
+function cityKeySet(cities) {
+  return new Set(cities.map(cityKey));
+}
+
+function cityKey(city) {
+  return city.qid ? `qid:${city.qid}` : `name:${normalizeName(city.city)}`;
+}
+
+function normalizeName(value) {
+  return String(value ?? "")
+    .normalize("NFKD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 }
 
 function cleanText(html) {
