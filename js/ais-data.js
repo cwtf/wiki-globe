@@ -1,5 +1,8 @@
 // AIS reference data: MMSI MID -> flag state, ship type codes -> labels,
-// and a port gazetteer for resolving free-text AIS destinations.
+// and a port gazetteer for resolving free-text AIS destinations. Ports are
+// loaded from generated UN/LOCODE data, with the legacy list as a fallback.
+
+const PORTS_URL = "data/ports.latest.json";
 
 const MID_FLAGS = {
   201: "Albania", 202: "Andorra", 203: "Austria", 204: "Azores", 205: "Belgium",
@@ -235,7 +238,24 @@ const PORTS = [
   ["ISREY", "Reykjavík", 64.15, -21.93], ["GLGOH", "Nuuk", 64.17, -51.73],
 ];
 
-const PORT_BY_LOCODE = new Map(PORTS.map((p) => [p[0], p]));
+let portIndex = buildPortIndex(PORTS.map(legacyPort));
+let portDataLoaded = false;
+
+export async function loadPortData() {
+  if (portDataLoaded) return true;
+  try {
+    const resp = await fetch(PORTS_URL);
+    if (!resp.ok) throw new Error(`ports ${resp.status}`);
+    const data = await resp.json();
+    if (!Array.isArray(data?.ports)) throw new Error("ports payload missing ports array");
+    portIndex = buildPortIndex(data.ports);
+    portDataLoaded = true;
+    return true;
+  } catch (e) {
+    console.warn("[ais] generated port data unavailable, using bundled fallback:", e.message);
+    return false;
+  }
+}
 
 // AIS destination fields are free text: "NL RTM", "SGSIN", "ROTTERDAM",
 // "RU ULU > NL RTM"… Best-effort resolution against the gazetteer.
@@ -245,20 +265,70 @@ export function resolveDestination(dest) {
   if (!d || d === "UNKNOWN" || d.length < 3) return null;
   if (d.includes(">")) d = d.split(">").pop().trim(); // "FROM > TO" convention
 
-  const compact = d.replace(/[^A-Z]/g, "");
-  const byCode = PORT_BY_LOCODE.get(compact);
+  const compact = normalizeCompact(d);
+  const byCode = portIndex.byCode.get(compact);
   if (byCode) return portObj(byCode);
 
-  const dn = d.replace(/[^A-Z ]/g, " ").replace(/\s+/g, " ").trim();
+  const dn = normalizeWords(d);
   if (dn.length >= 4) {
-    for (const p of PORTS) {
-      const n = p[1].toUpperCase();
-      if (dn.includes(n) || (dn.length >= 5 && n.includes(dn))) return portObj(p);
+    for (const a of portIndex.aliases) {
+      if (dn.includes(a.words) || (dn.length >= 5 && a.words.includes(dn))) return portObj(a.port);
     }
   }
   return null;
 }
 
 function portObj(p) {
-  return { locode: p[0], name: p[1], lat: p[2], lon: p[3] };
+  return { locode: p.locode, name: p.name, lat: p.lat, lon: p.lon };
+}
+
+function legacyPort(p) {
+  return { locode: p[0], name: p[1], lat: p[2], lon: p[3], aliases: [p[0], p[1]] };
+}
+
+function buildPortIndex(ports) {
+  const byCode = new Map();
+  const aliases = [];
+  for (const raw of ports) {
+    const port = normalizePort(raw);
+    if (!port) continue;
+    byCode.set(port.locode, port);
+    const aliasSet = new Set([port.locode, port.name, port.nameWoDiacritics, ...(port.aliases ?? [])]);
+    for (const alias of aliasSet) {
+      const words = normalizeWords(alias);
+      if (words.length < 4) continue;
+      aliases.push({ words, port });
+    }
+  }
+  aliases.sort((a, b) => b.words.length - a.words.length);
+  return { byCode, aliases };
+}
+
+function normalizePort(p) {
+  const locode = normalizeCompact(p.locode);
+  const lat = Number(p.lat);
+  const lon = Number(p.lon);
+  if (!/^[A-Z]{2}[A-Z0-9]{3}$/.test(locode) || !Number.isFinite(lat) || !Number.isFinite(lon)) {
+    return null;
+  }
+  return {
+    locode,
+    name: String(p.name ?? locode).trim(),
+    nameWoDiacritics: p.nameWoDiacritics ? String(p.nameWoDiacritics).trim() : null,
+    lat,
+    lon,
+    aliases: Array.isArray(p.aliases) ? p.aliases : [],
+  };
+}
+
+function normalizeCompact(s) {
+  return stripDiacritics(s).toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+function normalizeWords(s) {
+  return stripDiacritics(s).toUpperCase().replace(/[^A-Z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function stripDiacritics(s) {
+  return String(s ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
