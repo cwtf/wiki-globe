@@ -113,7 +113,6 @@ html, body {
 }
 
 .heat-select {
-  display: block;
   width: calc(100% - 24px);
   margin: 2px 0 4px 24px;
   background: rgba(255, 255, 255, 0.07);
@@ -127,6 +126,69 @@ html, body {
   color-scheme: dark;
 }
 .heat-select:focus { outline: 1px solid #4aa3ff; }
+
+/* baseline popup theming (any browser): dark navy rows instead of UA gray.
+   Group headers are the optgroup's own text style; options reset what they
+   would otherwise inherit from it. */
+.heat-select option,
+.heat-select optgroup {
+  background: rgb(12, 17, 27);
+  color: var(--text);
+}
+.heat-select optgroup {
+  color: var(--text-dim);
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+.heat-select option {
+  font-size: 11.5px;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+/* fully themed popup where the customizable <select> is supported (Chromium) */
+@supports selector(::picker(select)) {
+  .heat-select,
+  .heat-select::picker(select) {
+    appearance: base-select;
+  }
+  .heat-select::picker(select) {
+    background: var(--bg-glass-2);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--stroke);
+    border-radius: 10px;
+    padding: 4px;
+    margin-top: 4px;
+    font-size: 11.5px;
+    color: var(--text);
+  }
+  .heat-select option {
+    background: none;
+    padding: 4px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .heat-select option:hover,
+  .heat-select option:focus-visible {
+    background: rgba(110, 243, 255, 0.12);
+  }
+  .heat-select option:checked {
+    background: rgba(110, 243, 255, 0.16);
+    color: var(--cyan);
+  }
+  .heat-select option::checkmark { color: var(--cyan); }
+  .heat-select optgroup {
+    padding: 4px 8px 2px;
+  }
+  .heat-select optgroup option {
+    margin: 0 -8px; /* headers indent, options stay flush with the picker */
+  }
+}
 
 .wb-controls { margin: 4px 0 2px 24px; }
 .wb-controls[hidden] { display: none; }
