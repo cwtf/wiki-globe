@@ -9,6 +9,8 @@ plain HTML/CSS/ES modules served statically.
 
 Live demo: [https://cwtf.github.io/wiki-globe/](https://cwtf.github.io/wiki-globe/)
 
+GitHub: [https://github.com/cwtf/](https://github.com/cwtf/)
+
 ## Run it
 
 Any static file server works. From this folder:
