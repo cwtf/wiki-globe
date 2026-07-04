@@ -214,7 +214,13 @@ async function boot() {
       const lon = Cesium.Math.toDegrees(c.longitude);
       // size-compare mode: clicking a country copies it instead of opening wiki
       if (truesize.enabled && truesize.tryAdd(lat, lon)) return;
-      wiki.open(lat, lon);
+      // conflict heat-map: clicking a zone leads the article list with
+      // conflict-related Wikipedia pages for that cell's parties
+      const conflictZone =
+        heat.visible && METRICS[heat.mode]?.kind === "conflict"
+          ? heat.conflictAt(lat, lon)
+          : null;
+      wiki.open(lat, lon, { conflict: conflictZone });
     }
   }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
@@ -429,7 +435,7 @@ function tooltipHtml(id) {
       const period = s.period ? `${s.period.start} → ${s.period.end}` : "trailing 12 months";
       return `<div class="tt-title">${esc(s.country ?? "Conflict zone")}</div>
         <div class="tt-line">${esc(m.fmt(s.value))} deaths · ${s.events} event${s.events === 1 ? "" : "s"} in this area</div>
-        <div class="tt-note">${esc(s.dyad ?? "")} · ${esc(period)} · ${esc(s.source)}</div>`;
+        <div class="tt-note">${esc(s.dyad ?? "")} · ${esc(period)} · ${esc(s.source)} · click for related articles</div>`;
     }
     if (s.kind === "country") {
       const source = [s.stat?.source, s.stat?.year].filter(Boolean).join(" ");

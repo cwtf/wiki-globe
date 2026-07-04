@@ -87,7 +87,10 @@ export class WikiPanel {
     return MIN_KM * Math.pow(MAX_KM / MIN_KM, t);
   }
 
-  open(lat, lon) {
+  // opts.conflict: aggregated UCDP cell from HeatmapLayer.conflictAt() — when
+  // set, the result list opens with articles about that zone's conflicts.
+  open(lat, lon, opts = {}) {
+    this.conflict = opts.conflict ?? null;
     this.center = { lat, lon };
     this.coordsEl.textContent =
       `${Math.abs(lat).toFixed(4)}° ${lat >= 0 ? "N" : "S"},  ` +
@@ -107,6 +110,7 @@ export class WikiPanel {
     this._clearMarkers();
     this.items = [];
     this.selected = null;
+    this.conflict = null;
   }
 
   // --- globe overlays --------------------------------------------------------
@@ -240,22 +244,19 @@ export class WikiPanel {
       `<div class="wp-status"><div class="spinner"></div>Searching within ${formatKm(radiusKm)}…</div>`;
 
     try {
-      const tasks = [geosearch(lat, lon, Math.min(radiusKm * 1000, GEOSEARCH_MAX_M))];
-      if (radiusKm > 10) tasks.push(contextArticles(lat, lon, radiusKm));
-      const [nearby, context] = await Promise.all(tasks);
+      const [nearby, context, conflictRelated] = await Promise.all([
+        geosearch(lat, lon, Math.min(radiusKm * 1000, GEOSEARCH_MAX_M)),
+        radiusKm > 10 ? contextArticles(lat, lon, radiusKm) : Promise.resolve([]),
+        this.conflict ? conflictArticles(this.conflict) : Promise.resolve([]),
+      ]);
       if (seq !== this.searchSeq) return; // superseded by a newer search
 
       const seen = new Set();
       const items = [];
-      for (const c of context ?? []) {
+      for (const c of [...conflictRelated, ...context, ...nearby]) {
         if (seen.has(c.title)) continue;
         seen.add(c.title);
         items.push(c);
-      }
-      for (const a of nearby) {
-        if (seen.has(a.title)) continue;
-        seen.add(a.title);
-        items.push(a);
       }
 
       this.items = items.slice(0, 25);
@@ -273,12 +274,18 @@ export class WikiPanel {
   }
 
   _renderList(radiusKm) {
+    const zoneNote = this.conflict
+      ? `<div class="wp-status">Active conflict zone — ` +
+        `${escapeHtml(this.conflict.deaths.toLocaleString("en-US"))} deaths · ` +
+        `${escapeHtml(String(this.conflict.events))} events` +
+        `${this.conflict.period ? ` (${escapeHtml(this.conflict.period.start)} → ${escapeHtml(this.conflict.period.end)})` : ""}</div>`
+      : "";
     if (this.items.length === 0) {
-      this.resultsEl.innerHTML =
+      this.resultsEl.innerHTML = zoneNote +
         `<div class="wp-status">No articles found within ${formatKm(radiusKm)}.<br/>Try widening the radius.</div>`;
       return;
     }
-    this.resultsEl.innerHTML = this.items.map((it) => `
+    this.resultsEl.innerHTML = zoneNote + this.items.map((it) => `
       <div class="wp-item" data-idx="${it._index}">
         <div class="wp-item-title">
           <span class="wp-item-name">${escapeHtml(it.title)}</span>
@@ -328,6 +335,75 @@ async function geosearch(lat, lon, radiusM) {
     extract: pages[h.pageid]?.extract ?? "",
     url: pages[h.pageid]?.fullurl ?? `https://en.wikipedia.org/?curid=${h.pageid}`,
   }));
+}
+
+// --- Conflict-zone related articles ------------------------------------------
+
+// Wikipedia full-text search seeded from the zone's dominant dyads (the
+// conflict parties recorded by UCDP for the clicked cell), e.g.
+// "Government of Russia (Soviet Union) - Government of Ukraine" →
+// "Russia Ukraine conflict". Results carry no coordinates, so they list
+// without map markers, badged "Conflict".
+async function conflictArticles(zone) {
+  const queries = (zone.topDyads ?? []).map(dyadQuery).filter(Boolean);
+  if (queries.length === 0 && zone.country) queries.push(zone.country);
+
+  const seen = new Set();
+  const pageids = [];
+  for (const q of queries.slice(0, 3)) {
+    try {
+      const url = new URL("https://en.wikipedia.org/w/api.php");
+      url.search = new URLSearchParams({
+        action: "query", list: "search",
+        srsearch: `${q} conflict`, srlimit: "3",
+        format: "json", origin: "*",
+      });
+      const res = await fetch(url);
+      if (!res.ok) continue;
+      for (const hit of (await res.json())?.query?.search ?? []) {
+        if (!seen.has(hit.pageid)) {
+          seen.add(hit.pageid);
+          pageids.push(hit.pageid);
+        }
+      }
+    } catch { /* a failed query just drops its suggestions */ }
+  }
+  if (pageids.length === 0) return [];
+
+  const ex = new URL("https://en.wikipedia.org/w/api.php");
+  ex.search = new URLSearchParams({
+    action: "query",
+    pageids: pageids.slice(0, 6).join("|"),
+    prop: "extracts|info",
+    exintro: "1", explaintext: "1", exchars: "260", exlimit: "6",
+    inprop: "url", format: "json", origin: "*",
+  });
+  const exRes = await fetch(ex);
+  if (!exRes.ok) return [];
+  const pages = (await exRes.json())?.query?.pages ?? {};
+
+  return pageids.slice(0, 6)
+    .map((id) => pages[id])
+    .filter(Boolean)
+    .map((p) => ({
+      title: p.title,
+      badge: "Conflict",
+      extract: p.extract ?? "",
+      url: p.fullurl ?? `https://en.wikipedia.org/?curid=${p.pageid}`,
+      distKm: null,
+      lat: null,
+      lon: null,
+    }));
+}
+
+// "Government of Sudan (X) - SFA" → "Sudan SFA" for use as a search seed.
+function dyadQuery(dyad) {
+  return String(dyad ?? "")
+    .replace(/Government of /gi, "")
+    .replace(/\([^)]*\)/g, "")
+    .replace(/\s*-\s*/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 // --- Regional / national context via Nominatim + Wikipedia summaries --------

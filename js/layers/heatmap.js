@@ -660,17 +660,27 @@ export class HeatmapLayer {
         const key = cy * cols + cx;
         let cell = cells.get(key);
         if (!cell) {
-          cell = { deaths: 0, events: 0, worst: -1, country: null, dyad: null };
+          cell = { deaths: 0, events: 0, worst: -1, country: null, dyad: null, dyads: new Map() };
           cells.set(key, cell);
         }
         cell.deaths += best;
         cell.events++;
+        const dyad = data.dyads[di];
+        // rank dyads by deaths, breaking ties by event count
+        cell.dyads.set(dyad, (cell.dyads.get(dyad) ?? 0) + best + 0.001);
         if (best > cell.worst) {
           cell.worst = best;
           cell.country = data.countries[ci];
-          cell.dyad = data.dyads[di];
+          cell.dyad = dyad;
         }
         deaths += best;
+      }
+      for (const cell of cells.values()) {
+        cell.topDyads = [...cell.dyads.entries()]
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 3)
+          .map(([dyad]) => dyad);
+        delete cell.dyads;
       }
       this.conflict = { cells, totalEvents: data.events.length, totalDeaths: deaths };
       this.conflictMeta = {
@@ -694,6 +704,37 @@ export class HeatmapLayer {
     const cx = Math.floor((lon + 180) / CONFLICT_CELL_DEG);
     const cy = Math.floor((90 - lat) / CONFLICT_CELL_DEG);
     return this.conflict.cells.get(cy * cols + cx) ?? null;
+  }
+
+  // Click-through lookup for the wiki panel: the cell under the cursor, or —
+  // since the rendered squares have a visibility halo — the heaviest
+  // immediately neighbouring cell. Returns null away from any conflict zone.
+  conflictAt(lat, lon) {
+    if (!this.conflict) return null;
+    let cell = this._conflictCellAt(lat, lon);
+    if (!cell) {
+      const cols = 360 / CONFLICT_CELL_DEG;
+      const rows = 180 / CONFLICT_CELL_DEG;
+      const cx = Math.floor((lon + 180) / CONFLICT_CELL_DEG);
+      const cy = Math.floor((90 - lat) / CONFLICT_CELL_DEG);
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          const y = cy + dy;
+          if (y < 0 || y >= rows) continue;
+          const n = this.conflict.cells.get(y * cols + (((cx + dx) % cols) + cols) % cols);
+          if (n && (!cell || n.deaths > cell.deaths)) cell = n;
+        }
+      }
+    }
+    if (!cell) return null;
+    return {
+      deaths: cell.deaths,
+      events: cell.events,
+      country: cell.country,
+      topDyads: cell.topDyads,
+      period: this.conflictMeta?.period ?? null,
+      source: this.conflictMeta?.sourceLabel ?? "conflict events",
+    };
   }
 
   // --- shared: tooltip lookup, canvas, overlay ------------------------------------
