@@ -4,9 +4,10 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const FILE = path.join(ROOT, "data/heatmap-metrics.json");
-const FORMATTERS = new Set(["money", "degC", "percent", "fixed3"]);
+const FORMATTERS = new Set(["money", "degC", "percent", "fixed3", "density"]);
 const VALUE_KEYS = new Set(["tw", "t", "rh"]);
-const STAT_KEYS = new Set(["gdpNominal", "gdpPpp", "hdi", "ihdi", "gni"]);
+const STAT_KEYS = new Set(["gdpNominal", "gdpPpp", "hdi", "ihdi", "gni", "popDensity"]);
+const KINDS = new Set(["weather", "country", "region"]);
 
 const data = JSON.parse(await readFile(FILE, "utf8"));
 const errors = [];
@@ -16,13 +17,13 @@ if (!data.metrics || typeof data.metrics !== "object") errors.push("metrics obje
 
 for (const [key, metric] of Object.entries(data.metrics ?? {})) {
   if (!metric.label || typeof metric.label !== "string") errors.push(`${key}: label is required`);
-  if (metric.kind !== "weather" && metric.kind !== "country") errors.push(`${key}: invalid kind`);
+  if (!KINDS.has(metric.kind)) errors.push(`${key}: invalid kind`);
   if (!FORMATTERS.has(metric.formatter)) errors.push(`${key}: unknown formatter ${metric.formatter}`);
 
   if (metric.kind === "weather" && !VALUE_KEYS.has(metric.valueKey)) {
     errors.push(`${key}: unknown valueKey ${metric.valueKey}`);
   }
-  if (metric.kind === "country" && !STAT_KEYS.has(metric.statKey)) {
+  if ((metric.kind === "country" || metric.kind === "region") && !STAT_KEYS.has(metric.statKey)) {
     errors.push(`${key}: unknown statKey ${metric.statKey}`);
   }
 

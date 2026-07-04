@@ -179,7 +179,10 @@ async function boot() {
     } else {
       tooltip.hidden = true;
     }
-    viewer.canvas.style.cursor = hovered ? "pointer" : "default";
+    viewer.canvas.style.cursor =
+      hovered?.kind === "truesize"
+        ? (hovered.ts.dragging ? "grabbing" : "grab")
+        : hovered ? "pointer" : "default";
   }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
   handler.setInputAction((click) => {
@@ -412,6 +415,15 @@ function tooltipHtml(id) {
   if (id.kind === "heat") {
     const s = id.sample;
     const m = METRICS[s.metric];
+    if (s.kind === "region") {
+      const pop = s.population != null
+        ? `${s.population.toLocaleString("en-US")} people${s.popYear ? ` (${s.popYear})` : ""}`
+        : null;
+      const area = s.areaKm2 != null ? `${Math.round(s.areaKm2).toLocaleString("en-US")} km²` : null;
+      return `<div class="tt-title">${esc(s.name)}${s.country ? ` · ${esc(s.country)}` : ""}</div>
+        <div class="tt-line">${esc(m.label)}: ${esc(m.fmt(s.value))}</div>
+        <div class="tt-note">${esc([pop, area, s.source].filter(Boolean).join(" · "))}</div>`;
+    }
     if (s.kind === "country") {
       const source = [s.stat?.source, s.stat?.year].filter(Boolean).join(" ");
       return `<div class="tt-title">${esc(s.name)}</div>
@@ -430,9 +442,14 @@ function tooltipHtml(id) {
   }
   if (id.kind === "truesize") {
     const c = id.ts;
+    const guide = c.dragging
+      ? `<span class="tt-key">scroll</span> rotate &nbsp;·&nbsp; release to drop`
+      : `<span class="tt-key">drag</span> move &nbsp;
+         <span class="tt-key">⇧ shift</span><span class="tt-plus">+</span><span class="tt-key">scroll</span> rotate &nbsp;
+         <span class="tt-key">right-click</span> remove`;
     return `<div class="tt-title">${esc(c.name)}</div>
       <div class="tt-line">${esc(c.areaLabel)} · true-size outline</div>
-      <div class="tt-note">Drag to move · Shift+scroll to rotate · right-click removes</div>`;
+      <div class="tt-guide">${guide}</div>`;
   }
   if (id.kind === "lane") {
     return `<div class="tt-title">${esc(id.lane.name)}</div>

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "meta": {
-    "generatedAt": "2026-07-04T00:05:58.550Z",
+    "generatedAt": "2026-07-04T05:26:13.809Z",
     "sourceLabel": "World Bank Indicators API + UNDP Human Development Reports",
     "sources": [
       {
@@ -23,6 +23,13 @@
         "url": "https://api.worldbank.org/v2/country/all/indicator/NY.GNP.PCAP.PP.CD?format=json",
         "indicators": [
           "NY.GNP.PCAP.PP.CD"
+        ]
+      },
+      {
+        "name": "World Bank Indicators API",
+        "url": "https://api.worldbank.org/v2/country/all/indicator/EN.POP.DNST?format=json",
+        "indicators": [
+          "EN.POP.DNST"
         ]
       },
       {
@@ -64,6 +71,11 @@
       "unit": "current international dollars per person",
       "defaultSource": "World Bank",
       "indicator": "NY.GNP.PCAP.PP.CD"
+    },
+    "popDensity": {
+      "unit": "people per square kilometre of land area",
+      "defaultSource": "World Bank",
+      "indicator": "EN.POP.DNST"
     }
   },
   "countries": {
@@ -97,6 +109,13 @@
         "value": 1971.549,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 63.559,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "ALB": {
@@ -129,6 +148,13 @@
         "value": 17627.394,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 88.017,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "DZA": {
@@ -161,6 +187,13 @@
         "value": 15114.172,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 19.383,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "AGO": {
@@ -193,6 +226,13 @@
         "value": 6631.277,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 29.478,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "ARG": {
@@ -225,6 +265,13 @@
         "value": 25876.053,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 16.64,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "ARM": {
@@ -257,6 +304,13 @@
         "value": 20220.723,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 105.119,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "AUS": {
@@ -289,6 +343,13 @@
         "value": 58276.876,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 3.466,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "AUT": {
@@ -321,6 +382,13 @@
         "value": 63479.208,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 110.661,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "AZE": {
@@ -353,6 +421,13 @@
         "value": 20667.957,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 122.855,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "BHS": {
@@ -385,6 +460,13 @@
         "value": 30974.681,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 39.904,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "BHR": {
@@ -417,6 +499,13 @@
         "value": 52818.795,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 1971.324,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "BGD": {
@@ -449,6 +538,13 @@
         "value": 8497.659,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 1319.18,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "BLR": {
@@ -481,6 +577,13 @@
         "value": 26724.871,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 45.217,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "BEL": {
@@ -513,6 +616,13 @@
         "value": 63582.475,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 386.304,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "BLZ": {
@@ -545,6 +655,13 @@
         "value": 12343.078,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 18.023,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "BEN": {
@@ -577,6 +694,13 @@
         "value": 3805.528,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 125.142,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "BTN": {
@@ -609,6 +733,13 @@
         "value": 13842.804,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 20.618,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "BOL": {
@@ -641,6 +772,13 @@
         "value": 9445.245,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 11.303,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "BIH": {
@@ -673,6 +811,13 @@
         "value": 19827.486,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 62.208,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "BWA": {
@@ -705,6 +850,13 @@
         "value": 16983.771,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 4.376,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "BRA": {
@@ -737,6 +889,13 @@
         "value": 18011.285,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 25.262,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "BRN": {
@@ -769,6 +928,13 @@
         "value": 75826.873,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 87.087,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "BGR": {
@@ -801,6 +967,13 @@
         "value": 32174.93,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 59.383,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "BFA": {
@@ -833,6 +1006,13 @@
         "value": 2390.528,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 84.159,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "BDI": {
@@ -865,6 +1045,13 @@
         "value": 858.916,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 533.078,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "KHM": {
@@ -897,6 +1084,13 @@
         "value": 4931.017,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 98.708,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "CMR": {
@@ -929,6 +1123,13 @@
         "value": 4746.266,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 60.021,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "CAN": {
@@ -961,6 +1162,13 @@
         "value": 54688.417,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 4.557,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "CPV": {
@@ -993,6 +1201,13 @@
         "value": 8165.379,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 129.611,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "CAF": {
@@ -1025,6 +1240,13 @@
         "value": 1099.861,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 8.271,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "TCD": {
@@ -1057,6 +1279,13 @@
         "value": 1748.001,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 15.342,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "CHL": {
@@ -1089,6 +1318,13 @@
         "value": 28047.17,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 26.465,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "CHN": {
@@ -1121,6 +1357,13 @@
         "value": 22029.223,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 150.264,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "COL": {
@@ -1153,6 +1396,13 @@
         "value": 18665.95,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 47.157,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "COM": {
@@ -1185,6 +1435,13 @@
         "value": 3481.121,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 456.952,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "COD": {
@@ -1217,6 +1474,13 @@
         "value": 1431.048,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 46.664,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "COG": {
@@ -1249,6 +1513,13 @@
         "value": 5902.599,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 18.105,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "CRI": {
@@ -1281,6 +1552,13 @@
         "value": 23417.213,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 99.991,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "CIV": {
@@ -1313,6 +1591,13 @@
         "value": 6735.416,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 98.005,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "HRV": {
@@ -1345,6 +1630,13 @@
         "value": 41379.89,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 68.972,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "CUB": {
@@ -1371,6 +1663,13 @@
         "value": 8415.412,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 106.165,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "CYP": {
@@ -1403,6 +1702,13 @@
         "value": 45394.156,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 145.56,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "CZE": {
@@ -1435,6 +1741,13 @@
         "value": 45889.014,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 140.786,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "DNK": {
@@ -1467,6 +1780,13 @@
         "value": 76007.857,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 148.674,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "DJI": {
@@ -1499,6 +1819,13 @@
         "value": 6367.606,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 49.739,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "DOM": {
@@ -1531,6 +1858,13 @@
         "value": 22023.511,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 235.098,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "ECU": {
@@ -1563,6 +1897,13 @@
         "value": 13986.397,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 72.395,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "EGY": {
@@ -1595,6 +1936,13 @@
         "value": 16218.135,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 115.059,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "SLV": {
@@ -1627,6 +1975,13 @@
         "value": 10594.842,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 304.519,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "GNQ": {
@@ -1659,6 +2014,13 @@
         "value": 12762.468,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 65.866,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "ERI": {
@@ -1691,6 +2053,13 @@
         "value": 2029.07,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 28.639,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "EST": {
@@ -1723,6 +2092,13 @@
         "value": 40880.93,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 32.068,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "SWZ": {
@@ -1755,6 +2131,13 @@
         "value": 9919.085,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 71.541,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "ETH": {
@@ -1787,6 +2170,13 @@
         "value": 2795.507,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 114.038,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "FJI": {
@@ -1819,6 +2209,13 @@
         "value": 12843.159,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 50.583,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "FIN": {
@@ -1851,6 +2248,13 @@
         "value": 57067.637,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 18.371,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "FRA": {
@@ -1883,6 +2287,13 @@
         "value": 55060.16,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 126.862,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "GAB": {
@@ -1915,6 +2326,13 @@
         "value": 18854.062,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 9.643,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "GMB": {
@@ -1947,6 +2365,13 @@
         "value": 2812.018,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 266.585,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "GEO": {
@@ -1979,6 +2404,13 @@
         "value": 20752.57,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 65.004,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "DEU": {
@@ -2011,6 +2443,13 @@
         "value": 64053.221,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 238.352,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "GHA": {
@@ -2043,6 +2482,13 @@
         "value": 6846.352,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 148.497,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "GRC": {
@@ -2075,6 +2521,13 @@
         "value": 35760.749,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 80.74,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "GRL": {
@@ -2101,6 +2554,13 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 0.139,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "GTM": {
@@ -2133,6 +2593,13 @@
         "value": 12458.604,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 169.138,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "GIN": {
@@ -2165,6 +2632,13 @@
         "value": 3494.348,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 58.626,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "GNB": {
@@ -2197,6 +2671,13 @@
         "value": 2403.059,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 76.577,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "GUY": {
@@ -2229,6 +2710,13 @@
         "value": 46959.252,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 3.914,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "HTI": {
@@ -2261,6 +2749,13 @@
         "value": 2934.926,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 422.257,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "HND": {
@@ -2293,6 +2788,13 @@
         "value": 6064.786,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 95.137,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "HUN": {
@@ -2325,6 +2827,13 @@
         "value": 37236.075,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 105.108,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "ISL": {
@@ -2357,6 +2866,13 @@
         "value": 69116.937,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 3.825,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "IND": {
@@ -2389,6 +2905,13 @@
         "value": 9046.756,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 483.679,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "IDN": {
@@ -2421,6 +2944,13 @@
         "value": 13700.13,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 148.577,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "IRN": {
@@ -2453,6 +2983,13 @@
         "value": 16095.772,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 55.845,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "IRQ": {
@@ -2485,6 +3022,13 @@
         "value": 12653.525,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 103.826,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "IRL": {
@@ -2517,6 +3061,13 @@
         "value": 90884.635,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 77.102,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "ISR": {
@@ -2549,6 +3100,13 @@
         "value": 48050.112,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 455.129,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "ITA": {
@@ -2581,6 +3139,13 @@
         "value": 52388.883,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 199.46,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "JAM": {
@@ -2613,6 +3178,13 @@
         "value": 10056.985,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 262.215,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "JPN": {
@@ -2645,6 +3217,13 @@
         "value": 47774.61,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 341.545,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "JOR": {
@@ -2677,6 +3256,13 @@
         "value": 9221.872,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 128.829,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "KAZ": {
@@ -2709,6 +3295,13 @@
         "value": 30988.528,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 7.531,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "KEN": {
@@ -2741,6 +3334,13 @@
         "value": 5608.296,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 95.268,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "KOS": {
@@ -2778,6 +3378,13 @@
         "value": 0,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 219.402,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "KOR": {
@@ -2810,6 +3417,13 @@
         "value": 49726.453,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 529.842,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "KWT": {
@@ -2842,6 +3456,13 @@
         "value": 56612.047,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 272.358,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "KGZ": {
@@ -2874,6 +3495,13 @@
         "value": 6078.118,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 37.016,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "LAO": {
@@ -2906,6 +3534,13 @@
         "value": 8106.153,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 33.211,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "LVA": {
@@ -2938,6 +3573,13 @@
         "value": 37997.822,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 30.27,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "LBN": {
@@ -2970,6 +3612,13 @@
         "value": 11298.887,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 564.369,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "LSO": {
@@ -3002,6 +3651,13 @@
         "value": 3029.386,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 76.135,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "LBR": {
@@ -3034,6 +3690,13 @@
         "value": 1537.859,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 57.029,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "LBY": {
@@ -3066,6 +3729,13 @@
         "value": 19831.432,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 4.152,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "LTU": {
@@ -3098,6 +3768,13 @@
         "value": 41916.466,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 45.872,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "LUX": {
@@ -3130,6 +3807,13 @@
         "value": 85461.248,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 258.862,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "MDG": {
@@ -3162,6 +3846,13 @@
         "value": 1655.765,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 53.62,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "MWI": {
@@ -3194,6 +3885,13 @@
         "value": 1633.693,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 223.849,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "MYS": {
@@ -3226,6 +3924,13 @@
         "value": 32553.091,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 106.913,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "MDV": {
@@ -3258,6 +3963,13 @@
         "value": 19317.319,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 1765.081,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "MLI": {
@@ -3290,6 +4002,13 @@
         "value": 2341.588,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 19.48,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "MLT": {
@@ -3322,6 +4041,13 @@
         "value": 52155.075,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 1727.334,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "MRT": {
@@ -3354,6 +4080,13 @@
         "value": 6267.471,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 4.873,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "MUS": {
@@ -3386,6 +4119,13 @@
         "value": 27279.96,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 625.261,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "MEX": {
@@ -3418,6 +4158,13 @@
         "value": 21812.656,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 66.74,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "MDA": {
@@ -3450,6 +4197,13 @@
         "value": 15866.542,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 85.438,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "MNG": {
@@ -3482,6 +4236,13 @@
         "value": 14787.082,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 2.234,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "MNE": {
@@ -3514,6 +4275,13 @@
         "value": 28026.33,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 46.359,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "MAR": {
@@ -3546,6 +4314,13 @@
         "value": 8652.881,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 84.5,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "MOZ": {
@@ -3578,6 +4353,13 @@
         "value": 1355.767,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 42.772,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "MMR": {
@@ -3610,6 +4392,13 @@
         "value": 4918.811,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 82.942,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "NAM": {
@@ -3642,6 +4431,13 @@
         "value": 10916.609,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 3.599,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "NPL": {
@@ -3674,6 +4470,13 @@
         "value": 4725.931,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 207.148,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "NLD": {
@@ -3706,6 +4509,13 @@
         "value": 68344.308,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 530.951,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "NCL": {
@@ -3720,7 +4530,14 @@
       "gdpPpp": null,
       "hdi": null,
       "ihdi": null,
-      "gni": null
+      "gni": null,
+      "popDensity": {
+        "value": 15.857,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
+      }
     },
     "NZL": {
       "name": "New Zealand",
@@ -3752,6 +4569,13 @@
         "value": 47259.601,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 19.749,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "NIC": {
@@ -3784,6 +4608,13 @@
         "value": 6881.48,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 56.703,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "NER": {
@@ -3816,6 +4647,13 @@
         "value": 1590.188,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 20.652,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "NGA": {
@@ -3848,6 +4686,13 @@
         "value": 5569.375,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 250.209,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "MKD": {
@@ -3880,6 +4725,13 @@
         "value": 22128.395,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 72.475,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "NOR": {
@@ -3912,6 +4764,13 @@
         "value": 112710.021,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 15.152,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "OMN": {
@@ -3944,6 +4803,13 @@
         "value": 36096.041,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 16.314,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "PAK": {
@@ -3976,6 +4842,13 @@
         "value": 5501.133,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 321.067,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "PAN": {
@@ -4008,6 +4881,13 @@
         "value": 34384.568,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 60.107,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "PNG": {
@@ -4040,6 +4920,13 @@
         "value": 3970.648,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 22.942,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "PRY": {
@@ -4072,6 +4959,13 @@
         "value": 15252.22,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 17.283,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "PER": {
@@ -4104,6 +4998,13 @@
         "value": 14338.71,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 26.442,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "PHL": {
@@ -4136,6 +5037,13 @@
         "value": 10731.204,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 385.321,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "POL": {
@@ -4168,6 +5076,13 @@
         "value": 42217.638,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 119.788,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "PRT": {
@@ -4200,6 +5115,13 @@
         "value": 41063.926,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 115.475,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "PRI": {
@@ -4226,6 +5148,13 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 361.194,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "PSE": {
@@ -4258,6 +5187,13 @@
         "value": 6547.099,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 857.39,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "QAT": {
@@ -4290,6 +5226,13 @@
         "value": 105353.268,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 231.16,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "ROU": {
@@ -4322,6 +5265,13 @@
         "value": 39374.254,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 82.845,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "RUS": {
@@ -4354,6 +5304,13 @@
         "value": 39221.684,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 8.782,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "RWA": {
@@ -4386,6 +5343,13 @@
         "value": 2970.559,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 565.645,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "WSM": {
@@ -4418,6 +5382,13 @@
         "value": 5952.017,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 77.936,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "SAU": {
@@ -4450,6 +5421,13 @@
         "value": 50298.914,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 15.678,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "SEN": {
@@ -4482,6 +5460,13 @@
         "value": 4202.031,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 93.895,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "SRB": {
@@ -4514,6 +5499,13 @@
         "value": 23114.81,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 78.763,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "SYC": {
@@ -4546,6 +5538,13 @@
         "value": 29195.038,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 260.376,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "SLE": {
@@ -4578,6 +5577,13 @@
         "value": 1713.728,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 117.214,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "SGP": {
@@ -4610,6 +5616,13 @@
         "value": 111239.229,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 8241.85,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "SVK": {
@@ -4642,6 +5655,13 @@
         "value": 36792.989,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 112.869,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "SVN": {
@@ -4674,6 +5694,13 @@
         "value": 46360.808,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 105.315,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "SLB": {
@@ -4706,6 +5733,13 @@
         "value": 2777.267,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 28.582,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "SOM": {
@@ -4738,6 +5772,13 @@
         "value": 1474.738,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 29.264,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "ZAF": {
@@ -4770,6 +5811,13 @@
         "value": 13693.989,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 52.109,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "SSD": {
@@ -4802,6 +5850,13 @@
         "value": 688.347,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 18.172,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "ESP": {
@@ -4834,6 +5889,13 @@
         "value": 46008.442,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 96.764,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "LKA": {
@@ -4866,6 +5928,13 @@
         "value": 12615.6,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 356.24,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "SDN": {
@@ -4898,6 +5967,13 @@
         "value": 2810.312,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 26.79,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "SUR": {
@@ -4930,6 +6006,13 @@
         "value": 17344.387,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 3.918,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "SWE": {
@@ -4962,6 +6045,13 @@
         "value": 66102.086,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 25.871,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "CHE": {
@@ -4994,6 +6084,13 @@
         "value": 81948.902,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 224.979,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "SYR": {
@@ -5026,6 +6123,13 @@
         "value": 3917.702,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 128.49,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "TWN": {
@@ -5072,6 +6176,13 @@
         "value": 5746.569,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 74.86,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "TZA": {
@@ -5104,6 +6215,13 @@
         "value": 3514.633,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 75.206,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "THA": {
@@ -5136,6 +6254,13 @@
         "value": 20569.902,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 140.348,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "TLS": {
@@ -5168,6 +6293,13 @@
         "value": 5434.595,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 93.093,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "TGO": {
@@ -5200,6 +6332,13 @@
         "value": 2855.964,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 151.202,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "TTO": {
@@ -5232,6 +6371,13 @@
         "value": 27000.145,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 266.571,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "TUN": {
@@ -5264,6 +6410,13 @@
         "value": 12011.388,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 78.53,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "TUR": {
@@ -5296,6 +6449,13 @@
         "value": 34506.981,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 110.866,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "TKM": {
@@ -5328,6 +6488,13 @@
         "value": 17715.582,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 15.671,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "UGA": {
@@ -5360,6 +6527,13 @@
         "value": 2736.41,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 242.652,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "UKR": {
@@ -5392,6 +6566,13 @@
         "value": 16933.145,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 65.124,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "ARE": {
@@ -5424,6 +6605,13 @@
         "value": 71142.305,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 147.617,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "GBR": {
@@ -5456,6 +6644,13 @@
         "value": 54371.586,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 283.247,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "USA": {
@@ -5488,6 +6683,13 @@
         "value": 73650.031,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 36.814,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "URY": {
@@ -5520,6 +6722,13 @@
         "value": 28649.822,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 19.358,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "UZB": {
@@ -5552,6 +6761,13 @@
         "value": 8825.731,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 80.908,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "VUT": {
@@ -5584,6 +6800,13 @@
         "value": 3403.69,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 26.285,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "VEN": {
@@ -5616,6 +6839,13 @@
         "value": 7157.08,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 32.085,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "VNM": {
@@ -5648,6 +6878,13 @@
         "value": 13032.635,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 320.175,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "YEM": {
@@ -5680,6 +6917,13 @@
         "value": 1018.201,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 74.608,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "ZMB": {
@@ -5712,6 +6956,13 @@
         "value": 3446.676,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 27.878,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "ZWE": {
@@ -5744,10 +6995,17 @@
         "value": 3511.463,
         "year": 2023,
         "source": "UNDP HDR"
+      },
+      "popDensity": {
+        "value": 42.241,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "AFE": {
-      "name": "AFE",
+      "name": "Africa Eastern and Southern",
       "gdpNominal": {
         "value": 1722.386,
         "year": 2025,
@@ -5768,10 +7026,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 50.515,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "AFW": {
-      "name": "AFW",
+      "name": "Africa Western and Central",
       "gdpNominal": {
         "value": 1600.058,
         "year": 2025,
@@ -5792,10 +7057,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 56.194,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "ARB": {
-      "name": "ARB",
+      "name": "Arab World",
       "gdpNominal": {
         "value": 7544.414,
         "year": 2025,
@@ -5816,10 +7088,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 36.8,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "CSS": {
-      "name": "CSS",
+      "name": "Caribbean small states",
       "gdpNominal": {
         "value": 20880.061,
         "year": 2025,
@@ -5840,10 +7119,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 10.949,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "CEB": {
-      "name": "CEB",
+      "name": "Central Europe and the Baltics",
       "gdpNominal": {
         "value": 27676.939,
         "year": 2025,
@@ -5864,10 +7150,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 90.658,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "EAR": {
-      "name": "EAR",
+      "name": "Early-demographic dividend",
       "gdpNominal": {
         "value": 4566.427,
         "year": 2025,
@@ -5888,10 +7181,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 105.363,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "EAS": {
-      "name": "EAS",
+      "name": "East Asia & Pacific",
       "gdpNominal": {
         "value": 14077.271,
         "year": 2025,
@@ -5912,10 +7212,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 97.523,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "EAP": {
-      "name": "EAP",
+      "name": "East Asia & Pacific (excluding high income)",
       "gdpNominal": {
         "value": 10843.436,
         "year": 2025,
@@ -5936,10 +7243,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 133.578,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "TEA": {
-      "name": "TEA",
+      "name": "East Asia & Pacific (IDA & IBRD countries)",
       "gdpNominal": {
         "value": 10965.827,
         "year": 2025,
@@ -5960,10 +7274,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 132.925,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "EMU": {
-      "name": "EMU",
+      "name": "Euro area",
       "gdpNominal": {
         "value": 50214.078,
         "year": 2025,
@@ -5984,10 +7305,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 125.591,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "ECS": {
-      "name": "ECS",
+      "name": "Europe & Central Asia",
       "gdpNominal": {
         "value": 34603.481,
         "year": 2025,
@@ -6008,10 +7336,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 33.713,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "ECA": {
-      "name": "ECA",
+      "name": "Europe & Central Asia (excluding high income)",
       "gdpNominal": {
         "value": 11117.614,
         "year": 2025,
@@ -6032,10 +7367,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 42.102,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "TEC": {
-      "name": "TEC",
+      "name": "Europe & Central Asia (IDA & IBRD countries)",
       "gdpNominal": {
         "value": 15300.07,
         "year": 2025,
@@ -6056,10 +7398,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 19.952,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "EUU": {
-      "name": "EUU",
+      "name": "European Union",
       "gdpNominal": {
         "value": 47089.164,
         "year": 2025,
@@ -6080,10 +7429,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 112.553,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "HPC": {
-      "name": "HPC",
+      "name": "Heavily indebted poor countries (HIPC)",
       "gdpNominal": {
         "value": 1331.9,
         "year": 2025,
@@ -6104,10 +7460,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 47.206,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "IBD": {
-      "name": "IBD",
+      "name": "IBRD only",
       "gdpNominal": {
         "value": 8599.358,
         "year": 2025,
@@ -6128,10 +7491,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 69.962,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "IBT": {
-      "name": "IBT",
+      "name": "IDA & IBRD total",
       "gdpNominal": {
         "value": 6613.209,
         "year": 2025,
@@ -6152,10 +7522,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 71.358,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "IDB": {
-      "name": "IDB",
+      "name": "IDA blend",
       "gdpNominal": {
         "value": 1841.204,
         "year": 2025,
@@ -6176,10 +7553,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 135.181,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "IDX": {
-      "name": "IDX",
+      "name": "IDA only",
       "gdpNominal": {
         "value": 1484.112,
         "year": 2025,
@@ -6200,10 +7584,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 60.824,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "IDA": {
-      "name": "IDA",
+      "name": "IDA total",
       "gdpNominal": {
         "value": 1608.084,
         "year": 2025,
@@ -6224,10 +7615,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 75.26,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "LTE": {
-      "name": "LTE",
+      "name": "Late-demographic dividend",
       "gdpNominal": {
         "value": 13677.323,
         "year": 2025,
@@ -6248,10 +7646,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 52.234,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "LCN": {
-      "name": "LCN",
+      "name": "Latin America & Caribbean",
       "gdpNominal": {
         "value": 11095.218,
         "year": 2025,
@@ -6272,10 +7677,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 32.79,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "LAC": {
-      "name": "LAC",
+      "name": "Latin America & Caribbean (excluding high income)",
       "gdpNominal": {
         "value": 10407.482,
         "year": 2025,
@@ -6296,10 +7708,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 32.928,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "TLA": {
-      "name": "TLA",
+      "name": "Latin America & the Caribbean (IDA & IBRD countries)",
       "gdpNominal": {
         "value": 10822.593,
         "year": 2025,
@@ -6320,10 +7739,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 32.232,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "LDC": {
-      "name": "LDC",
+      "name": "Least developed countries: UN classification",
       "gdpNominal": {
         "value": 1361.992,
         "year": 2025,
@@ -6344,10 +7770,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 56.965,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "LMY": {
-      "name": "LMY",
+      "name": "Low & middle income",
       "gdpNominal": {
         "value": 6107.262,
         "year": 2025,
@@ -6368,10 +7801,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 85.328,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "MEA": {
-      "name": "MEA",
+      "name": "Middle East, North Africa, Afghanistan & Pakistan",
       "gdpNominal": {
         "value": 6202.19,
         "year": 2025,
@@ -6392,10 +7832,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 63.116,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "MNA": {
-      "name": "MNA",
+      "name": "Middle East, North Africa, Afghanistan & Pakistan (excluding high income)",
       "gdpNominal": {
         "value": 2829.129,
         "year": 2025,
@@ -6416,10 +7863,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 72.488,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "TMN": {
-      "name": "TMN",
+      "name": "Middle East, North Africa, Afghanistan & Pakistan (IDA & IBRD)",
       "gdpNominal": {
         "value": 2826.655,
         "year": 2025,
@@ -6440,10 +7894,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 72.017,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "MIC": {
-      "name": "MIC",
+      "name": "Middle income",
       "gdpNominal": {
         "value": 6778.798,
         "year": 2025,
@@ -6464,10 +7925,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 93.644,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "NAC": {
-      "name": "NAC",
+      "name": "North America",
       "gdpNominal": {
         "value": 86308.072,
         "year": 2025,
@@ -6488,10 +7956,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 21.012,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "OED": {
-      "name": "OED",
+      "name": "OECD members",
       "gdpNominal": {
         "value": 51733.714,
         "year": 2025,
@@ -6512,10 +7987,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 39.29,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "OSS": {
-      "name": "OSS",
+      "name": "Other small states",
       "gdpNominal": {
         "value": 17540.31,
         "year": 2025,
@@ -6536,10 +8018,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 46.644,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "PSS": {
-      "name": "PSS",
+      "name": "Pacific island small states",
       "gdpNominal": {
         "value": 4719.69,
         "year": 2025,
@@ -6560,10 +8049,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 41.921,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "PST": {
-      "name": "PST",
+      "name": "Post-demographic dividend",
       "gdpNominal": {
         "value": 59490.024,
         "year": 2025,
@@ -6584,10 +8080,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 35.984,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "PRE": {
-      "name": "PRE",
+      "name": "Pre-demographic dividend",
       "gdpNominal": {
         "value": 1470.058,
         "year": 2025,
@@ -6608,10 +8111,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 53.008,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "SST": {
-      "name": "SST",
+      "name": "Small states",
       "gdpNominal": {
         "value": 16577.845,
         "year": 2025,
@@ -6632,10 +8142,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 26.642,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "SAS": {
-      "name": "SAS",
+      "name": "South Asia",
       "gdpNominal": {
         "value": 2705.282,
         "year": 2025,
@@ -6656,10 +8173,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 496.765,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "TSA": {
-      "name": "TSA",
+      "name": "South Asia (IDA & IBRD)",
       "gdpNominal": {
         "value": 2705.282,
         "year": 2025,
@@ -6680,10 +8204,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 496.765,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "SSF": {
-      "name": "SSF",
+      "name": "Sub-Saharan Africa",
       "gdpNominal": {
         "value": 1673.071,
         "year": 2025,
@@ -6704,10 +8235,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 52.664,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "SSA": {
-      "name": "SSA",
+      "name": "Sub-Saharan Africa (excluding high income)",
       "gdpNominal": {
         "value": 1671.42,
         "year": 2025,
@@ -6728,10 +8266,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 52.66,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "TSS": {
-      "name": "TSS",
+      "name": "Sub-Saharan Africa (IDA & IBRD countries)",
       "gdpNominal": {
         "value": 1673.071,
         "year": 2025,
@@ -6752,10 +8297,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 52.664,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "WLD": {
-      "name": "WLD",
+      "name": "World",
       "gdpNominal": {
         "value": 14405.848,
         "year": 2025,
@@ -6776,20 +8328,34 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 62.135,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "ASM": {
-      "name": "ASM",
+      "name": "American Samoa",
       "gdpNominal": {
         "value": 18017.459,
         "year": 2022,
         "source": "World Bank",
         "indicator": "NY.GDP.PCAP.CD",
         "label": "GDP per capita (current US$)"
+      },
+      "popDensity": {
+        "value": 237.605,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "AND": {
-      "name": "AND",
+      "name": "Andorra",
       "gdpNominal": {
         "value": 54291.503,
         "year": 2025,
@@ -6809,6 +8375,13 @@
         "year": 2023,
         "source": "UNDP HDR"
       },
+      "popDensity": {
+        "value": 172.034,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
+      },
       "hdi": {
         "value": 0.913,
         "year": 2023,
@@ -6821,7 +8394,7 @@
       }
     },
     "ATG": {
-      "name": "ATG",
+      "name": "Antigua and Barbuda",
       "gdpNominal": {
         "value": 24819.245,
         "year": 2025,
@@ -6841,6 +8414,13 @@
         "year": 2023,
         "source": "UNDP HDR"
       },
+      "popDensity": {
+        "value": 212.082,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
+      },
       "hdi": {
         "value": 0.851,
         "year": 2023,
@@ -6853,7 +8433,7 @@
       }
     },
     "ABW": {
-      "name": "ABW",
+      "name": "Aruba",
       "gdpNominal": {
         "value": 38590.565,
         "year": 2024,
@@ -6874,10 +8454,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 596.439,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "BRB": {
-      "name": "BRB",
+      "name": "Barbados",
       "gdpNominal": {
         "value": 28364.818,
         "year": 2025,
@@ -6897,6 +8484,13 @@
         "year": 2023,
         "source": "UNDP HDR"
       },
+      "popDensity": {
+        "value": 656.595,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
+      },
       "hdi": {
         "value": 0.811,
         "year": 2023,
@@ -6909,7 +8503,7 @@
       }
     },
     "BMU": {
-      "name": "BMU",
+      "name": "Bermuda",
       "gdpNominal": {
         "value": 142250.433,
         "year": 2024,
@@ -6930,10 +8524,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 1198.111,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "CYM": {
-      "name": "CYM",
+      "name": "Cayman Islands",
       "gdpNominal": {
         "value": 104292.901,
         "year": 2024,
@@ -6954,20 +8555,34 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 304.325,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "CHI": {
-      "name": "CHI",
+      "name": "Channel Islands",
       "gdpNominal": {
         "value": 74585.522,
         "year": 2023,
         "source": "World Bank",
         "indicator": "NY.GDP.PCAP.CD",
         "label": "GDP per capita (current US$)"
+      },
+      "popDensity": {
+        "value": 842.126,
+        "year": 2021,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "CUW": {
-      "name": "CUW",
+      "name": "Curacao",
       "gdpNominal": {
         "value": 22832.895,
         "year": 2024,
@@ -6988,10 +8603,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 348.32,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "DMA": {
-      "name": "DMA",
+      "name": "Dominica",
       "gdpNominal": {
         "value": 10989.043,
         "year": 2025,
@@ -7011,6 +8633,13 @@
         "year": 2023,
         "source": "UNDP HDR"
       },
+      "popDensity": {
+        "value": 88.68,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
+      },
       "hdi": {
         "value": 0.761,
         "year": 2023,
@@ -7023,7 +8652,7 @@
       }
     },
     "FRO": {
-      "name": "FRO",
+      "name": "Faroe Islands",
       "gdpNominal": {
         "value": 74175.278,
         "year": 2024,
@@ -7044,20 +8673,34 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 39.707,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "PYF": {
-      "name": "PYF",
+      "name": "French Polynesia",
       "gdpNominal": {
         "value": 22439.884,
         "year": 2024,
         "source": "World Bank",
         "indicator": "NY.GDP.PCAP.CD",
         "label": "GDP per capita (current US$)"
+      },
+      "popDensity": {
+        "value": 80.99,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "GRD": {
-      "name": "GRD",
+      "name": "Grenada",
       "gdpNominal": {
         "value": 12106.879,
         "year": 2025,
@@ -7077,6 +8720,13 @@
         "year": 2023,
         "source": "UNDP HDR"
       },
+      "popDensity": {
+        "value": 344.356,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
+      },
       "hdi": {
         "value": 0.791,
         "year": 2023,
@@ -7089,17 +8739,24 @@
       }
     },
     "GUM": {
-      "name": "GUM",
+      "name": "Guam",
       "gdpNominal": {
         "value": 41833.152,
         "year": 2022,
         "source": "World Bank",
         "indicator": "NY.GDP.PCAP.CD",
         "label": "GDP per capita (current US$)"
+      },
+      "popDensity": {
+        "value": 308.344,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "HKG": {
-      "name": "HKG",
+      "name": "Hong Kong SAR, China",
       "gdpNominal": {
         "value": 56983.066,
         "year": 2025,
@@ -7119,6 +8776,13 @@
         "year": 2023,
         "source": "UNDP HDR"
       },
+      "popDensity": {
+        "value": 7177.238,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
+      },
       "hdi": {
         "value": 0.955,
         "year": 2023,
@@ -7131,17 +8795,24 @@
       }
     },
     "IMN": {
-      "name": "IMN",
+      "name": "Isle of Man",
       "gdpNominal": {
         "value": 90015.207,
         "year": 2023,
         "source": "World Bank",
         "indicator": "NY.GDP.PCAP.CD",
         "label": "GDP per capita (current US$)"
+      },
+      "popDensity": {
+        "value": 147.658,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "KIR": {
-      "name": "KIR",
+      "name": "Kiribati",
       "gdpNominal": {
         "value": 2558.666,
         "year": 2025,
@@ -7161,6 +8832,13 @@
         "year": 2023,
         "source": "UNDP HDR"
       },
+      "popDensity": {
+        "value": 163.617,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
+      },
       "hdi": {
         "value": 0.644,
         "year": 2023,
@@ -7173,7 +8851,7 @@
       }
     },
     "XKX": {
-      "name": "XKX",
+      "name": "Kosovo",
       "gdpNominal": {
         "value": 7899.418,
         "year": 2025,
@@ -7197,13 +8875,20 @@
       }
     },
     "LIE": {
-      "name": "LIE",
+      "name": "Liechtenstein",
       "gdpNominal": {
         "value": 220167.225,
         "year": 2024,
         "source": "World Bank",
         "indicator": "NY.GDP.PCAP.CD",
         "label": "GDP per capita (current US$)"
+      },
+      "popDensity": {
+        "value": 249.038,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       },
       "hdi": {
         "value": 0.938,
@@ -7222,7 +8907,7 @@
       }
     },
     "MAC": {
-      "name": "MAC",
+      "name": "Macao SAR, China",
       "gdpNominal": {
         "value": 75901.746,
         "year": 2025,
@@ -7243,10 +8928,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 20569.697,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "MHL": {
-      "name": "MHL",
+      "name": "Marshall Islands",
       "gdpNominal": {
         "value": 8489.058,
         "year": 2025,
@@ -7266,6 +8958,13 @@
         "year": 2023,
         "source": "UNDP HDR"
       },
+      "popDensity": {
+        "value": 215.706,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
+      },
       "hdi": {
         "value": 0.733,
         "year": 2023,
@@ -7278,7 +8977,7 @@
       }
     },
     "FSM": {
-      "name": "FSM",
+      "name": "Micronesia, Fed. Sts.",
       "gdpNominal": {
         "value": 4414.007,
         "year": 2025,
@@ -7298,6 +8997,13 @@
         "year": 2023,
         "source": "UNDP HDR"
       },
+      "popDensity": {
+        "value": 160.9,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
+      },
       "hdi": {
         "value": 0.615,
         "year": 2023,
@@ -7310,13 +9016,20 @@
       }
     },
     "MCO": {
-      "name": "MCO",
+      "name": "Monaco",
       "gdpNominal": {
         "value": 288001.575,
         "year": 2024,
         "source": "World Bank",
         "indicator": "NY.GDP.PCAP.CD",
         "label": "GDP per capita (current US$)"
+      },
+      "popDensity": {
+        "value": 18692.898,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       },
       "hdi": {
         "value": 0,
@@ -7335,7 +9048,7 @@
       }
     },
     "NRU": {
-      "name": "NRU",
+      "name": "Nauru",
       "gdpNominal": {
         "value": 14639.505,
         "year": 2025,
@@ -7355,6 +9068,13 @@
         "year": 2023,
         "source": "UNDP HDR"
       },
+      "popDensity": {
+        "value": 593.75,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
+      },
       "hdi": {
         "value": 0.703,
         "year": 2023,
@@ -7367,17 +9087,24 @@
       }
     },
     "MNP": {
-      "name": "MNP",
+      "name": "Northern Mariana Islands",
       "gdpNominal": {
         "value": 23785.755,
         "year": 2022,
         "source": "World Bank",
         "indicator": "NY.GDP.PCAP.CD",
         "label": "GDP per capita (current US$)"
+      },
+      "popDensity": {
+        "value": 98.137,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "PLW": {
-      "name": "PLW",
+      "name": "Palau",
       "gdpNominal": {
         "value": 19532.356,
         "year": 2025,
@@ -7397,6 +9124,13 @@
         "year": 2023,
         "source": "UNDP HDR"
       },
+      "popDensity": {
+        "value": 38.537,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
+      },
       "hdi": {
         "value": 0.786,
         "year": 2023,
@@ -7409,7 +9143,7 @@
       }
     },
     "SMR": {
-      "name": "SMR",
+      "name": "San Marino",
       "gdpNominal": {
         "value": 59871.329,
         "year": 2023,
@@ -7429,6 +9163,13 @@
         "year": 2023,
         "source": "UNDP HDR"
       },
+      "popDensity": {
+        "value": 564.333,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
+      },
       "hdi": {
         "value": 0.915,
         "year": 2023,
@@ -7441,7 +9182,7 @@
       }
     },
     "STP": {
-      "name": "STP",
+      "name": "Sao Tome and Principe",
       "gdpNominal": {
         "value": 4084.401,
         "year": 2025,
@@ -7461,6 +9202,13 @@
         "year": 2023,
         "source": "UNDP HDR"
       },
+      "popDensity": {
+        "value": 240.491,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
+      },
       "hdi": {
         "value": 0.637,
         "year": 2023,
@@ -7473,7 +9221,7 @@
       }
     },
     "SXM": {
-      "name": "SXM",
+      "name": "Sint Maarten (Dutch part)",
       "gdpNominal": {
         "value": 42978.132,
         "year": 2025,
@@ -7494,10 +9242,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 1257.324,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "KNA": {
-      "name": "KNA",
+      "name": "St. Kitts and Nevis",
       "gdpNominal": {
         "value": 25223.026,
         "year": 2025,
@@ -7517,6 +9272,13 @@
         "year": 2023,
         "source": "UNDP HDR"
       },
+      "popDensity": {
+        "value": 179.838,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
+      },
       "hdi": {
         "value": 0.84,
         "year": 2023,
@@ -7529,7 +9291,7 @@
       }
     },
     "LCA": {
-      "name": "LCA",
+      "name": "St. Lucia",
       "gdpNominal": {
         "value": 14745.818,
         "year": 2025,
@@ -7549,6 +9311,13 @@
         "year": 2023,
         "source": "UNDP HDR"
       },
+      "popDensity": {
+        "value": 293.91,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
+      },
       "hdi": {
         "value": 0.748,
         "year": 2023,
@@ -7561,17 +9330,24 @@
       }
     },
     "MAF": {
-      "name": "MAF",
+      "name": "St. Martin (French part)",
       "gdpNominal": {
         "value": 21668.378,
         "year": 2021,
         "source": "World Bank",
         "indicator": "NY.GDP.PCAP.CD",
         "label": "GDP per capita (current US$)"
+      },
+      "popDensity": {
+        "value": 550.3,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "VCT": {
-      "name": "VCT",
+      "name": "St. Vincent and the Grenadines",
       "gdpNominal": {
         "value": 12561.769,
         "year": 2025,
@@ -7591,6 +9367,13 @@
         "year": 2023,
         "source": "UNDP HDR"
       },
+      "popDensity": {
+        "value": 259.803,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
+      },
       "hdi": {
         "value": 0.798,
         "year": 2023,
@@ -7603,7 +9386,7 @@
       }
     },
     "TON": {
-      "name": "TON",
+      "name": "Tonga",
       "gdpNominal": {
         "value": 6547.186,
         "year": 2025,
@@ -7623,6 +9406,13 @@
         "year": 2023,
         "source": "UNDP HDR"
       },
+      "popDensity": {
+        "value": 145.274,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
+      },
       "hdi": {
         "value": 0.769,
         "year": 2023,
@@ -7635,7 +9425,7 @@
       }
     },
     "TCA": {
-      "name": "TCA",
+      "name": "Turks and Caicos Islands",
       "gdpNominal": {
         "value": 37506.78,
         "year": 2024,
@@ -7656,10 +9446,17 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 48.629,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     },
     "TUV": {
-      "name": "TUV",
+      "name": "Tuvalu",
       "gdpNominal": {
         "value": 6344.775,
         "year": 2023,
@@ -7679,6 +9476,13 @@
         "year": 2023,
         "source": "UNDP HDR"
       },
+      "popDensity": {
+        "value": 327.2,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
+      },
       "hdi": {
         "value": 0.689,
         "year": 2023,
@@ -7691,7 +9495,7 @@
       }
     },
     "VIR": {
-      "name": "VIR",
+      "name": "Virgin Islands (U.S.)",
       "gdpNominal": {
         "value": 44320.909,
         "year": 2022,
@@ -7705,6 +9509,33 @@
         "source": "World Bank",
         "indicator": "NY.GDP.PCAP.PP.CD",
         "label": "GDP per capita, PPP (current international $)"
+      },
+      "popDensity": {
+        "value": 299.763,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
+      }
+    },
+    "VGB": {
+      "name": "British Virgin Islands",
+      "popDensity": {
+        "value": 259.9,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
+      }
+    },
+    "GIB": {
+      "name": "Gibraltar",
+      "popDensity": {
+        "value": 3847.1,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "EN.POP.DNST",
+        "label": "Population density (people per sq. km of land area)"
       }
     }
   }

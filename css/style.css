@@ -396,6 +396,28 @@ html, body {
 #tooltip .tt-title { font-weight: 700; font-size: 12.5px; }
 #tooltip .tt-line  { color: #b9c4d6; }
 #tooltip .tt-note  { color: var(--text-dim); font-size: 10.5px; margin-top: 2px; }
+#tooltip .tt-guide {
+  margin-top: 6px;
+  padding-top: 5px;
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+  color: var(--text-dim);
+  font-size: 10px;
+  line-height: 2;
+}
+#tooltip .tt-key {
+  display: inline-block;
+  padding: 0 5px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #c7d3e6;
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 0.3px;
+  line-height: 1.6;
+}
+#tooltip .tt-plus { margin: 0 2px; color: var(--text-dim); }
 
 /* ---------- Wikipedia panel ---------- */
 

@@ -22,6 +22,11 @@ const WORLD_BANK_INDICATORS = [
     indicator: "NY.GNP.PCAP.PP.CD",
     label: "GNI per capita, PPP (current international $)",
   },
+  {
+    key: "popDensity",
+    indicator: "EN.POP.DNST",
+    label: "Population density (people per sq. km of land area)",
+  },
 ];
 
 const HDR_DOWNLOADS = "https://hdr.undp.org/data-center/documentation-and-downloads";
@@ -91,6 +96,11 @@ async function main() {
         defaultSource: "World Bank",
         indicator: "NY.GNP.PCAP.PP.CD",
       },
+      popDensity: {
+        unit: "people per square kilometre of land area",
+        defaultSource: "World Bank",
+        indicator: "EN.POP.DNST",
+      },
     },
     countries,
   };
@@ -144,6 +154,7 @@ async function fetchWorldBankIndicator(spec) {
     const prev = latest.get(iso3);
     if (!prev || year > prev.year) {
       latest.set(iso3, {
+        countryName: row.country?.value,
         value: round(value),
         year,
         source: "World Bank",
@@ -157,8 +168,10 @@ async function fetchWorldBankIndicator(spec) {
 
 function mergeIndicator(countries, values, key) {
   for (const [iso3, stat] of values) {
-    countries[iso3] ??= { name: iso3 };
-    countries[iso3][key] = stat;
+    const { countryName, ...row } = stat;
+    countries[iso3] ??= { name: countryName ?? iso3 };
+    if (countries[iso3].name === iso3 && countryName) countries[iso3].name = countryName;
+    countries[iso3][key] = row;
   }
 }
 

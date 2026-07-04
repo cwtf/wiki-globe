@@ -5,7 +5,9 @@
 // Stull's 2011 approximation (~35 °C sustained is the theoretical limit of
 // human survivability). Country metrics (GDP per capita, HDI, IHDI, GNI)
 // are drawn as a choropleth from public-domain country polygons coloured by
-// the bundled dataset in country-data.js.
+// the bundled dataset in country-data.js. Region metrics (population
+// density) colour generated admin-1 polygons where data exists and fall
+// back to the country-level statistic elsewhere.
 // Either way the overlay renders to an equirectangular canvas draped over
 // the globe as a single-tile imagery layer, and valueAt() serves the
 // cursor tooltip.
@@ -36,6 +38,7 @@ const EDGE_FADE_DEG = 7.5;            // fade to transparent at grid edges
 const NO_DATA_FILL = "rgba(125, 135, 150, 0.16)";
 const COUNTRY_STATS_URL = "data/country-stats.latest.json";
 const HEATMAP_METRICS_URL = "data/heatmap-metrics.json";
+const ADMIN1_URL = "data/admin1-population.latest.geojson";
 
 const TIME_FMT = new Intl.DateTimeFormat("en", {
   month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
@@ -44,6 +47,8 @@ const TIME_FMT = new Intl.DateTimeFormat("en", {
 
 const money = (x) => `$${Math.round(x).toLocaleString("en-US")}`;
 const degC = (x) => `${x.toFixed(1)} °C`;
+const perKm2 = (x) =>
+  `${x >= 100 ? Math.round(x).toLocaleString("en-US") : x.toFixed(x >= 10 ? 0 : 1)}/km²`;
 
 // Fallback metric definitions. loadHeatmapMetrics() replaces these from
 // data/heatmap-metrics.json during app boot.
@@ -150,6 +155,19 @@ export const METRICS = {
       ["$22k", "#a8dd4e"], ["$50k", "#3fd98f"], ["$100k+", "#4fc3f7"],
     ],
   },
+  popDensity: {
+    label: "Population density", kind: "region",
+    statKey: "popDensity", fmt: perKm2,
+    stops: [
+      [1, [79, 195, 247]], [10, [63, 217, 143]], [50, [168, 221, 78]],
+      [150, [250, 204, 21]], [500, [251, 146, 60]], [2000, [239, 68, 68]],
+      [10000, [217, 70, 239]],
+    ],
+    legend: [
+      ["1", "#4fc3f7"], ["10", "#3fd98f"], ["50", "#a8dd4e"],
+      ["150", "#facc15"], ["500", "#fb923c"], ["2k", "#ef4444"], ["10k+", "#d946ef"],
+    ],
+  },
 };
 
 const FORMATTERS = {
@@ -157,6 +175,7 @@ const FORMATTERS = {
   degC,
   percent: (x) => `${Math.round(x)}%`,
   fixed3: (x) => x.toFixed(3),
+  density: perKm2,
 };
 
 const VALUE_GETTERS = {
@@ -209,7 +228,7 @@ function hydrateMetric(key, metric) {
     const value = VALUE_GETTERS[metric.valueKey];
     if (!value) throw new Error(`unknown valueKey for metric ${key}: ${metric.valueKey}`);
     out.value = value;
-  } else if (metric.kind === "country") {
+  } else if (metric.kind === "country" || metric.kind === "region") {
     out.statKey = metric.statKey;
   } else {
     throw new Error(`unknown metric kind for ${key}: ${metric.kind}`);
@@ -235,6 +254,8 @@ export class HeatmapLayer {
     this.selTime = null;              // pinned timestamp; null = follow latest
     this.onDataChanged = null;        // app hook: timeline bounds changed
     this.geo = null;                  // country polygons (lazy)
+    this.regions = null;              // admin-1 polygons + density (lazy)
+    this.regionsMeta = null;
     this.countryStats = legacyCountryStats();
     this.countryStatsMeta = {
       sourceLabel: "bundled IMF/UNDP 2022-23 estimates",
@@ -242,6 +263,7 @@ export class HeatmapLayer {
     };
     this._geoLoading = false;
     this._statsLoading = false;
+    this._regionsLoading = false;
     this._retryTimer = null;
     this._rebuildTimer = null;
     this._gen = 0;                    // overlay rebuild generation (latest wins)
@@ -286,10 +308,13 @@ export class HeatmapLayer {
       if (Date.now() - this.lastFetch > REFRESH_MS) this._load();
       this.timer ??= setInterval(() => this._load(), REFRESH_MS);
       if (this.okCount > 0) this._scheduleRebuild();
-    } else if (!this.geo || this.countryStatsMeta.fallback) {
-      this._loadCountryData();
     } else {
-      this._scheduleRebuild();
+      // country/region choropleths; region modes also need admin-1 polygons
+      const needCountry = !this.geo || this.countryStatsMeta.fallback;
+      const needRegions = this.metric.kind === "region" && !this.regions;
+      if (needCountry) this._loadCountryData();
+      if (needRegions) this._loadRegions();
+      if (!needCountry && !needRegions) this._scheduleRebuild();
     }
   }
 
@@ -484,7 +509,8 @@ export class HeatmapLayer {
         this._loadCountryStats(),
       ]);
       this.geo = geo;
-      if (this.metric?.kind === "country") {
+      const kind = this.metric?.kind;
+      if (kind === "country" || kind === "region") {
         this._rebuildOverlay();
         this.onDataChanged?.();
       }
@@ -521,6 +547,56 @@ export class HeatmapLayer {
     return countryAt(this.geo, lat, lon);
   }
 
+  // --- admin-1 region data -------------------------------------------------------
+
+  // Generated admin-1 polygons with population density (see
+  // scripts/data/update-population-density.mjs). Parsed into the same
+  // { rings, bbox } shape as country features so countryAt() can search them.
+  async _loadRegions() {
+    if (this._regionsLoading || this.regions) return;
+    this._regionsLoading = true;
+    try {
+      const resp = await fetch(ADMIN1_URL);
+      if (!resp.ok) throw new Error(`admin1 population ${resp.status}`);
+      const gj = await resp.json();
+      if (!Array.isArray(gj?.features)) throw new Error("admin1 payload missing features");
+      this.regions = gj.features.map((f) => {
+        const p = f.properties ?? {};
+        const rings = (f.geometry?.type === "MultiPolygon" ? f.geometry.coordinates
+          : f.geometry?.type === "Polygon" ? [f.geometry.coordinates] : []).flat();
+        let w = 180, e = -180, s = 90, n = -90;
+        for (const ring of rings) {
+          for (const [lon, lat] of ring) {
+            if (lon < w) w = lon;
+            if (lon > e) e = lon;
+            if (lat < s) s = lat;
+            if (lat > n) n = lat;
+          }
+        }
+        return {
+          id: f.id, name: p.name ?? f.id, iso3: p.iso3,
+          population: p.population, popYear: p.popYear,
+          areaKm2: p.areaKm2, density: p.density,
+          rings, bbox: [w, s, e, n],
+        };
+      });
+      this.regionsMeta = {
+        sourceLabel: gj.meta?.sourceLabel ?? "generated admin-1 population",
+        generatedAt: gj.meta?.generatedAt,
+      };
+      if (this.metric?.kind === "region") {
+        this._scheduleRebuild();
+        this.onDataChanged?.();
+      }
+    } catch (e) {
+      console.warn("[heatmap] admin-1 population unavailable, falling back to country level:", e.message);
+      // still draw the country-level base coat
+      if (this.metric?.kind === "region" && this.geo) this._scheduleRebuild();
+    } finally {
+      this._regionsLoading = false;
+    }
+  }
+
   // --- shared: tooltip lookup, canvas, overlay ------------------------------------
 
   // Weather modes: bilinear interpolation over the sample grid (longitude
@@ -529,7 +605,25 @@ export class HeatmapLayer {
   valueAt(lat, lon) {
     const m = this.metric;
     if (!m) return null;
-    if (m.kind === "country") {
+    if (m.kind === "country" || m.kind === "region") {
+      // region metrics: prefer the admin-1 polygon under the cursor when it
+      // carries its own value, else fall back to the country statistic
+      if (m.kind === "region") {
+        const r = countryAt(this.regions, lat, lon);
+        if (r?.density != null) {
+          return {
+            kind: "region",
+            metric: this.mode,
+            name: r.name,
+            country: this.countryStats[r.iso3]?.name ?? r.iso3 ?? "",
+            value: r.density,
+            population: r.population,
+            popYear: r.popYear,
+            areaKm2: r.areaKm2,
+            source: this.regionsMeta?.sourceLabel ?? "admin-1 population",
+          };
+        }
+      }
       const f = this._countryAt(lat, lon);
       if (!f) return null;
       const stat = this.countryStats[f.id]?.[m.statKey] ?? null;
@@ -570,7 +664,8 @@ export class HeatmapLayer {
   }
 
   _renderCanvas() {
-    return this.metric?.kind === "country"
+    const kind = this.metric?.kind;
+    return kind === "country" || kind === "region"
       ? this._renderCountryCanvas()
       : this._renderWeatherCanvas();
   }
@@ -607,31 +702,22 @@ export class HeatmapLayer {
     return canvas;
   }
 
+  // Country choropleth; for region metrics the country fill is the fallback
+  // base coat and admin-1 polygons with their own value are painted on top.
   _renderCountryCanvas() {
     const m = this.metric;
     const canvas = document.createElement("canvas");
     canvas.width = COUNTRY_W;
     canvas.height = COUNTRY_H;
     const ctx = canvas.getContext("2d");
-    const X = (lon) => ((lon + 180) * COUNTRY_W) / 360;
-    const Y = (lat) => ((90 - lat) * COUNTRY_H) / 180;
     for (const f of this.geo ?? []) {
       const value = statValue(this.countryStats[f.id]?.[m.statKey]);
-      if (value == null) {
-        ctx.fillStyle = NO_DATA_FILL;
-      } else {
-        const [r, g, b] = colorFor(m.stops, value);
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${OVERLAY_ALPHA / 255})`;
+      fillFeature(ctx, f, value, m.stops);
+    }
+    if (m.kind === "region") {
+      for (const r of this.regions ?? []) {
+        if (r.density != null) fillFeature(ctx, r, r.density, m.stops);
       }
-      ctx.beginPath();
-      for (const ring of f.rings) {
-        ctx.moveTo(X(ring[0][0]), Y(ring[0][1]));
-        for (let i = 1; i < ring.length; i++) {
-          ctx.lineTo(X(ring[i][0]), Y(ring[i][1]));
-        }
-        ctx.closePath();
-      }
-      ctx.fill("evenodd");
     }
     return canvas;
   }
@@ -651,6 +737,22 @@ export class HeatmapLayer {
   counts() {
     if (!this.visible) return { count: 0, detail: "", source: this.source };
     const m = this.metric;
+    if (m.kind === "region") {
+      if (!this.geo && !this.regions) {
+        return { count: 0, detail: "loading region boundaries…", source: "loading" };
+      }
+      const regions = (this.regions ?? []).filter((r) => r.density != null).length;
+      const countries = (this.geo ?? [])
+        .filter((f) => statValue(this.countryStats[f.id]?.[m.statKey]) != null).length;
+      const src = this.regions
+        ? this.regionsMeta.sourceLabel
+        : `country-level only · ${this.countryStatsMeta.sourceLabel}`;
+      return {
+        count: regions + countries,
+        detail: `${regions} regions · ${countries} country fallbacks · ${src}`,
+        source: "data",
+      };
+    }
     if (m.kind === "country") {
       if (!this.geo) {
         return { count: 0, detail: "loading country boundaries…", source: "loading" };
@@ -680,6 +782,25 @@ function stullWetBulb(t, rh) {
     0.00391838 * Math.pow(rh, 1.5) * Math.atan(0.023101 * rh) -
     4.686035
   );
+}
+
+// Paint one { rings } feature onto the equirectangular choropleth canvas.
+function fillFeature(ctx, f, value, stops) {
+  if (value == null) {
+    ctx.fillStyle = NO_DATA_FILL;
+  } else {
+    const [r, g, b] = colorFor(stops, value);
+    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${OVERLAY_ALPHA / 255})`;
+  }
+  ctx.beginPath();
+  for (const ring of f.rings) {
+    ctx.moveTo(((ring[0][0] + 180) * COUNTRY_W) / 360, ((90 - ring[0][1]) * COUNTRY_H) / 180);
+    for (let i = 1; i < ring.length; i++) {
+      ctx.lineTo(((ring[i][0] + 180) * COUNTRY_W) / 360, ((90 - ring[i][1]) * COUNTRY_H) / 180);
+    }
+    ctx.closePath();
+  }
+  ctx.fill("evenodd");
 }
 
 function colorFor(stops, v) {
