@@ -8,7 +8,7 @@
 import { SHIPPING_LANES } from "../shipping-lanes.js";
 import { vesselName } from "../demo-data.js";
 import { createLiveAis } from "../ais.js";
-import { flagFromMmsi, shipTypeName, resolveDestination, loadPortData } from "../ais-data.js";
+import { flagFromMmsi, shipTypeName, resolveDestination, loadMaritimeReferenceData } from "../ais-data.js";
 
 const LANE_HEIGHT = 1500;       // metres — keeps segments clear of the ellipsoid
 const VESSEL_HEIGHT = 1200;
@@ -58,7 +58,7 @@ export class ShippingLayer {
 
   async init() {
     this._buildLanes(LANE_COLOR, POLAR_COLOR);
-    await loadPortData();
+    await loadMaritimeReferenceData();
 
     this.live = await createLiveAis({
       onPosition: (u) => this._upsertLive(u),

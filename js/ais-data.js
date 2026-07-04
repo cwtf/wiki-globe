@@ -2,6 +2,8 @@
 // and a port gazetteer for resolving free-text AIS destinations. Ports are
 // loaded from generated UN/LOCODE data, with the legacy list as a fallback.
 
+const MIDS_URL = "data/maritime-mids.latest.json";
+const SHIP_TYPES_URL = "data/ais-ship-types.latest.json";
 const PORTS_URL = "data/ports.latest.json";
 
 const MID_FLAGS = {
@@ -73,32 +75,87 @@ const MID_FLAGS = {
   755: "Paraguay", 760: "Peru", 765: "Suriname", 770: "Uruguay", 775: "Venezuela",
 };
 
+const LEGACY_SHIP_TYPE_RULES = [
+  { from: 20, to: 29, label: "Wing-in-ground craft" },
+  { from: 30, to: 30, label: "Fishing vessel" },
+  { from: 31, to: 32, label: "Towing vessel" },
+  { from: 33, to: 33, label: "Dredger" },
+  { from: 34, to: 34, label: "Diving ops vessel" },
+  { from: 35, to: 35, label: "Military vessel" },
+  { from: 36, to: 36, label: "Sailing vessel" },
+  { from: 37, to: 37, label: "Pleasure craft" },
+  { from: 40, to: 49, label: "High-speed craft" },
+  { from: 50, to: 50, label: "Pilot vessel" },
+  { from: 51, to: 51, label: "Search & rescue vessel" },
+  { from: 52, to: 52, label: "Tug" },
+  { from: 53, to: 53, label: "Port tender" },
+  { from: 54, to: 54, label: "Anti-pollution vessel" },
+  { from: 55, to: 55, label: "Law enforcement vessel" },
+  { from: 58, to: 58, label: "Medical transport" },
+  { from: 60, to: 69, label: "Passenger ship" },
+  { from: 70, to: 79, label: "Cargo ship" },
+  { from: 80, to: 89, label: "Tanker" },
+];
+
+let midFlags = buildMidMap(Object.entries(MID_FLAGS).map(([mid, flag]) => ({ mid: Number(mid), flag })));
+let shipTypeRules = LEGACY_SHIP_TYPE_RULES;
+let midDataLoaded = false;
+let shipTypeDataLoaded = false;
+
+export async function loadMaritimeReferenceData() {
+  const [midsOk, typesOk, portsOk] = await Promise.all([
+    loadMidData(),
+    loadShipTypeData(),
+    loadPortData(),
+  ]);
+  return midsOk && typesOk && portsOk;
+}
+
 export function flagFromMmsi(mmsi) {
-  return MID_FLAGS[Number(String(mmsi).slice(0, 3))] ?? null;
+  return midFlags.get(Number(String(mmsi).slice(0, 3))) ?? null;
 }
 
 export function shipTypeName(code) {
-  if (code == null || code === 0) return "Vessel";
-  if (code >= 20 && code <= 29) return "Wing-in-ground craft";
-  if (code === 30) return "Fishing vessel";
-  if (code === 31 || code === 32) return "Towing vessel";
-  if (code === 33) return "Dredger";
-  if (code === 34) return "Diving ops vessel";
-  if (code === 35) return "Military vessel";
-  if (code === 36) return "Sailing vessel";
-  if (code === 37) return "Pleasure craft";
-  if (code >= 40 && code <= 49) return "High-speed craft";
-  if (code === 50) return "Pilot vessel";
-  if (code === 51) return "Search & rescue vessel";
-  if (code === 52) return "Tug";
-  if (code === 53) return "Port tender";
-  if (code === 54) return "Anti-pollution vessel";
-  if (code === 55) return "Law enforcement vessel";
-  if (code === 58) return "Medical transport";
-  if (code >= 60 && code <= 69) return "Passenger ship";
-  if (code >= 70 && code <= 79) return "Cargo ship";
-  if (code >= 80 && code <= 89) return "Tanker";
-  return "Vessel";
+  const n = Number(code);
+  if (!Number.isFinite(n) || n === 0) return "Vessel";
+  const rule = shipTypeRules.find((r) => n >= r.from && n <= r.to);
+  return rule?.label ?? "Vessel";
+}
+
+async function loadMidData() {
+  if (midDataLoaded) return true;
+  try {
+    const resp = await fetch(MIDS_URL);
+    if (!resp.ok) throw new Error(`maritime mids ${resp.status}`);
+    const data = await resp.json();
+    if (!Array.isArray(data?.mids)) throw new Error("maritime mids payload missing mids array");
+    const nextMidFlags = buildMidMap(data.mids);
+    if (nextMidFlags.size < 100) throw new Error("maritime mids payload is unexpectedly small");
+    midFlags = nextMidFlags;
+    midDataLoaded = true;
+    return true;
+  } catch (e) {
+    console.warn("[ais] generated MID data unavailable, using bundled fallback:", e.message);
+    return false;
+  }
+}
+
+async function loadShipTypeData() {
+  if (shipTypeDataLoaded) return true;
+  try {
+    const resp = await fetch(SHIP_TYPES_URL);
+    if (!resp.ok) throw new Error(`ship types ${resp.status}`);
+    const data = await resp.json();
+    if (!Array.isArray(data?.shipTypes)) throw new Error("ship types payload missing shipTypes array");
+    const nextShipTypeRules = normalizeShipTypeRules(data.shipTypes);
+    if (nextShipTypeRules.length < 10) throw new Error("ship types payload is unexpectedly small");
+    shipTypeRules = nextShipTypeRules;
+    shipTypeDataLoaded = true;
+    return true;
+  } catch (e) {
+    console.warn("[ais] generated ship type data unavailable, using bundled fallback:", e.message);
+    return false;
+  }
 }
 
 // [UN/LOCODE, display name, lat, lon] — majors worldwide, dense in the Baltic
@@ -240,6 +297,27 @@ const PORTS = [
 
 let portIndex = buildPortIndex(PORTS.map(legacyPort));
 let portDataLoaded = false;
+
+function buildMidMap(rows) {
+  const map = new Map();
+  for (const row of rows ?? []) {
+    const mid = Number(row.mid);
+    const flag = String(row.flag ?? "").trim();
+    if (Number.isInteger(mid) && flag) map.set(mid, flag);
+  }
+  return map;
+}
+
+function normalizeShipTypeRules(rows) {
+  return (rows ?? [])
+    .map((row) => ({
+      from: Number(row.from),
+      to: Number(row.to),
+      label: String(row.label ?? "").trim(),
+    }))
+    .filter((row) => Number.isInteger(row.from) && Number.isInteger(row.to) && row.from <= row.to && row.label)
+    .sort((a, b) => a.from - b.from || a.to - b.to);
+}
 
 export async function loadPortData() {
   if (portDataLoaded) return true;
