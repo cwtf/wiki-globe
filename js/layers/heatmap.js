@@ -34,6 +34,7 @@ const COUNTRY_H = 720;
 const OVERLAY_ALPHA = 160;            // 0-255 baked into the overlay pixels
 const EDGE_FADE_DEG = 7.5;            // fade to transparent at grid edges
 const NO_DATA_FILL = "rgba(125, 135, 150, 0.16)";
+const COUNTRY_STATS_URL = "data/country-stats.latest.json";
 
 const TIME_FMT = new Intl.DateTimeFormat("en", {
   month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
@@ -46,7 +47,7 @@ const degC = (x) => `${x.toFixed(1)} °C`;
 // Metric definitions. stops: [value, [r,g,b]] colour ramp (piecewise-linear);
 // legend: evenly spaced [label, css] ticks for the panel gradient bar.
 // Weather metrics read interpolated grid samples via value(); country
-// metrics index the COUNTRY_STATS rows via statIdx.
+// metrics index generated country-stat rows via statKey.
 export const METRICS = {
   wetbulb: {
     label: "Wet-bulb temp", kind: "weather",
@@ -88,7 +89,7 @@ export const METRICS = {
   },
   gdpNominal: {
     label: "GDP per capita (nominal)", kind: "country",
-    statIdx: 1, fmt: money,
+    statKey: "gdpNominal", fmt: money,
     stops: [
       [500, [239, 68, 68]], [2000, [251, 146, 60]], [6000, [250, 204, 21]],
       [15000, [168, 221, 78]], [40000, [63, 217, 143]], [90000, [79, 195, 247]],
@@ -100,7 +101,7 @@ export const METRICS = {
   },
   gdpPpp: {
     label: "GDP per capita (PPP)", kind: "country",
-    statIdx: 2, fmt: money,
+    statKey: "gdpPpp", fmt: money,
     stops: [
       [1000, [239, 68, 68]], [4000, [251, 146, 60]], [12000, [250, 204, 21]],
       [25000, [168, 221, 78]], [60000, [63, 217, 143]], [120000, [79, 195, 247]],
@@ -112,7 +113,7 @@ export const METRICS = {
   },
   hdi: {
     label: "HDI", kind: "country",
-    statIdx: 3, fmt: (x) => x.toFixed(3),
+    statKey: "hdi", fmt: (x) => x.toFixed(3),
     stops: [
       [0.40, [239, 68, 68]], [0.55, [251, 146, 60]], [0.70, [250, 204, 21]],
       [0.80, [168, 221, 78]], [0.90, [63, 217, 143]], [0.97, [79, 195, 247]],
@@ -124,7 +125,7 @@ export const METRICS = {
   },
   ihdi: {
     label: "IHDI", kind: "country",
-    statIdx: 4, fmt: (x) => x.toFixed(3),
+    statKey: "ihdi", fmt: (x) => x.toFixed(3),
     stops: [
       [0.25, [239, 68, 68]], [0.40, [251, 146, 60]], [0.55, [250, 204, 21]],
       [0.68, [168, 221, 78]], [0.80, [63, 217, 143]], [0.92, [79, 195, 247]],
@@ -136,7 +137,7 @@ export const METRICS = {
   },
   gni: {
     label: "GNI per capita (PPP)", kind: "country",
-    statIdx: 5, fmt: money,
+    statKey: "gni", fmt: money,
     stops: [
       [800, [239, 68, 68]], [3000, [251, 146, 60]], [9000, [250, 204, 21]],
       [22000, [168, 221, 78]], [50000, [63, 217, 143]], [100000, [79, 195, 247]],
@@ -166,7 +167,13 @@ export class HeatmapLayer {
     this.selTime = null;              // pinned timestamp; null = follow latest
     this.onDataChanged = null;        // app hook: timeline bounds changed
     this.geo = null;                  // country polygons (lazy)
+    this.countryStats = legacyCountryStats();
+    this.countryStatsMeta = {
+      sourceLabel: "bundled IMF/UNDP 2022-23 estimates",
+      fallback: true,
+    };
     this._geoLoading = false;
+    this._statsLoading = false;
     this._retryTimer = null;
     this._rebuildTimer = null;
     this._gen = 0;                    // overlay rebuild generation (latest wins)
@@ -211,8 +218,8 @@ export class HeatmapLayer {
       if (Date.now() - this.lastFetch > REFRESH_MS) this._load();
       this.timer ??= setInterval(() => this._load(), REFRESH_MS);
       if (this.okCount > 0) this._scheduleRebuild();
-    } else if (!this.geo) {
-      this._loadCountries();
+    } else if (!this.geo || this.countryStatsMeta.fallback) {
+      this._loadCountryData();
     } else {
       this._scheduleRebuild();
     }
@@ -399,20 +406,46 @@ export class HeatmapLayer {
 
   // --- country data ------------------------------------------------------------
 
-  async _loadCountries() {
-    if (this._geoLoading) return;
+  async _loadCountryData() {
+    if (this._geoLoading || this._statsLoading) return;
     this._geoLoading = true;
+    this._statsLoading = true;
     try {
-      this.geo = await loadCountryGeo(); // shared with search / true-size compare
+      const [geo] = await Promise.all([
+        loadCountryGeo(), // shared with search / true-size compare
+        this._loadCountryStats(),
+      ]);
+      this.geo = geo;
       if (this.metric?.kind === "country") {
         this._rebuildOverlay();
         this.onDataChanged?.();
       }
     } catch (e) {
-      console.warn("[heatmap] country boundaries failed to load:", e.message);
+      console.warn("[heatmap] country data failed to load:", e.message);
       this.geo = null;
     } finally {
       this._geoLoading = false;
+      this._statsLoading = false;
+    }
+  }
+
+  async _loadCountryStats() {
+    if (!this.countryStatsMeta.fallback) return;
+    try {
+      const resp = await fetch(COUNTRY_STATS_URL);
+      if (!resp.ok) throw new Error(`country stats ${resp.status}`);
+      const data = await resp.json();
+      if (!data?.countries || typeof data.countries !== "object") {
+        throw new Error("country stats payload missing countries");
+      }
+      this.countryStats = data.countries;
+      this.countryStatsMeta = {
+        sourceLabel: data.meta?.sourceLabel ?? "generated country statistics",
+        generatedAt: data.meta?.generatedAt ?? data.generatedAt,
+        fallback: false,
+      };
+    } catch (e) {
+      console.warn("[heatmap] generated country stats unavailable, using bundled fallback:", e.message);
     }
   }
 
@@ -431,8 +464,14 @@ export class HeatmapLayer {
     if (m.kind === "country") {
       const f = this._countryAt(lat, lon);
       if (!f) return null;
-      const value = COUNTRY_STATS[f.id]?.[m.statIdx] ?? null;
-      return { kind: "country", metric: this.mode, name: f.name, value };
+      const stat = this.countryStats[f.id]?.[m.statKey] ?? null;
+      return {
+        kind: "country",
+        metric: this.mode,
+        name: f.name,
+        value: statValue(stat),
+        stat,
+      };
     }
     if (lat < LAT_MIN || lat > this.maxLat) return null;
     lon = ((lon + 180) % 360 + 360) % 360 - 180;
@@ -509,7 +548,7 @@ export class HeatmapLayer {
     const X = (lon) => ((lon + 180) * COUNTRY_W) / 360;
     const Y = (lat) => ((90 - lat) * COUNTRY_H) / 180;
     for (const f of this.geo ?? []) {
-      const value = COUNTRY_STATS[f.id]?.[m.statIdx];
+      const value = statValue(this.countryStats[f.id]?.[m.statKey]);
       if (value == null) {
         ctx.fillStyle = NO_DATA_FILL;
       } else {
@@ -548,8 +587,8 @@ export class HeatmapLayer {
       if (!this.geo) {
         return { count: 0, detail: "loading country boundaries…", source: "loading" };
       }
-      const count = this.geo.filter((f) => COUNTRY_STATS[f.id]?.[m.statIdx] != null).length;
-      return { count, detail: `${count} countries · bundled IMF/UNDP 2022-23 estimates`, source: "data" };
+      const count = this.geo.filter((f) => statValue(this.countryStats[f.id]?.[m.statKey]) != null).length;
+      return { count, detail: `${count} countries · ${this.countryStatsMeta.sourceLabel}`, source: "data" };
     }
     const note = {
       limited: " · API rate-limited, retrying later",
@@ -590,6 +629,25 @@ function colorFor(stops, v) {
     }
   }
   return stops[stops.length - 1][1];
+}
+
+function statValue(stat) {
+  return stat && typeof stat === "object" ? stat.value ?? null : stat ?? null;
+}
+
+function legacyCountryStats() {
+  const keys = ["name", "gdpNominal", "gdpPpp", "hdi", "ihdi", "gni"];
+  const out = {};
+  for (const [iso3, row] of Object.entries(COUNTRY_STATS)) {
+    out[iso3] = { name: row[0] };
+    for (let i = 1; i < keys.length; i++) {
+      out[iso3][keys[i]] = {
+        value: row[i],
+        source: "Bundled legacy snapshot",
+      };
+    }
+  }
+  return out;
 }
 
 // Human heat-stress context for the wet-bulb tooltip.

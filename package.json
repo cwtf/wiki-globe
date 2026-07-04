@@ -1,0 +1,7 @@
+{
+  "scripts": {
+    "data:update:country-stats": "node scripts/data/update-country-stats.mjs",
+    "data:update": "node scripts/data/update-country-stats.mjs",
+    "data:validate": "node scripts/data/validate-country-stats.mjs"
+  }
+}

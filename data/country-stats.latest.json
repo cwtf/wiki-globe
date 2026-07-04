@@ -1,0 +1,7711 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "generatedAt": "2026-07-04T00:05:58.550Z",
+    "sourceLabel": "World Bank Indicators API + UNDP Human Development Reports",
+    "sources": [
+      {
+        "name": "World Bank Indicators API",
+        "url": "https://api.worldbank.org/v2/country/all/indicator/NY.GDP.PCAP.CD?format=json",
+        "indicators": [
+          "NY.GDP.PCAP.CD"
+        ]
+      },
+      {
+        "name": "World Bank Indicators API",
+        "url": "https://api.worldbank.org/v2/country/all/indicator/NY.GDP.PCAP.PP.CD?format=json",
+        "indicators": [
+          "NY.GDP.PCAP.PP.CD"
+        ]
+      },
+      {
+        "name": "World Bank Indicators API",
+        "url": "https://api.worldbank.org/v2/country/all/indicator/NY.GNP.PCAP.PP.CD?format=json",
+        "indicators": [
+          "NY.GNP.PCAP.PP.CD"
+        ]
+      },
+      {
+        "name": "UNDP Human Development Reports",
+        "url": "https://hdr.undp.org/sites/default/files/2025_HDR/HDR25_Composite_indices_complete_time_series.csv",
+        "fields": [
+          "hdi",
+          "ihdi",
+          "gni"
+        ]
+      }
+    ],
+    "warnings": [],
+    "notes": [
+      "World Bank values are the latest non-null annual value returned by the Indicators API.",
+      "UNDP HDR fields are merged when an HDR CSV URL is supplied or discoverable; otherwise legacy HDI/IHDI values remain marked as legacy."
+    ]
+  },
+  "fields": {
+    "gdpNominal": {
+      "unit": "current US dollars per person",
+      "defaultSource": "World Bank",
+      "indicator": "NY.GDP.PCAP.CD"
+    },
+    "gdpPpp": {
+      "unit": "current international dollars per person",
+      "defaultSource": "World Bank",
+      "indicator": "NY.GDP.PCAP.PP.CD"
+    },
+    "hdi": {
+      "unit": "index",
+      "defaultSource": "UNDP HDR"
+    },
+    "ihdi": {
+      "unit": "index",
+      "defaultSource": "UNDP HDR"
+    },
+    "gni": {
+      "unit": "current international dollars per person",
+      "defaultSource": "World Bank",
+      "indicator": "NY.GNP.PCAP.PP.CD"
+    }
+  },
+  "countries": {
+    "AFG": {
+      "name": "Afghanistan",
+      "gdpNominal": {
+        "value": 416.871,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 2201.723,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.496,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.321,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 1971.549,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "ALB": {
+      "name": "Albania",
+      "gdpNominal": {
+        "value": 12998.148,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 26701.675,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.81,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.705,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 17627.394,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "DZA": {
+      "name": "Algeria",
+      "gdpNominal": {
+        "value": 6051.003,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 17620.742,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.763,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.601,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 15114.172,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "AGO": {
+      "name": "Angola",
+      "gdpNominal": {
+        "value": 3129.477,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 10118.609,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.616,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.36,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 6631.277,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "ARG": {
+      "name": "Argentina",
+      "gdpNominal": {
+        "value": 14898.089,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 30431.193,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.865,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.761,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 25876.053,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "ARM": {
+      "name": "Armenia",
+      "gdpNominal": {
+        "value": 9474.018,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 22823.18,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.811,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.743,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 20220.723,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "AUS": {
+      "name": "Australia",
+      "gdpNominal": {
+        "value": 65129.723,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 72111.184,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.958,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.873,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 58276.876,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "AUT": {
+      "name": "Austria",
+      "gdpNominal": {
+        "value": 62930.035,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 73911.44,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.93,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.861,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 63479.208,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "AZE": {
+      "name": "Azerbaijan",
+      "gdpNominal": {
+        "value": 7410.723,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 25088.999,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.789,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.735,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 20667.957,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "BHS": {
+      "name": "Bahamas",
+      "gdpNominal": {
+        "value": 39455.447,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 41197.934,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.82,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.67,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 30974.681,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "BHR": {
+      "name": "Bahrain",
+      "gdpNominal": {
+        "value": 30596.579,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 66941.243,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.899,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 52818.795,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "BGD": {
+      "name": "Bangladesh",
+      "gdpNominal": {
+        "value": 2597.344,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 9646.77,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.685,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.482,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 8497.659,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "BLR": {
+      "name": "Belarus",
+      "gdpNominal": {
+        "value": 10279.255,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 33010.331,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.824,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.771,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 26724.871,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "BEL": {
+      "name": "Belgium",
+      "gdpNominal": {
+        "value": 60750.274,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 73514.483,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.951,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.891,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 63582.475,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "BLZ": {
+      "name": "Belize",
+      "gdpNominal": {
+        "value": 7865.479,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 14346.519,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.721,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 12343.078,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "BEN": {
+      "name": "Benin",
+      "gdpNominal": {
+        "value": 1658.273,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 4434.564,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.515,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.316,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 3805.528,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "BTN": {
+      "name": "Bhutan",
+      "gdpNominal": {
+        "value": 4492.784,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 16215.152,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.698,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.478,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 13842.804,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "BOL": {
+      "name": "Bolivia",
+      "gdpNominal": {
+        "value": 5147.811,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 12877.635,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.733,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.578,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 9445.245,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "BIH": {
+      "name": "Bosnia and Herzegovina",
+      "gdpNominal": {
+        "value": 10381.846,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 25043.089,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.804,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.689,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 19827.486,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "BWA": {
+      "name": "Botswana",
+      "gdpNominal": {
+        "value": 7778.115,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 20538.132,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.731,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.509,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 16983.771,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "BRA": {
+      "name": "Brazil",
+      "gdpNominal": {
+        "value": 10713.286,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 22338.477,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.786,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.594,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 18011.285,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "BRN": {
+      "name": "Brunei",
+      "gdpNominal": {
+        "value": 32234.643,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 89879.361,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.837,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.756,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 75826.873,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "BGR": {
+      "name": "Bulgaria",
+      "gdpNominal": {
+        "value": 20328.167,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 41969.452,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.845,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.748,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 32174.93,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "BFA": {
+      "name": "Burkina Faso",
+      "gdpNominal": {
+        "value": 1147.571,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 2895.892,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.459,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.273,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 2390.528,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "BDI": {
+      "name": "Burundi",
+      "gdpNominal": {
+        "value": 233.823,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 1194.947,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.439,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.286,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 858.916,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "KHM": {
+      "name": "Cambodia",
+      "gdpNominal": {
+        "value": 2872.429,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 7966.874,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.606,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.444,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 4931.017,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "CMR": {
+      "name": "Cameroon",
+      "gdpNominal": {
+        "value": 1972.382,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 5588.986,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.588,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.361,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 4746.266,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "CAN": {
+      "name": "Canada",
+      "gdpNominal": {
+        "value": 55697.664,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 64610.38,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.939,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.867,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 54688.417,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "CPV": {
+      "name": "Cape Verde",
+      "gdpNominal": {
+        "value": 5796.472,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 11195.121,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.668,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.478,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 8165.379,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "CAF": {
+      "name": "Central African Republic",
+      "gdpNominal": {
+        "value": 556.131,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 1263.102,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.414,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.253,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 1099.861,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "TCD": {
+      "name": "Chad",
+      "gdpNominal": {
+        "value": 1022.336,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 2742.66,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.416,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.252,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 1748.001,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "CHL": {
+      "name": "Chile",
+      "gdpNominal": {
+        "value": 17994.591,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 36181.157,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.878,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.723,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 28047.17,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "CHN": {
+      "name": "China",
+      "gdpNominal": {
+        "value": 13861.97,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 27104.87,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.797,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.67,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 22029.223,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "COL": {
+      "name": "Colombia",
+      "gdpNominal": {
+        "value": 8561.621,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 22349.436,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.788,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.593,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 18665.95,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "COM": {
+      "name": "Comoros",
+      "gdpNominal": {
+        "value": 2055.759,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 3958.532,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.603,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.356,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 3481.121,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "COD": {
+      "name": "DR Congo",
+      "gdpNominal": {
+        "value": 806.776,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 1821.049,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.522,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.341,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 1431.048,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "COG": {
+      "name": "Republic of the Congo",
+      "gdpNominal": {
+        "value": 2514.734,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 7026.362,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.649,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.426,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 5902.599,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "CRI": {
+      "name": "Costa Rica",
+      "gdpNominal": {
+        "value": 19970.099,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 31106.764,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.833,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.678,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 23417.213,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "CIV": {
+      "name": "Côte d'Ivoire",
+      "gdpNominal": {
+        "value": 3050.102,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 7669.232,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.582,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.35,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 6735.416,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "HRV": {
+      "name": "Croatia",
+      "gdpNominal": {
+        "value": 27103.912,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 49550.792,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.889,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.828,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 41379.89,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "CUB": {
+      "name": "Cuba",
+      "gdpNominal": {
+        "value": 9605.279,
+        "year": 2020,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": null,
+      "hdi": {
+        "value": 0.762,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 8415.412,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "CYP": {
+      "name": "Cyprus",
+      "gdpNominal": {
+        "value": 41783.09,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 63006.613,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.913,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.841,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 45394.156,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "CZE": {
+      "name": "Czechia",
+      "gdpNominal": {
+        "value": 35917.272,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 57285.424,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.915,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.867,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 45889.014,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "DNK": {
+      "name": "Denmark",
+      "gdpNominal": {
+        "value": 76970.154,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 81878.235,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.962,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.909,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 76007.857,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "DJI": {
+      "name": "Djibouti",
+      "gdpNominal": {
+        "value": 3905.605,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 7810.279,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.513,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.341,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 6367.606,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "DOM": {
+      "name": "Dominican Republic",
+      "gdpNominal": {
+        "value": 11059.208,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 27541.663,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.776,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.634,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 22023.511,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "ECU": {
+      "name": "Ecuador",
+      "gdpNominal": {
+        "value": 7125.276,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 15840.267,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.777,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.64,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 13986.397,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "EGY": {
+      "name": "Egypt",
+      "gdpNominal": {
+        "value": 3085.807,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 19094.145,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.754,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.582,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 16218.135,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "SLV": {
+      "name": "El Salvador",
+      "gdpNominal": {
+        "value": 5766.726,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 13264.027,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.678,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.555,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 10594.842,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "GNQ": {
+      "name": "Equatorial Guinea",
+      "gdpNominal": {
+        "value": 6615.252,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 17566.76,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.674,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 12762.468,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "ERI": {
+      "name": "Eritrea",
+      "gdpNominal": {
+        "value": 688.682,
+        "year": 2011,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 1742.324,
+        "year": 2011,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.503,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 2029.07,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "EST": {
+      "name": "Estonia",
+      "gdpNominal": {
+        "value": 34417.632,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 49968.711,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.905,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.841,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 40880.93,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "SWZ": {
+      "name": "Eswatini",
+      "gdpNominal": {
+        "value": 4108.252,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 11799.203,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.695,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.431,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 9919.085,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "ETH": {
+      "name": "Ethiopia",
+      "gdpNominal": {
+        "value": 932.729,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 3287.535,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.497,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.326,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 2795.507,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "FJI": {
+      "name": "Fiji",
+      "gdpNominal": {
+        "value": 6642.004,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 15450.299,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.731,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.626,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 12843.159,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "FIN": {
+      "name": "Finland",
+      "gdpNominal": {
+        "value": 56148.581,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 65378.384,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.948,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.891,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 57067.637,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "FRA": {
+      "name": "France",
+      "gdpNominal": {
+        "value": 48985.731,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 62556.918,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.92,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.836,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 55060.16,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "GAB": {
+      "name": "Gabon",
+      "gdpNominal": {
+        "value": 8263.033,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 21510.173,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.733,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.558,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 18854.062,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "GMB": {
+      "name": "Gambia",
+      "gdpNominal": {
+        "value": 919.06,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 3475.612,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.524,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.329,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 2812.018,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "GEO": {
+      "name": "Georgia",
+      "gdpNominal": {
+        "value": 9691.535,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 28285.073,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.844,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.754,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 20752.57,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "DEU": {
+      "name": "Germany",
+      "gdpNominal": {
+        "value": 60496.435,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 73551.935,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.959,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.89,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 64053.221,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "GHA": {
+      "name": "Ghana",
+      "gdpNominal": {
+        "value": 3257.159,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 8019.997,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.628,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.399,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 6846.352,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "GRC": {
+      "name": "Greece",
+      "gdpNominal": {
+        "value": 26948.007,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 44327.21,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.908,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.825,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 35760.749,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "GRL": {
+      "name": "Greenland",
+      "gdpNominal": {
+        "value": 58498.971,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 78840.598,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": null,
+      "ihdi": null,
+      "gni": {
+        "value": 40270,
+        "year": 2007,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "GTM": {
+      "name": "Guatemala",
+      "gdpNominal": {
+        "value": 6598.18,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 14368.661,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.662,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.479,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 12458.604,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "GIN": {
+      "name": "Guinea",
+      "gdpNominal": {
+        "value": 1877.254,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 4565.301,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.5,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.302,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 3494.348,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "GNB": {
+      "name": "Guinea-Bissau",
+      "gdpNominal": {
+        "value": 1123.767,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 3119.372,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.514,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.331,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 2403.059,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "GUY": {
+      "name": "Guyana",
+      "gdpNominal": {
+        "value": 32413.793,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 80155.039,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.776,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 46959.252,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "HTI": {
+      "name": "Haiti",
+      "gdpNominal": {
+        "value": 2694.19,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 3193.671,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.554,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.337,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 2934.926,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "HND": {
+      "name": "Honduras",
+      "gdpNominal": {
+        "value": 3598.215,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 7486.019,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.645,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.496,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 6064.786,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "HUN": {
+      "name": "Hungary",
+      "gdpNominal": {
+        "value": 25907.474,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 48552.471,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.87,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.819,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 37236.075,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "ISL": {
+      "name": "Iceland",
+      "gdpNominal": {
+        "value": 98323.485,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 84256.845,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.972,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.923,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 69116.937,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "IND": {
+      "name": "India",
+      "gdpNominal": {
+        "value": 2702.48,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 11159.986,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.685,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.475,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 9046.756,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "IDN": {
+      "name": "Indonesia",
+      "gdpNominal": {
+        "value": 5059.626,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 16448.276,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.728,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.608,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 13700.13,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "IRN": {
+      "name": "Iran",
+      "gdpNominal": {
+        "value": 3924.38,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 19873.886,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.799,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.643,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 16095.772,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "IRQ": {
+      "name": "Iraq",
+      "gdpNominal": {
+        "value": 5409.679,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 14464.319,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.695,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.534,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 12653.525,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "IRL": {
+      "name": "Ireland",
+      "gdpNominal": {
+        "value": 131592.463,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 133437.47,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.949,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.886,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 90884.635,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "ISR": {
+      "name": "Israel",
+      "gdpNominal": {
+        "value": 60336.848,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 57235.776,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.919,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.813,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 48050.112,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "ITA": {
+      "name": "Italy",
+      "gdpNominal": {
+        "value": 43308.64,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 62014.268,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.915,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.817,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 52388.883,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "JAM": {
+      "name": "Jamaica",
+      "gdpNominal": {
+        "value": 8002.921,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 12890.266,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.72,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.59,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 10056.985,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "JPN": {
+      "name": "Japan",
+      "gdpNominal": {
+        "value": 35951.045,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 52039.172,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.925,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.845,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 47774.61,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "JOR": {
+      "name": "Jordan",
+      "gdpNominal": {
+        "value": 5347.777,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 10821.491,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.754,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.637,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 9221.872,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "KAZ": {
+      "name": "Kazakhstan",
+      "gdpNominal": {
+        "value": 14692.133,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 40890.932,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.837,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.766,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 30988.528,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "KEN": {
+      "name": "Kenya",
+      "gdpNominal": {
+        "value": 2362.861,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 6644.131,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.628,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.456,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 5608.296,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "KOS": {
+      "name": "Kosovo",
+      "gdpNominal": {
+        "value": 5700,
+        "source": "Bundled legacy snapshot"
+      },
+      "gdpPpp": {
+        "value": 15300,
+        "source": "Bundled legacy snapshot"
+      },
+      "hdi": null,
+      "ihdi": null,
+      "gni": null
+    },
+    "PRK": {
+      "name": "North Korea",
+      "gdpNominal": {
+        "value": 640,
+        "source": "Bundled legacy snapshot"
+      },
+      "gdpPpp": null,
+      "hdi": {
+        "value": 0,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 0,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "KOR": {
+      "name": "South Korea",
+      "gdpNominal": {
+        "value": 36226.966,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 61051.349,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.937,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.857,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 49726.453,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "KWT": {
+      "name": "Kuwait",
+      "gdpNominal": {
+        "value": 32312.312,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 52443.597,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.852,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 56612.047,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "KGZ": {
+      "name": "Kyrgyzstan",
+      "gdpNominal": {
+        "value": 3080.969,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 8012.455,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.72,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.649,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 6078.118,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "LAO": {
+      "name": "Laos",
+      "gdpNominal": {
+        "value": 2324.764,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 9775.828,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.617,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.462,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 8106.153,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "LVA": {
+      "name": "Latvia",
+      "gdpNominal": {
+        "value": 26311.973,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 43394.273,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.889,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.812,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 37997.822,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "LBN": {
+      "name": "Lebanon",
+      "gdpNominal": {
+        "value": 4473.271,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 12574.833,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.752,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 11298.887,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "LSO": {
+      "name": "Lesotho",
+      "gdpNominal": {
+        "value": 1088.963,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 3001.163,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.55,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.357,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 3029.386,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "LBR": {
+      "name": "Liberia",
+      "gdpNominal": {
+        "value": 915.329,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 1871.044,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.51,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.326,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 1537.859,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "LBY": {
+      "name": "Libya",
+      "gdpNominal": {
+        "value": 6448.824,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 14303.809,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.721,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 19831.432,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "LTU": {
+      "name": "Lithuania",
+      "gdpNominal": {
+        "value": 32958.671,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 55285.899,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.895,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.812,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 41916.466,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "LUX": {
+      "name": "Luxembourg",
+      "gdpNominal": {
+        "value": 147252.179,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 155941.288,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.922,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.838,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 85461.248,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "MDG": {
+      "name": "Madagascar",
+      "gdpNominal": {
+        "value": 599.265,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 1883.537,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.487,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.319,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 1655.765,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "MWI": {
+      "name": "Malawi",
+      "gdpNominal": {
+        "value": 671.507,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 1857.618,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.517,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.365,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 1633.693,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "MYS": {
+      "name": "Malaysia",
+      "gdpNominal": {
+        "value": 13124.555,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 38779.283,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.819,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.707,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 32553.091,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "MDV": {
+      "name": "Maldives",
+      "gdpNominal": {
+        "value": 14614.721,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 26182.783,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.766,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.602,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 19317.319,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "MLI": {
+      "name": "Mali",
+      "gdpNominal": {
+        "value": 1193.276,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 3314.773,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.419,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.281,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 2341.588,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "MLT": {
+      "name": "Malta",
+      "gdpNominal": {
+        "value": 47906.9,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 69863.746,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.924,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.843,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 52155.075,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "MRT": {
+      "name": "Mauritania",
+      "gdpNominal": {
+        "value": 2197.51,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 7368.753,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.563,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.374,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 6267.471,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "MUS": {
+      "name": "Mauritius",
+      "gdpNominal": {
+        "value": 12991.294,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 31839.76,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.806,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.669,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 27279.96,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "MEX": {
+      "name": "Mexico",
+      "gdpNominal": {
+        "value": 13889.234,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 26185.356,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.789,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.646,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 21812.656,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "MDA": {
+      "name": "Moldova",
+      "gdpNominal": {
+        "value": 8621.717,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 18614.988,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.785,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.719,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 15866.542,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "MNG": {
+      "name": "Mongolia",
+      "gdpNominal": {
+        "value": 7108.227,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 19144.726,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.747,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.647,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 14787.082,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "MNE": {
+      "name": "Montenegro",
+      "gdpNominal": {
+        "value": 14816.838,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 34062.758,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.862,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.771,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 28026.33,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "MAR": {
+      "name": "Morocco",
+      "gdpNominal": {
+        "value": 4672.468,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 10415.124,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.71,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.517,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 8652.881,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "MOZ": {
+      "name": "Mozambique",
+      "gdpNominal": {
+        "value": 626.914,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 1705.379,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.493,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.297,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 1355.767,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "MMR": {
+      "name": "Myanmar",
+      "gdpNominal": {
+        "value": 1488.875,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 5997.465,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.609,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.477,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 4918.811,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "NAM": {
+      "name": "Namibia",
+      "gdpNominal": {
+        "value": 4875.926,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 11686.602,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.665,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.438,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 10916.609,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "NPL": {
+      "name": "Nepal",
+      "gdpNominal": {
+        "value": 1535.878,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 5736.621,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.622,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.437,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 4725.931,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "NLD": {
+      "name": "Netherlands",
+      "gdpNominal": {
+        "value": 73683.917,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 86173.629,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.955,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.892,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 68344.308,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "NCL": {
+      "name": "New Caledonia",
+      "gdpNominal": {
+        "value": 29213.192,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": null,
+      "hdi": null,
+      "ihdi": null,
+      "gni": null
+    },
+    "NZL": {
+      "name": "New Zealand",
+      "gdpNominal": {
+        "value": 49591.041,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 55551.144,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.938,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.853,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 47259.601,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "NIC": {
+      "name": "Nicaragua",
+      "gdpNominal": {
+        "value": 3173.337,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 8708.8,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.706,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.535,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 6881.48,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "NER": {
+      "name": "Niger",
+      "gdpNominal": {
+        "value": 775.354,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 2049.933,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.419,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.265,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 1590.188,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "NGA": {
+      "name": "Nigeria",
+      "gdpNominal": {
+        "value": 1224.254,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 9086.876,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.56,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.379,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 5569.375,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "MKD": {
+      "name": "North Macedonia",
+      "gdpNominal": {
+        "value": 10489.926,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 26995.429,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.815,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.723,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 22128.395,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "NOR": {
+      "name": "Norway",
+      "gdpNominal": {
+        "value": 94594.193,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 102037.527,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.97,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.909,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 112710.021,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "OMN": {
+      "name": "Oman",
+      "gdpNominal": {
+        "value": 19947.397,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 41740.166,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.858,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.75,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 36096.041,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "PAK": {
+      "name": "Pakistan",
+      "gdpNominal": {
+        "value": 1595.909,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 6252.115,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.544,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.364,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 5501.133,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "PAN": {
+      "name": "Panama",
+      "gdpNominal": {
+        "value": 19789.731,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 41369.423,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.839,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.664,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 34384.568,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "PNG": {
+      "name": "Papua New Guinea",
+      "gdpNominal": {
+        "value": 3019.531,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 4874.69,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.576,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.423,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 3970.648,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "PRY": {
+      "name": "Paraguay",
+      "gdpNominal": {
+        "value": 7026.619,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 18523.681,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.756,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.599,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 15252.22,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "PER": {
+      "name": "Peru",
+      "gdpNominal": {
+        "value": 9684.412,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 17802.418,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.794,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.633,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 14338.71,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "PHL": {
+      "name": "Philippines",
+      "gdpNominal": {
+        "value": 4170.723,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 11794.138,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.72,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.597,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 10731.204,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "POL": {
+      "name": "Poland",
+      "gdpNominal": {
+        "value": 28419.578,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 51262.511,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.906,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.817,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 42217.638,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "PRT": {
+      "name": "Portugal",
+      "gdpNominal": {
+        "value": 32081.811,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 51679.888,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.89,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.795,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 41063.926,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "PRI": {
+      "name": "Puerto Rico",
+      "gdpNominal": {
+        "value": 40620.153,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 50247.849,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": null,
+      "ihdi": null,
+      "gni": {
+        "value": 35330,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "PSE": {
+      "name": "Palestine",
+      "gdpNominal": {
+        "value": 3171.108,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 4371.111,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.674,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.538,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 6547.099,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "QAT": {
+      "name": "Qatar",
+      "gdpNominal": {
+        "value": 72524.907,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 126046.355,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.886,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 105353.268,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "ROU": {
+      "name": "Romania",
+      "gdpNominal": {
+        "value": 22537.953,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 49076.54,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.845,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.758,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 39374.254,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "RUS": {
+      "name": "Russia",
+      "gdpNominal": {
+        "value": 17546.609,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 47361.906,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.832,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.758,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 39221.684,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "RWA": {
+      "name": "Rwanda",
+      "gdpNominal": {
+        "value": 1123.739,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 3710.86,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.578,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.399,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 2970.559,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "WSM": {
+      "name": "Samoa",
+      "gdpNominal": {
+        "value": 5872.783,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 8736.816,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.708,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.609,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 5952.017,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "SAU": {
+      "name": "Saudi Arabia",
+      "gdpNominal": {
+        "value": 34536.656,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 71375.373,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.9,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 50298.914,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "SEN": {
+      "name": "Senegal",
+      "gdpNominal": {
+        "value": 1954.712,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 5070.649,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.53,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.34,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 4202.031,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "SRB": {
+      "name": "Serbia",
+      "gdpNominal": {
+        "value": 15262.046,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 32832.176,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.833,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.772,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 23114.81,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "SYC": {
+      "name": "Seychelles",
+      "gdpNominal": {
+        "value": 19449.384,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 33238.58,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.848,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.755,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 29195.038,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "SLE": {
+      "name": "Sierra Leone",
+      "gdpNominal": {
+        "value": 846.296,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 3522.306,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.467,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.281,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 1713.728,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "SGP": {
+      "name": "Singapore",
+      "gdpNominal": {
+        "value": 98813.979,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 150689.302,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.946,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.823,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 111239.229,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "SVK": {
+      "name": "Slovakia",
+      "gdpNominal": {
+        "value": 28543.665,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 48132.356,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.88,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.833,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 36792.989,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "SVN": {
+      "name": "Slovenia",
+      "gdpNominal": {
+        "value": 37376.222,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 57186.371,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.931,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.885,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 46360.808,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "SLB": {
+      "name": "Solomon Islands",
+      "gdpNominal": {
+        "value": 2086.19,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 2674.893,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.584,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.483,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 2777.267,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "SOM": {
+      "name": "Somalia",
+      "gdpNominal": {
+        "value": 661.174,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 1601.965,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.404,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.229,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 1474.738,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "ZAF": {
+      "name": "South Africa",
+      "gdpNominal": {
+        "value": 6597.715,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 15456.199,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.741,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.476,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 13693.989,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "SSD": {
+      "name": "South Sudan",
+      "gdpNominal": {
+        "value": 1080.147,
+        "year": 2015,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 1154.887,
+        "year": 2015,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.388,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.226,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 688.347,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "ESP": {
+      "name": "Spain",
+      "gdpNominal": {
+        "value": 38627.247,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 57965.295,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.918,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.819,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 46008.442,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "LKA": {
+      "name": "Sri Lanka",
+      "gdpNominal": {
+        "value": 5002.079,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 15632.592,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.776,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.63,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 12615.6,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "SDN": {
+      "name": "Sudan",
+      "gdpNominal": {
+        "value": 1164.54,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 2115.816,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.511,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.328,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 2810.312,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "SUR": {
+      "name": "Suriname",
+      "gdpNominal": {
+        "value": 7069.872,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 21800.527,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.722,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 17344.387,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "SWE": {
+      "name": "Sweden",
+      "gdpNominal": {
+        "value": 63133.213,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 71844.913,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.959,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.886,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 66102.086,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "CHE": {
+      "name": "Switzerland",
+      "gdpNominal": {
+        "value": 114769.012,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 96497.695,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.97,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.894,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 81948.902,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "SYR": {
+      "name": "Syria",
+      "gdpNominal": {
+        "value": 1056.783,
+        "year": 2022,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 4772.462,
+        "year": 2022,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.564,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 3917.702,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "TWN": {
+      "name": "Taiwan",
+      "gdpNominal": {
+        "value": 33900,
+        "source": "Bundled legacy snapshot"
+      },
+      "gdpPpp": {
+        "value": 73300,
+        "source": "Bundled legacy snapshot"
+      },
+      "hdi": null,
+      "ihdi": null,
+      "gni": null
+    },
+    "TJK": {
+      "name": "Tajikistan",
+      "gdpNominal": {
+        "value": 1637.254,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 5405.98,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.691,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.594,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 5746.569,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "TZA": {
+      "name": "Tanzania",
+      "gdpNominal": {
+        "value": 1318.819,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 4220.796,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.555,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.391,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 3514.633,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "THA": {
+      "name": "Thailand",
+      "gdpNominal": {
+        "value": 8056.564,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 24712.066,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.798,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.677,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 20569.902,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "TLS": {
+      "name": "Timor-Leste",
+      "gdpNominal": {
+        "value": 1340.964,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 4422.779,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.634,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.451,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 5434.595,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "TGO": {
+      "name": "Togo",
+      "gdpNominal": {
+        "value": 1383.9,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 3365.458,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.571,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.363,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 2855.964,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "TTO": {
+      "name": "Trinidad and Tobago",
+      "gdpNominal": {
+        "value": 18967.27,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 36328.513,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.807,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 27000.145,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "TUN": {
+      "name": "Tunisia",
+      "gdpNominal": {
+        "value": 4656.638,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 14521.008,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.746,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.595,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 12011.388,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "TUR": {
+      "name": "Turkey",
+      "gdpNominal": {
+        "value": 18599.442,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 45639.019,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.853,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.708,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 34506.981,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "TKM": {
+      "name": "Turkmenistan",
+      "gdpNominal": {
+        "value": 6540.179,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 21213.086,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.764,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 17715.582,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "UGA": {
+      "name": "Uganda",
+      "gdpNominal": {
+        "value": 1206.305,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 3273.267,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.582,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.4,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 2736.41,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "UKR": {
+      "name": "Ukraine",
+      "gdpNominal": {
+        "value": 5865.885,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 18548.859,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.779,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.715,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 16933.145,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "ARE": {
+      "name": "United Arab Emirates",
+      "gdpNominal": {
+        "value": 50273.513,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 79228.739,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.94,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.866,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 71142.305,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "GBR": {
+      "name": "United Kingdom",
+      "gdpNominal": {
+        "value": 57601.962,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 62009.491,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.946,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.869,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 54371.586,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "USA": {
+      "name": "United States",
+      "gdpNominal": {
+        "value": 90026.516,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 85809.9,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.938,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.832,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 73650.031,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "URY": {
+      "name": "Uruguay",
+      "gdpNominal": {
+        "value": 25215.824,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 36417.874,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.862,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.747,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 28649.822,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "UZB": {
+      "name": "Uzbekistan",
+      "gdpNominal": {
+        "value": 3968.272,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 11878.553,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.74,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 8825.731,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "VUT": {
+      "name": "Vanuatu",
+      "gdpNominal": {
+        "value": 4038.735,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 3605.607,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.621,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.521,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 3403.69,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "VEN": {
+      "name": "Venezuela",
+      "gdpNominal": {
+        "value": 3494.814,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 21241.435,
+        "year": 2011,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.709,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.605,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 7157.08,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "VNM": {
+      "name": "Vietnam",
+      "gdpNominal": {
+        "value": 5065.991,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 16385.507,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.766,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.641,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 13032.635,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "YEM": {
+      "name": "Yemen",
+      "gdpNominal": {
+        "value": 633.887,
+        "year": 2018,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 3164.322,
+        "year": 2013,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.47,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.325,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 1018.201,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "ZMB": {
+      "name": "Zambia",
+      "gdpNominal": {
+        "value": 1317.878,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 4214.893,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.595,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.361,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 3446.676,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "ZWE": {
+      "name": "Zimbabwe",
+      "gdpNominal": {
+        "value": 3021.43,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 5928.081,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "hdi": {
+        "value": 0.598,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.406,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 3511.463,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "AFE": {
+      "name": "AFE",
+      "gdpNominal": {
+        "value": 1722.386,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 4635.788,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 4730.692,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "AFW": {
+      "name": "AFW",
+      "gdpNominal": {
+        "value": 1600.058,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 6815.991,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 6924.889,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "ARB": {
+      "name": "ARB",
+      "gdpNominal": {
+        "value": 7544.414,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 18870.315,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 19694.527,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "CSS": {
+      "name": "CSS",
+      "gdpNominal": {
+        "value": 20880.061,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 38624.061,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 38621.507,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "CEB": {
+      "name": "CEB",
+      "gdpNominal": {
+        "value": 27676.939,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 50487.33,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 51153.5,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "EAR": {
+      "name": "EAR",
+      "gdpNominal": {
+        "value": 4566.427,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 13995.406,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 14470.161,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "EAS": {
+      "name": "EAS",
+      "gdpNominal": {
+        "value": 14077.271,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 27285.211,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 29315.316,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "EAP": {
+      "name": "EAP",
+      "gdpNominal": {
+        "value": 10843.436,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 23248.025,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 24928.225,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "TEA": {
+      "name": "TEA",
+      "gdpNominal": {
+        "value": 10965.827,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 23509.724,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 25209.335,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "EMU": {
+      "name": "EMU",
+      "gdpNominal": {
+        "value": 50214.078,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 66097.021,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 67275.536,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "ECS": {
+      "name": "ECS",
+      "gdpNominal": {
+        "value": 34603.481,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 52463.147,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 53744.934,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "ECA": {
+      "name": "ECA",
+      "gdpNominal": {
+        "value": 11117.614,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 29333.256,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 29485.321,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "TEC": {
+      "name": "TEC",
+      "gdpNominal": {
+        "value": 15300.07,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 38139.122,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 38843.627,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "EUU": {
+      "name": "EUU",
+      "gdpNominal": {
+        "value": 47089.164,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 63585.405,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 65147.364,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "HPC": {
+      "name": "HPC",
+      "gdpNominal": {
+        "value": 1331.9,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 3611.763,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 3696.596,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "IBD": {
+      "name": "IBD",
+      "gdpNominal": {
+        "value": 8599.358,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 21125.53,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 22024.206,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "IBT": {
+      "name": "IBT",
+      "gdpNominal": {
+        "value": 6613.209,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 16789.137,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 17458.742,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "IDB": {
+      "name": "IDB",
+      "gdpNominal": {
+        "value": 1841.204,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 7631.623,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 7879.094,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "IDX": {
+      "name": "IDX",
+      "gdpNominal": {
+        "value": 1484.112,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 4697.561,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 4965.66,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "IDA": {
+      "name": "IDA",
+      "gdpNominal": {
+        "value": 1608.084,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 5710.145,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 5967.424,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "LTE": {
+      "name": "LTE",
+      "gdpNominal": {
+        "value": 13677.323,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 28317.791,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 29832.029,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "LCN": {
+      "name": "LCN",
+      "gdpNominal": {
+        "value": 11095.218,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 23104.552,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 22997.689,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "LAC": {
+      "name": "LAC",
+      "gdpNominal": {
+        "value": 10407.482,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 21961.19,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 22100.261,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "TLA": {
+      "name": "TLA",
+      "gdpNominal": {
+        "value": 10822.593,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 22984.688,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 22945.553,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "LDC": {
+      "name": "LDC",
+      "gdpNominal": {
+        "value": 1361.992,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 4463.996,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 4692.125,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "LMY": {
+      "name": "LMY",
+      "gdpNominal": {
+        "value": 6107.262,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 15795.13,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 16306.721,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "MEA": {
+      "name": "MEA",
+      "gdpNominal": {
+        "value": 6202.19,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 16261.945,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 16795.672,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "MNA": {
+      "name": "MNA",
+      "gdpNominal": {
+        "value": 2829.129,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 11220.607,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 11387.091,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "TMN": {
+      "name": "TMN",
+      "gdpNominal": {
+        "value": 2826.655,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 11271.564,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 11432.435,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "MIC": {
+      "name": "MIC",
+      "gdpNominal": {
+        "value": 6778.798,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 17212.468,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 18055.203,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "NAC": {
+      "name": "NAC",
+      "gdpNominal": {
+        "value": 86308.072,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 83521.839,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 87033.129,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "OED": {
+      "name": "OED",
+      "gdpNominal": {
+        "value": 51733.714,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 61972.888,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 64094.842,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "OSS": {
+      "name": "OSS",
+      "gdpNominal": {
+        "value": 17540.31,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 29352.556,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 29927.809,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "PSS": {
+      "name": "PSS",
+      "gdpNominal": {
+        "value": 4719.69,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 8214.971,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 8671.788,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "PST": {
+      "name": "PST",
+      "gdpNominal": {
+        "value": 59490.024,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 68080.597,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 71041.966,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "PRE": {
+      "name": "PRE",
+      "gdpNominal": {
+        "value": 1470.058,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 5268.749,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 5320.042,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "SST": {
+      "name": "SST",
+      "gdpNominal": {
+        "value": 16577.845,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 28616.387,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 28976.083,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "SAS": {
+      "name": "SAS",
+      "gdpNominal": {
+        "value": 2705.282,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 10973.71,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 11489.14,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "TSA": {
+      "name": "TSA",
+      "gdpNominal": {
+        "value": 2705.282,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 10973.71,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 11489.14,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "SSF": {
+      "name": "SSF",
+      "gdpNominal": {
+        "value": 1673.071,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 5517.421,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 5615.619,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "SSA": {
+      "name": "SSA",
+      "gdpNominal": {
+        "value": 1671.42,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 5768.027,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 5612.896,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "TSS": {
+      "name": "TSS",
+      "gdpNominal": {
+        "value": 1673.071,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 5517.421,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 5615.619,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "WLD": {
+      "name": "WLD",
+      "gdpNominal": {
+        "value": 14405.848,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 24526.012,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 25517.396,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "ASM": {
+      "name": "ASM",
+      "gdpNominal": {
+        "value": 18017.459,
+        "year": 2022,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      }
+    },
+    "AND": {
+      "name": "AND",
+      "gdpNominal": {
+        "value": 54291.503,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 74939.475,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 64631.075,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "hdi": {
+        "value": 0.913,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.837,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "ATG": {
+      "name": "ATG",
+      "gdpNominal": {
+        "value": 24819.245,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 33386.192,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 27386.518,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "hdi": {
+        "value": 0.851,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "ABW": {
+      "name": "ABW",
+      "gdpNominal": {
+        "value": 38590.565,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 50649.302,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 48900,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "BRB": {
+      "name": "BRB",
+      "gdpNominal": {
+        "value": 28364.818,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 24822.534,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 17327.52,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "hdi": {
+        "value": 0.811,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.62,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "BMU": {
+      "name": "BMU",
+      "gdpNominal": {
+        "value": 142250.433,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 124252.836,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 122530,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "CYM": {
+      "name": "CYM",
+      "gdpNominal": {
+        "value": 104292.901,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 88427.787,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 74470,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "CHI": {
+      "name": "CHI",
+      "gdpNominal": {
+        "value": 74585.522,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      }
+    },
+    "CUW": {
+      "name": "CUW",
+      "gdpNominal": {
+        "value": 22832.895,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 32693.294,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 33330,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "DMA": {
+      "name": "DMA",
+      "gdpNominal": {
+        "value": 10989.043,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 21300.685,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 16001.126,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "hdi": {
+        "value": 0.761,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "FRO": {
+      "name": "FRO",
+      "gdpNominal": {
+        "value": 74175.278,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 81908.778,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 83480,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "PYF": {
+      "name": "PYF",
+      "gdpNominal": {
+        "value": 22439.884,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      }
+    },
+    "GRD": {
+      "name": "GRD",
+      "gdpNominal": {
+        "value": 12106.879,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 20177.809,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 14349.028,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "hdi": {
+        "value": 0.791,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "GUM": {
+      "name": "GUM",
+      "gdpNominal": {
+        "value": 41833.152,
+        "year": 2022,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      }
+    },
+    "HKG": {
+      "name": "HKG",
+      "gdpNominal": {
+        "value": 56983.066,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 75195.987,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 69435.757,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "hdi": {
+        "value": 0.955,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.839,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "IMN": {
+      "name": "IMN",
+      "gdpNominal": {
+        "value": 90015.207,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      }
+    },
+    "KIR": {
+      "name": "KIR",
+      "gdpNominal": {
+        "value": 2558.666,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 3702.326,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 4947.28,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "hdi": {
+        "value": 0.644,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.535,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "XKX": {
+      "name": "XKX",
+      "gdpNominal": {
+        "value": 7899.418,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 17864.416,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 19650,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "LIE": {
+      "name": "LIE",
+      "gdpNominal": {
+        "value": 220167.225,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "hdi": {
+        "value": 0.938,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 166811.674,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "MAC": {
+      "name": "MAC",
+      "gdpNominal": {
+        "value": 75901.746,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 126959.917,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 125630,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "MHL": {
+      "name": "MHL",
+      "gdpNominal": {
+        "value": 8489.058,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 8194.639,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 7223.861,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "hdi": {
+        "value": 0.733,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.626,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "FSM": {
+      "name": "FSM",
+      "gdpNominal": {
+        "value": 4414.007,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 4346.842,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 4245.878,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "hdi": {
+        "value": 0.615,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "MCO": {
+      "name": "MCO",
+      "gdpNominal": {
+        "value": 288001.575,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "hdi": {
+        "value": 0,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "gni": {
+        "value": 0,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "NRU": {
+      "name": "NRU",
+      "gdpNominal": {
+        "value": 14639.505,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 14173.008,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 19642.378,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "hdi": {
+        "value": 0.703,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.599,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "MNP": {
+      "name": "MNP",
+      "gdpNominal": {
+        "value": 23785.755,
+        "year": 2022,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      }
+    },
+    "PLW": {
+      "name": "PLW",
+      "gdpNominal": {
+        "value": 19532.356,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 18230.27,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 16034.51,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "hdi": {
+        "value": 0.786,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.616,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "SMR": {
+      "name": "SMR",
+      "gdpNominal": {
+        "value": 59871.329,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 78745.431,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 64706.376,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "hdi": {
+        "value": 0.915,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "STP": {
+      "name": "STP",
+      "gdpNominal": {
+        "value": 4084.401,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 6241.856,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 5583.423,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "hdi": {
+        "value": 0.637,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.478,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "SXM": {
+      "name": "SXM",
+      "gdpNominal": {
+        "value": 42978.132,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 53768.657,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 52060,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "KNA": {
+      "name": "KNA",
+      "gdpNominal": {
+        "value": 25223.026,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 34846.604,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 29105.437,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "hdi": {
+        "value": 0.84,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "LCA": {
+      "name": "LCA",
+      "gdpNominal": {
+        "value": 14745.818,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 27567.328,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 20899.782,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "hdi": {
+        "value": 0.748,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.523,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "MAF": {
+      "name": "MAF",
+      "gdpNominal": {
+        "value": 21668.378,
+        "year": 2021,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      }
+    },
+    "VCT": {
+      "name": "VCT",
+      "gdpNominal": {
+        "value": 12561.769,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 21272.08,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 17246.636,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "hdi": {
+        "value": 0.798,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "TON": {
+      "name": "TON",
+      "gdpNominal": {
+        "value": 6547.186,
+        "year": 2025,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 7802.67,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 7438.21,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "hdi": {
+        "value": 0.769,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.682,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "TCA": {
+      "name": "TCA",
+      "gdpNominal": {
+        "value": 37506.78,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 37954.388,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 37500,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "NY.GNP.PCAP.PP.CD",
+        "label": "GNI per capita, PPP (current international $)"
+      }
+    },
+    "TUV": {
+      "name": "TUV",
+      "gdpNominal": {
+        "value": 6344.775,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 6151.01,
+        "year": 2023,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      },
+      "gni": {
+        "value": 7005.521,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "hdi": {
+        "value": 0.689,
+        "year": 2023,
+        "source": "UNDP HDR"
+      },
+      "ihdi": {
+        "value": 0.578,
+        "year": 2023,
+        "source": "UNDP HDR"
+      }
+    },
+    "VIR": {
+      "name": "VIR",
+      "gdpNominal": {
+        "value": 44320.909,
+        "year": 2022,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.CD",
+        "label": "GDP per capita (current US$)"
+      },
+      "gdpPpp": {
+        "value": 49793.032,
+        "year": 2022,
+        "source": "World Bank",
+        "indicator": "NY.GDP.PCAP.PP.CD",
+        "label": "GDP per capita, PPP (current international $)"
+      }
+    }
+  }
+}

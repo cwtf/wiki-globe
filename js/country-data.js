@@ -1,8 +1,9 @@
-// Bundled country statistics for the choropleth heat-map modes.
+// Legacy fallback country statistics for the choropleth heat-map modes.
 // Sources: IMF World Economic Outlook (GDP per capita, ~2023 estimates, USD)
 // and the UNDP Human Development Report 2023/24 (HDI & IHDI for 2022,
 // GNI per capita in 2017 PPP$). Values are approximate snapshots intended
-// for visualisation, not authoritative reference data.
+// for visualisation, not authoritative reference data. Runtime code now tries
+// to load data/country-stats.latest.json first.
 // Format: ISO3: [name, gdpNominal, gdpPpp, hdi, ihdi, gniPpp]  (null = no data)
 
 export const GEOJSON_URL =

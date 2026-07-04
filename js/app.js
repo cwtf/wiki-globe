@@ -411,9 +411,10 @@ function tooltipHtml(id) {
     const s = id.sample;
     const m = METRICS[s.metric];
     if (s.kind === "country") {
+      const source = [s.stat?.source, s.stat?.year].filter(Boolean).join(" ");
       return `<div class="tt-title">${esc(s.name)}</div>
         <div class="tt-line">${esc(m.label)}: ${s.value != null ? esc(m.fmt(s.value)) : "no data"}</div>
-        <div class="tt-note">Bundled IMF / UNDP 2022–23 estimates</div>`;
+        <div class="tt-note">${esc(source || "Country statistics")}</div>`;
     }
     const others = {
       wetbulb: `Air ${s.t.toFixed(1)} °C · humidity ${Math.round(s.rh)}%`,
