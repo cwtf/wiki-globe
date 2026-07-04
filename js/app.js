@@ -432,7 +432,7 @@ function tooltipHtml(id) {
     const c = id.ts;
     return `<div class="tt-title">${esc(c.name)}</div>
       <div class="tt-line">${esc(c.areaLabel)} · true-size outline</div>
-      <div class="tt-note">Drag to compare anywhere · right-click to remove</div>`;
+      <div class="tt-note">Drag to move · Shift+scroll to rotate · right-click removes</div>`;
   }
   if (id.kind === "lane") {
     return `<div class="tt-title">${esc(id.lane.name)}</div>
