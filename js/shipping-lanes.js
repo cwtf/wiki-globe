@@ -1,7 +1,7 @@
-// Major global maritime corridors, hand-plotted as [lon, lat] waypoints.
-// Waypoints are dense around chokepoints (Malacca, Suez, Gibraltar, Panama,
-// Hormuz, Bering) so geodesic segments stay over water.
-// Kept as a temporary runtime fallback while the app prefers generated GeoJSON.
+// Shipping lane definitions. The app loads generated GeoJSON derived from
+// the Global Shipping Lanes dataset (CIA World Oceans map digitization; see
+// scripts/data/update-shipping-lanes.mjs). The hand-plotted corridors below
+// are only the offline fallback when that file cannot be fetched.
 
 const SHIPPING_LANES_URL = "data/shipping-lanes.latest.geojson";
 
@@ -214,6 +214,7 @@ function normalizeLaneFeature(feature) {
   return {
     name,
     polar: Boolean(properties.polar),
+    type: properties.type === "middle" ? "middle" : "major",
     waypoints,
   };
 }

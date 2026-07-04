@@ -38,17 +38,32 @@ export class FlightLayer {
     if (live) {
       this.source = "live";
       this._applyLiveStates(live);
-      this.refreshTimer = setInterval(async () => {
-        const next = await this._fetchLive();
-        if (next) this._applyLiveStates(next);
-        // on failure keep extrapolating the last snapshot and retry next tick
-      }, REFRESH_MS);
     } else {
-      console.warn("[flights] OpenSky unavailable, using demo flights");
+      console.warn("[flights] OpenSky unavailable, using demo flights until it responds");
       this.source = "demo";
       this._buildDemo();
     }
+    // one timer both refreshes live states and re-tries OpenSky from demo mode
+    this.refreshTimer = setInterval(() => this._refresh(), REFRESH_MS);
     this.points.show = this.visible;
+  }
+
+  async _refresh() {
+    const next = await this._fetchLive();
+    // on failure keep extrapolating the last snapshot (or keep the demo
+    // traffic animating) and retry on the next tick
+    if (!next) return;
+    if (this.source === "demo") {
+      // retire the demo arcs; live routes are drawn per hover/selection
+      this.routeQueue = [];
+      this.routeLines.removeAll();
+      this.activeRoute.removeAll();
+      this.selected = null;
+      this.hoverToken++;
+      console.info("[flights] OpenSky recovered, demo flights retired");
+    }
+    this.source = "live";
+    this._applyLiveStates(next);
   }
 
   async _fetchLive() {

@@ -9,6 +9,7 @@ const UPDATE_SLICES = 40;        // frames to cycle through all sats once
 const PATH_SAMPLES = 96;         // points per predicted orbit
 const PATH_REBUILD_MS = 8 * 60 * 1000;
 const PATHS_PER_FRAME = 12;      // incremental path building budget
+const LIVE_RETRY_MS = 5 * 60 * 1000; // re-try CelesTrak while on demo orbits
 
 const RE_KM = 6371;
 const MU = 398600.4418;          // km^3/s^2
@@ -35,25 +36,36 @@ export class SatelliteLayer {
   }
 
   async init() {
-    let parsed = null;
+    const parsed = await this._fetchTLEs();
+    if (parsed) {
+      this._build(parsed.slice(0, MAX_SATS), "live");
+    } else {
+      console.warn("[satellites] CelesTrak unavailable, using demo orbits until it responds");
+      this._build(makeDemoSatellites().map((s) => ({ ...s, demo: true })), "demo");
+      this.retryTimer = setInterval(() => this._retryLive(), LIVE_RETRY_MS);
+    }
+    this.points.show = this.visible;
+  }
+
+  async _fetchTLEs() {
     try {
       const ctl = new AbortController();
       const t = setTimeout(() => ctl.abort(), 12000);
       const res = await fetch(TLE_URL, { signal: ctl.signal });
       clearTimeout(t);
-      if (res.ok) parsed = parseTLEs(await res.text());
+      if (res.ok) {
+        const parsed = parseTLEs(await res.text());
+        if (parsed.length > 10) return parsed;
+      }
     } catch (e) {
-      console.warn("[satellites] CelesTrak unavailable, using demo orbits:", e.message);
+      console.warn("[satellites] CelesTrak fetch failed:", e.message);
     }
+    return null;
+  }
 
-    if (parsed && parsed.length > 10) {
-      this.sats = parsed.slice(0, MAX_SATS);
-      this.source = "live";
-    } else {
-      this.sats = makeDemoSatellites().map((s) => ({ ...s, demo: true }));
-      this.source = "demo";
-    }
-
+  _build(sats, source) {
+    this.sats = sats;
+    this.source = source;
     const now = new Date();
     const gmst = satellite.gstime(now);
     for (const s of this.sats) {
@@ -68,7 +80,24 @@ export class SatelliteLayer {
       });
       if (p) s.altKm = p.altKm;
     }
-    this.points.show = this.visible;
+  }
+
+  // Periodic re-attempt while on demo orbits, so a session that started
+  // offline swaps to the real constellation once CelesTrak is reachable.
+  async _retryLive() {
+    const parsed = await this._fetchTLEs();
+    if (!parsed) return;
+    clearInterval(this.retryTimer);
+    this.retryTimer = null;
+    this.points.removeAll();
+    this.paths.removeAll();
+    this.selectedPath.removeAll();
+    this.selected = null;
+    this.pathQueue = [];
+    this.cursor = 0;
+    this._build(parsed.slice(0, MAX_SATS), "live");
+    if (this.pathsVisible) this._queueAllPaths(Date.now());
+    console.info("[satellites] CelesTrak recovered, demo orbits retired");
   }
 
   // ECEF position (m) at a given time; null if propagation fails.

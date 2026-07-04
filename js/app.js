@@ -459,8 +459,9 @@ function tooltipHtml(id) {
       <div class="tt-guide">${guide}</div>`;
   }
   if (id.kind === "lane") {
+    const tier = id.lane.type === "middle" ? "Secondary" : "Major";
     return `<div class="tt-title">${esc(id.lane.name)}</div>
-      <div class="tt-note">Major shipping corridor · ${Math.round(id.lane.lengthKm).toLocaleString()} km</div>`;
+      <div class="tt-note">${tier} shipping corridor · ${Math.round(id.lane.lengthKm).toLocaleString()} km</div>`;
   }
   if (id.kind === "wiki") {
     const a = id.article;

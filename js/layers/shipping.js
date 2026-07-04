@@ -17,6 +17,7 @@ const PULSE_SPEED_KMS = 120;    // visual flow speed of lane pulses
 const SIM_SPEED_KMS = 5;        // ~16 kn sped up 600x so motion is perceptible
 
 const MAX_LIVE_VESSELS = 4000;
+const AIS_RETRY_MS = 5 * 60 * 1000; // re-try live feeds while simulating
 const STALE_MS = 20 * 60 * 1000;
 const UPDATE_SLICES = 30;       // frames per dead-reckoning sweep
 const MAX_ROUTES = 400;
@@ -60,22 +61,53 @@ export class ShippingLayer {
     await Promise.all([loadShippingLaneData(), loadMaritimeReferenceData()]);
     this._buildLanes(LANE_COLOR, POLAR_COLOR);
 
-    this.live = await createLiveAis({
+    this._aisCallbacks = {
       onPosition: (u) => this._upsertLive(u),
       onStatic: (u) => this._mergeStatic(u),
-    });
+    };
+    this.live = await createLiveAis(this._aisCallbacks);
 
     if (this.live) {
-      this.mode = "live";
-      this.source = "live";
-      // live vessels are the foreground now; mute the reference lanes
-      this.lines.removeAll();
-      this._buildLanes(LANE_COLOR_DIM, POLAR_COLOR_DIM);
+      this._enterLiveMode();
     } else {
       console.warn("[shipping] no live AIS feed reachable, using simulated vessels");
       this.mode = "sim";
       this.source = "demo";
       this._buildSimVessels();
+      this.retryTimer = setInterval(() => this._retryLive(), AIS_RETRY_MS);
+    }
+  }
+
+  _enterLiveMode() {
+    this.mode = "live";
+    this.source = "live";
+    // live vessels are the foreground now; mute the reference lanes
+    this.lines.removeAll();
+    this._buildLanes(LANE_COLOR_DIM, POLAR_COLOR_DIM);
+  }
+
+  // Periodic re-attempt while simulating, so a session that started offline
+  // (or before the user pasted an AIS key) can still promote to live data.
+  async _retryLive() {
+    if (this._retryInFlight || this.live) return;
+    this._retryInFlight = true;
+    try {
+      const live = await createLiveAis(this._aisCallbacks);
+      if (!live) return;
+      this.live = live;
+      clearInterval(this.retryTimer);
+      this.retryTimer = null;
+      // drop the simulated fleet one point at a time — live positions may
+      // already be streaming into the same collection
+      for (const v of this.simVessels) this.vesselPoints.remove(v.point);
+      this.simVessels = [];
+      this.routeQueue = [];
+      this.routeLines.removeAll();
+      this.lastRouteBuild = 0;
+      this._enterLiveMode();
+      console.info("[shipping] live AIS feed recovered, simulated vessels retired");
+    } finally {
+      this._retryInFlight = false;
     }
   }
 
@@ -84,18 +116,28 @@ export class ShippingLayer {
     if (firstBuild) {
       for (const def of getShippingLanes()) this.lanes.push(densifyLane(def));
     }
+    // materials are shared per style so the collection batches the network
+    // into a handful of draw calls instead of one per lane
+    const glow = (c) => Cesium.Material.fromType("PolylineGlow", {
+      color: c, glowPower: 0.22, taperPower: 1.0,
+    });
+    const mats = {
+      "major": glow(color),
+      "middle": glow(color.withAlpha(color.alpha * 0.55)),
+      "polar-major": glow(polarColor),
+      "polar-middle": glow(polarColor.withAlpha(polarColor.alpha * 0.55)),
+    };
     for (const lane of this.lanes) {
+      const middle = lane.type === "middle";
       this.lines.add({
         positions: lane.positions,
-        width: 4.5,
-        material: Cesium.Material.fromType("PolylineGlow", {
-          color: lane.polar ? polarColor : color,
-          glowPower: 0.22,
-          taperPower: 1.0,
-        }),
+        width: middle ? 2.6 : 4.5,
+        material: mats[`${lane.polar ? "polar-" : ""}${middle ? "middle" : "major"}`],
         id: { kind: "lane", lane },
       });
-      if (firstBuild) {
+      // pulses ride the major corridors only — the middle tier would add
+      // hundreds of per-frame point updates for little visual gain
+      if (firstBuild && !middle) {
         const pulseCount = clamp(Math.round(lane.lengthKm / 2500), 2, 8);
         for (let i = 0; i < pulseCount; i++) {
           this.pulses.push({
@@ -388,6 +430,7 @@ function densifyLane(def) {
   return {
     name: def.name,
     polar: def.polar,
+    type: def.type ?? "major",
     positions,
     headings,
     lengthKm: lengthM / 1000,
