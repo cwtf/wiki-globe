@@ -1,6 +1,9 @@
 // Major global maritime corridors, hand-plotted as [lon, lat] waypoints.
 // Waypoints are dense around chokepoints (Malacca, Suez, Gibraltar, Panama,
 // Hormuz, Bering) so geodesic segments stay over water.
+// Kept as a temporary runtime fallback while the app prefers generated GeoJSON.
+
+const SHIPPING_LANES_URL = "data/shipping-lanes.latest.geojson";
 
 export const SHIPPING_LANES = [
   {
@@ -165,3 +168,62 @@ export const SHIPPING_LANES = [
     ],
   },
 ];
+
+let activeShippingLanes = SHIPPING_LANES;
+let shippingLaneDataLoaded = false;
+
+export async function loadShippingLaneData() {
+  if (shippingLaneDataLoaded) return true;
+  try {
+    const resp = await fetch(SHIPPING_LANES_URL);
+    if (!resp.ok) throw new Error(`shipping lanes ${resp.status}`);
+    const data = await resp.json();
+    const lanes = normalizeShippingLaneGeoJson(data);
+    if (lanes.length < 5) throw new Error("shipping lane payload is unexpectedly small");
+    activeShippingLanes = lanes;
+    shippingLaneDataLoaded = true;
+    return true;
+  } catch (e) {
+    console.warn("[shipping-lanes] generated lane data unavailable, using bundled fallback:", e.message);
+    return false;
+  }
+}
+
+export function getShippingLanes() {
+  return activeShippingLanes;
+}
+
+function normalizeShippingLaneGeoJson(data) {
+  if (data?.type !== "FeatureCollection" || !Array.isArray(data.features)) {
+    throw new Error("shipping lanes payload must be a GeoJSON FeatureCollection");
+  }
+  return data.features.map(normalizeLaneFeature).filter(Boolean);
+}
+
+function normalizeLaneFeature(feature) {
+  const geometry = feature?.geometry;
+  const properties = feature?.properties ?? {};
+  if (geometry?.type !== "LineString" || !Array.isArray(geometry.coordinates)) return null;
+
+  const waypoints = geometry.coordinates.map(normalizePosition).filter(Boolean);
+  if (waypoints.length < 2) return null;
+
+  const name = String(properties.name ?? "").trim();
+  if (!name) return null;
+
+  return {
+    name,
+    polar: Boolean(properties.polar),
+    waypoints,
+  };
+}
+
+function normalizePosition(position) {
+  if (!Array.isArray(position) || position.length < 2) return null;
+  const lon = Number(position[0]);
+  const lat = Number(position[1]);
+  if (!Number.isFinite(lon) || !Number.isFinite(lat) || lon < -180 || lon > 180 || lat < -90 || lat > 90) {
+    return null;
+  }
+  return [lon, lat];
+}

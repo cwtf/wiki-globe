@@ -76,8 +76,9 @@ js/layers/flights.js    OpenSky states, dead reckoning, route arcs, adsbdb looku
 js/layers/shipping.js   lane rendering, flow pulses, simulated vessels
 js/layers/heatmap.js    heat-map overlays: Open-Meteo weather grid + country choropleths
 js/country-data.js      bundled per-country GDP/HDI/IHDI/GNI estimates
-js/shipping-lanes.js    hand-plotted corridor waypoints
+js/shipping-lanes.js    generated shipping-lane GeoJSON loader + fallback
 js/demo-data.js         demo flights/satellites generators, airports
 js/wiki-panel.js        geosearch + Nominatim context articles, radius slider
+data/shipping-lanes.latest.geojson  curated shipping corridor baseline
 assets/earth-night.jpg  night base texture
 ```

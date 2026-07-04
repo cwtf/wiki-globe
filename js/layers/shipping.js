@@ -5,7 +5,7 @@
 // The routes toggle draws each vessel's path to its reported destination
 // (AIS destination text resolved against a port gazetteer).
 
-import { SHIPPING_LANES } from "../shipping-lanes.js";
+import { getShippingLanes, loadShippingLaneData } from "../shipping-lanes.js";
 import { vesselName } from "../demo-data.js";
 import { createLiveAis } from "../ais.js";
 import { flagFromMmsi, shipTypeName, resolveDestination, loadMaritimeReferenceData } from "../ais-data.js";
@@ -57,8 +57,8 @@ export class ShippingLayer {
   }
 
   async init() {
+    await Promise.all([loadShippingLaneData(), loadMaritimeReferenceData()]);
     this._buildLanes(LANE_COLOR, POLAR_COLOR);
-    await loadMaritimeReferenceData();
 
     this.live = await createLiveAis({
       onPosition: (u) => this._upsertLive(u),
@@ -82,7 +82,7 @@ export class ShippingLayer {
   _buildLanes(color, polarColor) {
     const firstBuild = this.lanes.length === 0;
     if (firstBuild) {
-      for (const def of SHIPPING_LANES) this.lanes.push(densifyLane(def));
+      for (const def of getShippingLanes()) this.lanes.push(densifyLane(def));
     }
     for (const lane of this.lanes) {
       this.lines.add({
