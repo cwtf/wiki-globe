@@ -27,6 +27,11 @@ const WORLD_BANK_INDICATORS = [
     indicator: "EN.POP.DNST",
     label: "Population density (people per sq. km of land area)",
   },
+  {
+    key: "fertility",
+    indicator: "SP.DYN.TFRT.IN",
+    label: "Fertility rate, total (births per woman)",
+  },
 ];
 
 const HDR_DOWNLOADS = "https://hdr.undp.org/data-center/documentation-and-downloads";
@@ -100,6 +105,11 @@ async function main() {
         unit: "people per square kilometre of land area",
         defaultSource: "World Bank",
         indicator: "EN.POP.DNST",
+      },
+      fertility: {
+        unit: "children per woman (total fertility rate)",
+        defaultSource: "World Bank",
+        indicator: "SP.DYN.TFRT.IN",
       },
     },
     countries,

@@ -4,10 +4,11 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const FILE = path.join(ROOT, "data/heatmap-metrics.json");
-const FORMATTERS = new Set(["money", "degC", "percent", "fixed3", "density"]);
+const FORMATTERS = new Set(["money", "degC", "percent", "fixed2", "fixed3", "density", "integer"]);
 const VALUE_KEYS = new Set(["tw", "t", "rh"]);
-const STAT_KEYS = new Set(["gdpNominal", "gdpPpp", "hdi", "ihdi", "gni", "popDensity"]);
-const KINDS = new Set(["weather", "country", "region"]);
+const STAT_KEYS = new Set(["gdpNominal", "gdpPpp", "hdi", "ihdi", "gni", "popDensity", "fertility"]);
+const REGION_KEYS = new Set(["density", "fertility"]);
+const KINDS = new Set(["weather", "country", "region", "conflict"]);
 
 const data = JSON.parse(await readFile(FILE, "utf8"));
 const errors = [];
@@ -25,6 +26,9 @@ for (const [key, metric] of Object.entries(data.metrics ?? {})) {
   }
   if ((metric.kind === "country" || metric.kind === "region") && !STAT_KEYS.has(metric.statKey)) {
     errors.push(`${key}: unknown statKey ${metric.statKey}`);
+  }
+  if (metric.kind === "region" && !REGION_KEYS.has(metric.regionKey)) {
+    errors.push(`${key}: unknown regionKey ${metric.regionKey}`);
   }
 
   validateStops(key, metric.stops);

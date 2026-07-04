@@ -1,8 +1,9 @@
 // Generates data/admin1-population.latest.geojson: first-level administrative
-// regions (states/provinces) with population density, for the heatmap's
-// "Population density" mode. Boundaries come from Natural Earth 50m admin-1
-// (public domain); population and official area come from Wikidata (P1082 /
-// P2046) joined via the wikidataid each Natural Earth feature carries. Where
+// regions (states/provinces) with population density and total fertility
+// rate, for the heatmap's region-level demographic modes. Boundaries come
+// from Natural Earth admin-1 (public domain); population, official area and
+// fertility come from Wikidata (P1082 / P2046 / P4841) joined via the
+// wikidataid each Natural Earth feature carries. Where
 // Wikidata lacks an area (or reports one wildly inconsistent with the
 // polygon), density falls back to the spherical area of the boundary itself.
 // Regions without a resolvable population are still emitted so the runtime
@@ -88,6 +89,7 @@ async function main() {
 
   let withPopulation = 0;
   let withDensity = 0;
+  let withFertility = 0;
   let wikidataArea = 0;
   const features = regions.map((r) => {
     const soleRegion = !r.iso3 || regionsPerCountry.get(r.iso3) === 1;
@@ -109,6 +111,7 @@ async function main() {
       : null;
     if (population != null) withPopulation++;
     if (density != null) withDensity++;
+    if (fact?.fertility != null) withFertility++;
     return {
       type: "Feature",
       id: r.id,
@@ -121,6 +124,8 @@ async function main() {
         areaKm2,
         areaSource,
         density,
+        fertility: fact?.fertility ?? null,
+        fertilityYear: fact?.fertilityYear ?? null,
       },
       geometry: { type: "MultiPolygon", coordinates: r.coordinates },
     };
@@ -134,12 +139,13 @@ async function main() {
       sourceLabel: "Natural Earth admin-1 + Wikidata population",
       sources: [
         { name: "Natural Earth 10m admin-1 states/provinces", url: NE_ADMIN1_URL, license: "public domain" },
-        { name: "Wikidata (P1082 population, P2046 area)", url: SPARQL_URL, license: "CC0" },
+        { name: "Wikidata (P1082 population, P2046 area, P4841 fertility)", url: SPARQL_URL, license: "CC0" },
       ],
       counts: {
         regions: features.length,
         withPopulation,
         withDensity,
+        withFertility,
         wikidataArea,
         countries: new Set(regions.map((r) => r.iso3).filter(Boolean)).size,
       },
@@ -147,6 +153,7 @@ async function main() {
       notes: [
         "density is people per km²; regions without a Wikidata population have density null and rely on the country-level fallback at runtime.",
         "Countries with a single admin-1 feature carry no region density; the country-level statistic is the smallest available denomination there.",
+        "fertility is the total fertility rate (children per woman) where Wikidata records one for the region; null falls back to the country-level statistic at runtime.",
         "areaKm2 prefers the Wikidata official area and falls back to the spherical area of the (simplified) boundary polygons.",
         "Coordinates are quantized to 0.001°.",
       ],
@@ -158,16 +165,17 @@ async function main() {
   await writeFile(OUT_FILE, `${JSON.stringify(out)}\n`, "utf8");
   console.log(
     `Wrote ${path.relative(ROOT, OUT_FILE)} — ${features.length} regions, ` +
-    `${withDensity} with density (${withPopulation} with population, ${wikidataArea} Wikidata areas)`
+    `${withDensity} with density (${withPopulation} with population, ${wikidataArea} Wikidata areas), ` +
+    `${withFertility} with fertility`
   );
   for (const w of warnings) console.warn(`[warn] ${w}`);
 }
 
-// Latest non-deprecated population (dated statements beat undated ones) and
-// the largest normalized official area for each entity in the batch.
+// Latest non-deprecated population and fertility (dated statements beat
+// undated ones) and the largest normalized official area per entity.
 async function querySparql(qids) {
   const query = `
-    SELECT ?item ?pop ?popDate ?areaM2 WHERE {
+    SELECT ?item ?pop ?popDate ?areaM2 ?fert ?fertDate WHERE {
       VALUES ?item { ${qids.map((q) => `wd:${q}`).join(" ")} }
       OPTIONAL {
         ?item p:P1082 ?popStmt .
@@ -179,6 +187,12 @@ async function querySparql(qids) {
         ?item p:P2046 ?areaStmt .
         MINUS { ?areaStmt wikibase:rank wikibase:DeprecatedRank }
         ?areaStmt psn:P2046/wikibase:quantityAmount ?areaM2 .
+      }
+      OPTIONAL {
+        ?item p:P4841 ?fertStmt .
+        ?fertStmt ps:P4841 ?fert .
+        MINUS { ?fertStmt wikibase:rank wikibase:DeprecatedRank }
+        OPTIONAL { ?fertStmt pq:P585 ?fertDate }
       }
     }`;
   const resp = await fetch(SPARQL_URL, {
@@ -199,7 +213,10 @@ function mergeSparqlRows(facts, rows) {
   for (const row of rows) {
     const qid = row.item?.value?.split("/").pop();
     if (!qid) continue;
-    const fact = facts.get(qid) ?? { population: null, popYear: null, popDate: null, areaKm2: null };
+    const fact = facts.get(qid) ?? {
+      population: null, popYear: null, popDate: null, areaKm2: null,
+      fertility: null, fertilityYear: null, fertDate: null,
+    };
     const pop = Number(row.pop?.value);
     if (Number.isFinite(pop) && pop >= 0) {
       const date = row.popDate?.value ?? null;
@@ -215,6 +232,15 @@ function mergeSparqlRows(facts, rows) {
     const areaM2 = Number(row.areaM2?.value);
     if (Number.isFinite(areaM2) && areaM2 > 0) {
       fact.areaKm2 = Math.max(fact.areaKm2 ?? 0, areaM2 / 1e6);
+    }
+    const fert = Number(row.fert?.value);
+    if (Number.isFinite(fert) && fert >= 0 && fert < 15) {
+      const date = row.fertDate?.value ?? null;
+      if (fact.fertility == null || (date ?? "") > (fact.fertDate ?? "")) {
+        fact.fertility = Math.round(fert * 100) / 100;
+        fact.fertDate = date;
+        fact.fertilityYear = date ? Number(date.slice(0, 4)) || null : null;
+      }
     }
     facts.set(qid, fact);
   }

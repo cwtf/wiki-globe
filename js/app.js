@@ -416,13 +416,20 @@ function tooltipHtml(id) {
     const s = id.sample;
     const m = METRICS[s.metric];
     if (s.kind === "region") {
+      const popYr = s.popYear && s.popYear !== s.year ? ` (${s.popYear})` : "";
       const pop = s.population != null
-        ? `${s.population.toLocaleString("en-US")} people${s.popYear ? ` (${s.popYear})` : ""}`
+        ? `${s.population.toLocaleString("en-US")} people${popYr}`
         : null;
       const area = s.areaKm2 != null ? `${Math.round(s.areaKm2).toLocaleString("en-US")} km²` : null;
       return `<div class="tt-title">${esc(s.name)}${s.country ? ` · ${esc(s.country)}` : ""}</div>
-        <div class="tt-line">${esc(m.label)}: ${esc(m.fmt(s.value))}</div>
+        <div class="tt-line">${esc(m.label)}: ${esc(m.fmt(s.value))}${s.year ? ` (${s.year})` : ""}</div>
         <div class="tt-note">${esc([pop, area, s.source].filter(Boolean).join(" · "))}</div>`;
+    }
+    if (s.kind === "conflict") {
+      const period = s.period ? `${s.period.start} → ${s.period.end}` : "trailing 12 months";
+      return `<div class="tt-title">${esc(s.country ?? "Conflict zone")}</div>
+        <div class="tt-line">${esc(m.fmt(s.value))} deaths · ${s.events} event${s.events === 1 ? "" : "s"} in this area</div>
+        <div class="tt-note">${esc(s.dyad ?? "")} · ${esc(period)} · ${esc(s.source)}</div>`;
     }
     if (s.kind === "country") {
       const source = [s.stat?.source, s.stat?.year].filter(Boolean).join(" ");

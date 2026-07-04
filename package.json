@@ -5,7 +5,8 @@
     "data:update:maritime-reference": "node scripts/data/update-maritime-reference.mjs",
     "data:update:shipping-lanes": "node scripts/data/update-shipping-lanes.mjs",
     "data:update:population-density": "node scripts/data/update-population-density.mjs",
-    "data:update": "node scripts/data/update-country-stats.mjs && node scripts/data/update-ports.mjs && node scripts/data/update-maritime-reference.mjs && node scripts/data/update-shipping-lanes.mjs && node scripts/data/update-population-density.mjs",
-    "data:validate": "node scripts/data/validate-country-stats.mjs && node scripts/data/validate-ports.mjs && node scripts/data/validate-heatmap-metrics.mjs && node scripts/data/validate-maritime-reference.mjs && node scripts/data/validate-shipping-lanes.mjs && node scripts/data/validate-admin1-population.mjs"
+    "data:update:conflict-zones": "node scripts/data/update-conflict-zones.mjs",
+    "data:update": "node scripts/data/update-country-stats.mjs && node scripts/data/update-ports.mjs && node scripts/data/update-maritime-reference.mjs && node scripts/data/update-shipping-lanes.mjs && node scripts/data/update-population-density.mjs && node scripts/data/update-conflict-zones.mjs",
+    "data:validate": "node scripts/data/validate-country-stats.mjs && node scripts/data/validate-ports.mjs && node scripts/data/validate-heatmap-metrics.mjs && node scripts/data/validate-maritime-reference.mjs && node scripts/data/validate-shipping-lanes.mjs && node scripts/data/validate-admin1-population.mjs && node scripts/data/validate-conflict-events.mjs"
   }
 }

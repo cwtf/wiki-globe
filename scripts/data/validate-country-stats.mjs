@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const FILE = path.join(ROOT, "data/country-stats.latest.json");
-const STAT_KEYS = ["gdpNominal", "gdpPpp", "hdi", "ihdi", "gni", "popDensity"];
+const STAT_KEYS = ["gdpNominal", "gdpPpp", "hdi", "ihdi", "gni", "popDensity", "fertility"];
 
 const data = JSON.parse(await readFile(FILE, "utf8"));
 const errors = [];
@@ -36,6 +36,9 @@ for (const [iso3, row] of Object.entries(data.countries ?? {})) {
     }
     if (key === "popDensity" && stat.value < 0) {
       errors.push(`${iso3}.${key}.value: density must be non-negative`);
+    }
+    if (key === "fertility" && (stat.value < 0 || stat.value > 12)) {
+      errors.push(`${iso3}.${key}.value: fertility rate out of plausible range`);
     }
     if (stat.year != null && (!Number.isInteger(stat.year) || stat.year < 1900 || stat.year > 2100)) {
       errors.push(`${iso3}.${key}.year: invalid year`);

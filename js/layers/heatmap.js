@@ -6,8 +6,9 @@
 // human survivability). Country metrics (GDP per capita, HDI, IHDI, GNI)
 // are drawn as a choropleth from public-domain country polygons coloured by
 // the bundled dataset in country-data.js. Region metrics (population
-// density) colour generated admin-1 polygons where data exists and fall
-// back to the country-level statistic elsewhere.
+// density, fertility) colour generated admin-1 polygons where data exists
+// and fall back to the country-level statistic elsewhere. The conflict
+// metric aggregates generated UCDP event points into half-degree cells.
 // Either way the overlay renders to an equirectangular canvas draped over
 // the globe as a single-tile imagery layer, and valueAt() serves the
 // cursor tooltip.
@@ -39,6 +40,8 @@ const NO_DATA_FILL = "rgba(125, 135, 150, 0.16)";
 const COUNTRY_STATS_URL = "data/country-stats.latest.json";
 const HEATMAP_METRICS_URL = "data/heatmap-metrics.json";
 const ADMIN1_URL = "data/admin1-population.latest.geojson";
+const CONFLICT_URL = "data/conflict-events.latest.json";
+const CONFLICT_CELL_DEG = 0.5;        // aggregation cell for events (~55 km)
 
 const TIME_FMT = new Intl.DateTimeFormat("en", {
   month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
@@ -157,7 +160,7 @@ export const METRICS = {
   },
   popDensity: {
     label: "Population density", kind: "region",
-    statKey: "popDensity", fmt: perKm2,
+    statKey: "popDensity", regionKey: "density", regionYearKey: "popYear", fmt: perKm2,
     stops: [
       [1, [79, 195, 247]], [10, [63, 217, 143]], [50, [168, 221, 78]],
       [150, [250, 204, 21]], [500, [251, 146, 60]], [2000, [239, 68, 68]],
@@ -168,14 +171,40 @@ export const METRICS = {
       ["150", "#facc15"], ["500", "#fb923c"], ["2k", "#ef4444"], ["10k+", "#d946ef"],
     ],
   },
+  fertility: {
+    label: "Fertility rate", kind: "region",
+    statKey: "fertility", regionKey: "fertility", regionYearKey: "fertilityYear",
+    fmt: (x) => x.toFixed(2),
+    stops: [
+      [1, [79, 195, 247]], [1.5, [63, 217, 143]], [2.1, [168, 221, 78]],
+      [3, [250, 204, 21]], [4.5, [251, 146, 60]], [6, [239, 68, 68]],
+    ],
+    legend: [
+      ["1", "#4fc3f7"], ["1.5", "#3fd98f"], ["2.1", "#a8dd4e"],
+      ["3", "#facc15"], ["4.5", "#fb923c"], ["6+", "#ef4444"],
+    ],
+  },
+  conflicts: {
+    label: "Conflict deaths", kind: "conflict",
+    fmt: (x) => Math.round(x).toLocaleString("en-US"),
+    stops: [
+      [1, [250, 204, 21]], [10, [251, 146, 60]],
+      [100, [239, 68, 68]], [1000, [217, 70, 239]],
+    ],
+    legend: [
+      ["1", "#facc15"], ["10", "#fb923c"], ["100", "#ef4444"], ["1k+", "#d946ef"],
+    ],
+  },
 };
 
 const FORMATTERS = {
   money,
   degC,
   percent: (x) => `${Math.round(x)}%`,
+  fixed2: (x) => x.toFixed(2),
   fixed3: (x) => x.toFixed(3),
   density: perKm2,
+  integer: (x) => Math.round(x).toLocaleString("en-US"),
 };
 
 const VALUE_GETTERS = {
@@ -230,7 +259,11 @@ function hydrateMetric(key, metric) {
     out.value = value;
   } else if (metric.kind === "country" || metric.kind === "region") {
     out.statKey = metric.statKey;
-  } else {
+    if (metric.kind === "region") {
+      out.regionKey = metric.regionKey;
+      out.regionYearKey = metric.regionYearKey;
+    }
+  } else if (metric.kind !== "conflict") {
     throw new Error(`unknown metric kind for ${key}: ${metric.kind}`);
   }
   return out;
@@ -254,8 +287,10 @@ export class HeatmapLayer {
     this.selTime = null;              // pinned timestamp; null = follow latest
     this.onDataChanged = null;        // app hook: timeline bounds changed
     this.geo = null;                  // country polygons (lazy)
-    this.regions = null;              // admin-1 polygons + density (lazy)
+    this.regions = null;              // admin-1 polygons + demographics (lazy)
     this.regionsMeta = null;
+    this.conflict = null;             // aggregated UCDP event cells (lazy)
+    this.conflictMeta = null;
     this.countryStats = legacyCountryStats();
     this.countryStatsMeta = {
       sourceLabel: "bundled IMF/UNDP 2022-23 estimates",
@@ -264,6 +299,7 @@ export class HeatmapLayer {
     this._geoLoading = false;
     this._statsLoading = false;
     this._regionsLoading = false;
+    this._conflictLoading = false;
     this._retryTimer = null;
     this._rebuildTimer = null;
     this._gen = 0;                    // overlay rebuild generation (latest wins)
@@ -308,6 +344,9 @@ export class HeatmapLayer {
       if (Date.now() - this.lastFetch > REFRESH_MS) this._load();
       this.timer ??= setInterval(() => this._load(), REFRESH_MS);
       if (this.okCount > 0) this._scheduleRebuild();
+    } else if (this.metric.kind === "conflict") {
+      if (this.conflict) this._scheduleRebuild();
+      else this._loadConflict();
     } else {
       // country/region choropleths; region modes also need admin-1 polygons
       const needCountry = !this.geo || this.countryStatsMeta.fallback;
@@ -577,6 +616,7 @@ export class HeatmapLayer {
           id: f.id, name: p.name ?? f.id, iso3: p.iso3,
           population: p.population, popYear: p.popYear,
           areaKm2: p.areaKm2, density: p.density,
+          fertility: p.fertility, fertilityYear: p.fertilityYear,
           rings, bbox: [w, s, e, n],
         };
       });
@@ -597,6 +637,65 @@ export class HeatmapLayer {
     }
   }
 
+  // --- conflict data -------------------------------------------------------------
+
+  // Generated UCDP event rows (see scripts/data/update-conflict-zones.mjs),
+  // aggregated into half-degree cells: total deaths, event count, and the
+  // single worst incident for the tooltip.
+  async _loadConflict() {
+    if (this._conflictLoading || this.conflict) return;
+    this._conflictLoading = true;
+    try {
+      const resp = await fetch(CONFLICT_URL);
+      if (!resp.ok) throw new Error(`conflict events ${resp.status}`);
+      const data = await resp.json();
+      if (!Array.isArray(data?.events)) throw new Error("conflict payload missing events");
+      const cols = 360 / CONFLICT_CELL_DEG;
+      const rows = 180 / CONFLICT_CELL_DEG;
+      const cells = new Map();
+      let deaths = 0;
+      for (const [lat, lon, best, , ci, di] of data.events) {
+        const cx = Math.min(cols - 1, Math.max(0, Math.floor((lon + 180) / CONFLICT_CELL_DEG)));
+        const cy = Math.min(rows - 1, Math.max(0, Math.floor((90 - lat) / CONFLICT_CELL_DEG)));
+        const key = cy * cols + cx;
+        let cell = cells.get(key);
+        if (!cell) {
+          cell = { deaths: 0, events: 0, worst: -1, country: null, dyad: null };
+          cells.set(key, cell);
+        }
+        cell.deaths += best;
+        cell.events++;
+        if (best > cell.worst) {
+          cell.worst = best;
+          cell.country = data.countries[ci];
+          cell.dyad = data.dyads[di];
+        }
+        deaths += best;
+      }
+      this.conflict = { cells, totalEvents: data.events.length, totalDeaths: deaths };
+      this.conflictMeta = {
+        sourceLabel: data.meta?.sourceLabel ?? "generated conflict events",
+        period: data.meta?.period ?? null,
+      };
+      if (this.metric?.kind === "conflict") {
+        this._scheduleRebuild();
+        this.onDataChanged?.();
+      }
+    } catch (e) {
+      console.warn("[heatmap] conflict events unavailable:", e.message);
+    } finally {
+      this._conflictLoading = false;
+    }
+  }
+
+  _conflictCellAt(lat, lon) {
+    if (!this.conflict) return null;
+    const cols = 360 / CONFLICT_CELL_DEG;
+    const cx = Math.floor((lon + 180) / CONFLICT_CELL_DEG);
+    const cy = Math.floor((90 - lat) / CONFLICT_CELL_DEG);
+    return this.conflict.cells.get(cy * cols + cx) ?? null;
+  }
+
   // --- shared: tooltip lookup, canvas, overlay ------------------------------------
 
   // Weather modes: bilinear interpolation over the sample grid (longitude
@@ -605,22 +704,37 @@ export class HeatmapLayer {
   valueAt(lat, lon) {
     const m = this.metric;
     if (!m) return null;
+    if (m.kind === "conflict") {
+      const cell = this._conflictCellAt(lat, lon);
+      if (!cell) return null;
+      return {
+        kind: "conflict",
+        metric: this.mode,
+        value: cell.deaths,
+        events: cell.events,
+        country: cell.country,
+        dyad: cell.dyad,
+        period: this.conflictMeta?.period,
+        source: this.conflictMeta?.sourceLabel ?? "conflict events",
+      };
+    }
     if (m.kind === "country" || m.kind === "region") {
       // region metrics: prefer the admin-1 polygon under the cursor when it
       // carries its own value, else fall back to the country statistic
       if (m.kind === "region") {
         const r = countryAt(this.regions, lat, lon);
-        if (r?.density != null) {
+        if (r?.[m.regionKey] != null) {
           return {
             kind: "region",
             metric: this.mode,
             name: r.name,
             country: this.countryStats[r.iso3]?.name ?? r.iso3 ?? "",
-            value: r.density,
+            value: r[m.regionKey],
+            year: r[m.regionYearKey] ?? null,
             population: r.population,
             popYear: r.popYear,
             areaKm2: r.areaKm2,
-            source: this.regionsMeta?.sourceLabel ?? "admin-1 population",
+            source: this.regionsMeta?.sourceLabel ?? "admin-1 demographics",
           };
         }
       }
@@ -665,6 +779,7 @@ export class HeatmapLayer {
 
   _renderCanvas() {
     const kind = this.metric?.kind;
+    if (kind === "conflict") return this._renderConflictCanvas();
     return kind === "country" || kind === "region"
       ? this._renderCountryCanvas()
       : this._renderWeatherCanvas();
@@ -716,7 +831,30 @@ export class HeatmapLayer {
     }
     if (m.kind === "region") {
       for (const r of this.regions ?? []) {
-        if (r.density != null) fillFeature(ctx, r, r.density, m.stops);
+        if (r[m.regionKey] != null) fillFeature(ctx, r, r[m.regionKey], m.stops);
+      }
+    }
+    return canvas;
+  }
+
+  // Conflict cells as small squares with a faint halo so isolated events
+  // stay visible at globe scale; colour ramps on deaths in the cell.
+  _renderConflictCanvas() {
+    const m = this.metric;
+    const canvas = document.createElement("canvas");
+    canvas.width = COUNTRY_W;
+    canvas.height = COUNTRY_H;
+    const ctx = canvas.getContext("2d");
+    if (!this.conflict) return canvas;
+    const cols = 360 / CONFLICT_CELL_DEG;
+    const px = COUNTRY_W / cols; // canvas pixels per cell (2 at 0.25°/px)
+    for (const pass of [{ pad: 2, alpha: 0.22 }, { pad: 0, alpha: OVERLAY_ALPHA / 255 }]) {
+      for (const [key, cell] of this.conflict.cells) {
+        const cx = key % cols;
+        const cy = Math.floor(key / cols);
+        const [r, g, b] = colorFor(m.stops, Math.max(cell.deaths, 1));
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${pass.alpha})`;
+        ctx.fillRect(cx * px - pass.pad, cy * px - pass.pad, px + 2 * pass.pad, px + 2 * pass.pad);
       }
     }
     return canvas;
@@ -737,11 +875,24 @@ export class HeatmapLayer {
   counts() {
     if (!this.visible) return { count: 0, detail: "", source: this.source };
     const m = this.metric;
+    if (m.kind === "conflict") {
+      if (!this.conflict) {
+        return { count: 0, detail: "loading conflict events…", source: "loading" };
+      }
+      const p = this.conflictMeta.period;
+      return {
+        count: this.conflict.totalEvents,
+        detail: `${this.conflict.totalEvents.toLocaleString("en-US")} events · ` +
+          `${this.conflict.totalDeaths.toLocaleString("en-US")} deaths` +
+          `${p ? ` · ${p.start} → ${p.end}` : ""} · ${this.conflictMeta.sourceLabel}`,
+        source: "data",
+      };
+    }
     if (m.kind === "region") {
       if (!this.geo && !this.regions) {
         return { count: 0, detail: "loading region boundaries…", source: "loading" };
       }
-      const regions = (this.regions ?? []).filter((r) => r.density != null).length;
+      const regions = (this.regions ?? []).filter((r) => r[m.regionKey] != null).length;
       const countries = (this.geo ?? [])
         .filter((f) => statValue(this.countryStats[f.id]?.[m.statKey]) != null).length;
       const src = this.regions

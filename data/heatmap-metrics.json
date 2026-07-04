@@ -192,6 +192,8 @@
       "label": "Population density",
       "kind": "region",
       "statKey": "popDensity",
+      "regionKey": "density",
+      "regionYearKey": "popYear",
       "formatter": "density",
       "stops": [
         [1, [79, 195, 247]],
@@ -210,6 +212,47 @@
         ["500", "#fb923c"],
         ["2k", "#ef4444"],
         ["10k+", "#d946ef"]
+      ]
+    },
+    "fertility": {
+      "label": "Fertility rate",
+      "kind": "region",
+      "statKey": "fertility",
+      "regionKey": "fertility",
+      "regionYearKey": "fertilityYear",
+      "formatter": "fixed2",
+      "stops": [
+        [1, [79, 195, 247]],
+        [1.5, [63, 217, 143]],
+        [2.1, [168, 221, 78]],
+        [3, [250, 204, 21]],
+        [4.5, [251, 146, 60]],
+        [6, [239, 68, 68]]
+      ],
+      "legend": [
+        ["1", "#4fc3f7"],
+        ["1.5", "#3fd98f"],
+        ["2.1", "#a8dd4e"],
+        ["3", "#facc15"],
+        ["4.5", "#fb923c"],
+        ["6+", "#ef4444"]
+      ]
+    },
+    "conflicts": {
+      "label": "Conflict deaths",
+      "kind": "conflict",
+      "formatter": "integer",
+      "stops": [
+        [1, [250, 204, 21]],
+        [10, [251, 146, 60]],
+        [100, [239, 68, 68]],
+        [1000, [217, 70, 239]]
+      ],
+      "legend": [
+        ["1", "#facc15"],
+        ["10", "#fb923c"],
+        ["100", "#ef4444"],
+        ["1k+", "#d946ef"]
       ]
     }
   }

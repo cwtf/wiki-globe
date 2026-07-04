@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "meta": {
-    "generatedAt": "2026-07-04T05:26:13.809Z",
+    "generatedAt": "2026-07-04T05:42:06.930Z",
     "sourceLabel": "World Bank Indicators API + UNDP Human Development Reports",
     "sources": [
       {
@@ -30,6 +30,13 @@
         "url": "https://api.worldbank.org/v2/country/all/indicator/EN.POP.DNST?format=json",
         "indicators": [
           "EN.POP.DNST"
+        ]
+      },
+      {
+        "name": "World Bank Indicators API",
+        "url": "https://api.worldbank.org/v2/country/all/indicator/SP.DYN.TFRT.IN?format=json",
+        "indicators": [
+          "SP.DYN.TFRT.IN"
         ]
       },
       {
@@ -76,6 +83,11 @@
       "unit": "people per square kilometre of land area",
       "defaultSource": "World Bank",
       "indicator": "EN.POP.DNST"
+    },
+    "fertility": {
+      "unit": "children per woman (total fertility rate)",
+      "defaultSource": "World Bank",
+      "indicator": "SP.DYN.TFRT.IN"
     }
   },
   "countries": {
@@ -116,6 +128,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 4.761,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "ALB": {
@@ -155,6 +174,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.341,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "DZA": {
@@ -194,6 +220,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.723,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "AGO": {
@@ -233,6 +266,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 5.048,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "ARG": {
@@ -272,6 +312,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.504,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "ARM": {
@@ -311,6 +358,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.7,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "AUS": {
@@ -350,6 +404,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.481,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "AUT": {
@@ -389,6 +450,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.31,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "AZE": {
@@ -428,6 +496,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.43,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "BHS": {
@@ -467,6 +542,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.374,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "BHR": {
@@ -506,6 +588,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.805,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "BGD": {
@@ -545,6 +634,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.138,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "BLR": {
@@ -584,6 +680,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.217,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "BEL": {
@@ -623,6 +726,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.44,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "BLZ": {
@@ -662,6 +772,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.021,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "BEN": {
@@ -701,6 +818,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 4.48,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "BTN": {
@@ -740,6 +864,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.449,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "BOL": {
@@ -779,6 +910,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.523,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "BIH": {
@@ -818,6 +956,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.492,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "BWA": {
@@ -857,6 +1002,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.703,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "BRA": {
@@ -896,6 +1048,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.614,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "BRN": {
@@ -935,6 +1094,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.731,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "BGR": {
@@ -974,6 +1140,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.72,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "BFA": {
@@ -1013,6 +1186,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 4.11,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "BDI": {
@@ -1052,6 +1232,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 4.789,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "KHM": {
@@ -1091,6 +1278,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.548,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "CMR": {
@@ -1130,6 +1324,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 4.261,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "CAN": {
@@ -1169,6 +1370,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.25,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "CPV": {
@@ -1208,6 +1416,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.511,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "CAF": {
@@ -1247,6 +1462,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 5.954,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "TCD": {
@@ -1286,6 +1508,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 6.028,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "CHL": {
@@ -1325,6 +1554,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.14,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "CHN": {
@@ -1364,6 +1600,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.013,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "COL": {
@@ -1403,6 +1646,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.634,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "COM": {
@@ -1442,6 +1692,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.822,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "COD": {
@@ -1481,6 +1738,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 5.981,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "COG": {
@@ -1520,6 +1784,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 4.109,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "CRI": {
@@ -1559,6 +1830,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.318,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "CIV": {
@@ -1598,6 +1876,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 4.23,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "HRV": {
@@ -1637,6 +1922,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.46,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "CUB": {
@@ -1670,6 +1962,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.445,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "CYP": {
@@ -1709,6 +2008,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.38,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "CZE": {
@@ -1748,6 +2054,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.36,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "DNK": {
@@ -1787,6 +2100,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.47,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "DJI": {
@@ -1826,6 +2146,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.618,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "DOM": {
@@ -1865,6 +2192,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.222,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "ECU": {
@@ -1904,6 +2238,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.806,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "EGY": {
@@ -1943,6 +2284,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.735,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "SLV": {
@@ -1982,6 +2330,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.768,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "GNQ": {
@@ -2021,6 +2376,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 4.116,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "ERI": {
@@ -2060,6 +2422,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.68,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "EST": {
@@ -2099,6 +2468,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.18,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "SWZ": {
@@ -2138,6 +2514,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.718,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "ETH": {
@@ -2177,6 +2560,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.909,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "FJI": {
@@ -2216,6 +2606,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.27,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "FIN": {
@@ -2255,6 +2652,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.25,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "FRA": {
@@ -2294,6 +2698,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.61,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "GAB": {
@@ -2333,6 +2744,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.592,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "GMB": {
@@ -2372,6 +2790,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.907,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "GEO": {
@@ -2411,6 +2836,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.802,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "DEU": {
@@ -2450,6 +2882,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.36,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "GHA": {
@@ -2489,6 +2928,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.344,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "GRC": {
@@ -2528,6 +2974,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.24,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "GRL": {
@@ -2561,6 +3014,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.706,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "GTM": {
@@ -2600,6 +3060,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.287,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "GIN": {
@@ -2639,6 +3106,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 4.131,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "GNB": {
@@ -2678,6 +3152,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.757,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "GUY": {
@@ -2717,6 +3198,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.395,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "HTI": {
@@ -2756,6 +3244,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.625,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "HND": {
@@ -2795,6 +3290,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.476,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "HUN": {
@@ -2834,6 +3336,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.41,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "ISL": {
@@ -2873,6 +3382,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.56,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "IND": {
@@ -2912,6 +3428,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.962,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "IDN": {
@@ -2951,6 +3474,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.115,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "IRN": {
@@ -2990,6 +3520,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.684,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "IRQ": {
@@ -3029,6 +3566,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.221,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "IRL": {
@@ -3068,6 +3612,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.47,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "ISR": {
@@ -3107,6 +3658,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.87,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "ITA": {
@@ -3146,6 +3704,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.18,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "JAM": {
@@ -3185,6 +3750,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.351,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "JPN": {
@@ -3224,6 +3796,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.15,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "JOR": {
@@ -3263,6 +3842,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.604,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "KAZ": {
@@ -3302,6 +3888,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.984,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "KEN": {
@@ -3341,6 +3934,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.167,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "KOS": {
@@ -3385,6 +3985,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.784,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "KOR": {
@@ -3424,6 +4031,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 0.748,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "KWT": {
@@ -3463,6 +4077,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.56,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "KGZ": {
@@ -3502,6 +4123,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.6,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "LAO": {
@@ -3541,6 +4169,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.397,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "LVA": {
@@ -3580,6 +4215,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.24,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "LBN": {
@@ -3619,6 +4261,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.227,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "LSO": {
@@ -3658,6 +4307,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.664,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "LBR": {
@@ -3697,6 +4353,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.864,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "LBY": {
@@ -3736,6 +4399,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.298,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "LTU": {
@@ -3775,6 +4445,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.11,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "LUX": {
@@ -3814,6 +4491,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.25,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "MDG": {
@@ -3853,6 +4537,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.912,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "MWI": {
@@ -3892,6 +4583,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.59,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "MYS": {
@@ -3931,6 +4629,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.543,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "MDV": {
@@ -3970,6 +4675,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.56,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "MLI": {
@@ -4009,6 +4721,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 5.51,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "MLT": {
@@ -4048,6 +4767,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.01,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "MRT": {
@@ -4087,6 +4813,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 4.625,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "MUS": {
@@ -4126,6 +4859,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.44,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "MEX": {
@@ -4165,6 +4905,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.892,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "MDA": {
@@ -4204,6 +4951,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.726,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "MNG": {
@@ -4243,6 +4997,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.5,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "MNE": {
@@ -4282,6 +5043,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.8,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "MAR": {
@@ -4321,6 +5089,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.208,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "MOZ": {
@@ -4360,6 +5135,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 4.69,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "MMR": {
@@ -4399,6 +5181,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.098,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "NAM": {
@@ -4438,6 +5227,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.211,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "NPL": {
@@ -4477,6 +5273,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.961,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "NLD": {
@@ -4516,6 +5319,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.43,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "NCL": {
@@ -4537,6 +5347,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.964,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "NZL": {
@@ -4576,6 +5393,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.57,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "NIC": {
@@ -4615,6 +5439,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.206,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "NER": {
@@ -4654,6 +5485,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 5.935,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "NGA": {
@@ -4693,6 +5531,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 4.382,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "MKD": {
@@ -4732,6 +5577,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.4,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "NOR": {
@@ -4771,6 +5623,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.45,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "OMN": {
@@ -4810,6 +5669,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.508,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "PAK": {
@@ -4849,6 +5715,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.547,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "PAN": {
@@ -4888,6 +5761,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.106,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "PNG": {
@@ -4927,6 +5807,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.072,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "PRY": {
@@ -4966,6 +5853,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.416,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "PER": {
@@ -5005,6 +5899,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.965,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "PHL": {
@@ -5044,6 +5945,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.894,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "POL": {
@@ -5083,6 +5991,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.14,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "PRT": {
@@ -5122,6 +6037,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.41,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "PRI": {
@@ -5155,6 +6077,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 0.92,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "PSE": {
@@ -5194,6 +6123,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.25,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "QAT": {
@@ -5233,6 +6169,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.717,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "ROU": {
@@ -5272,6 +6215,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.39,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "RUS": {
@@ -5311,6 +6261,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.418,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "RWA": {
@@ -5350,6 +6307,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.645,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "WSM": {
@@ -5389,6 +6353,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.801,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "SAU": {
@@ -5428,6 +6399,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.308,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "SEN": {
@@ -5467,6 +6445,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.765,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "SRB": {
@@ -5506,6 +6491,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.64,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "SYC": {
@@ -5545,6 +6537,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.85,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "SLE": {
@@ -5584,6 +6583,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.703,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "SGP": {
@@ -5623,6 +6629,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 0.97,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "SVK": {
@@ -5662,6 +6675,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.46,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "SVN": {
@@ -5701,6 +6721,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.52,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "SLB": {
@@ -5740,6 +6767,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.513,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "SOM": {
@@ -5779,6 +6813,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 6.013,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "ZAF": {
@@ -5818,6 +6859,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.205,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "SSD": {
@@ -5857,6 +6905,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.785,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "ESP": {
@@ -5896,6 +6951,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.1,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "LKA": {
@@ -5935,6 +6997,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.952,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "SDN": {
@@ -5974,6 +7043,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 4.264,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "SUR": {
@@ -6013,6 +7089,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.231,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "SWE": {
@@ -6052,6 +7135,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.43,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "CHE": {
@@ -6091,6 +7181,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.29,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "SYR": {
@@ -6130,6 +7227,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.7,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "TWN": {
@@ -6183,6 +7287,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.036,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "TZA": {
@@ -6222,6 +7333,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 4.541,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "THA": {
@@ -6261,6 +7379,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.204,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "TLS": {
@@ -6300,6 +7425,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.627,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "TGO": {
@@ -6339,6 +7471,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 4.122,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "TTO": {
@@ -6378,6 +7517,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.536,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "TUN": {
@@ -6417,6 +7563,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.818,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "TUR": {
@@ -6456,6 +7609,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.48,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "TKM": {
@@ -6495,6 +7655,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.661,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "UGA": {
@@ -6534,6 +7701,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 4.165,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "UKR": {
@@ -6573,6 +7747,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 0.988,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "ARE": {
@@ -6612,6 +7793,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.213,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "GBR": {
@@ -6651,6 +7839,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.551,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "USA": {
@@ -6690,6 +7885,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.627,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "URY": {
@@ -6729,6 +7931,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.397,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "UZB": {
@@ -6768,6 +7977,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.486,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "VUT": {
@@ -6807,6 +8023,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.569,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "VEN": {
@@ -6846,6 +8069,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.077,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "VNM": {
@@ -6885,6 +8115,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.895,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "YEM": {
@@ -6924,6 +8161,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 4.499,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "ZMB": {
@@ -6963,6 +8207,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 4.036,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "ZWE": {
@@ -7002,6 +8253,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.674,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "AFE": {
@@ -7033,6 +8291,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 4.164,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "AFW": {
@@ -7064,6 +8329,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 4.416,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "ARB": {
@@ -7095,6 +8367,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.057,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "CSS": {
@@ -7126,6 +8405,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.83,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "CEB": {
@@ -7157,6 +8443,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.309,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "EAR": {
@@ -7188,6 +8481,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.28,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "EAS": {
@@ -7219,6 +8519,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.341,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "EAP": {
@@ -7250,6 +8557,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.368,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "TEA": {
@@ -7281,6 +8595,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.363,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "EMU": {
@@ -7312,6 +8633,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.353,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "ECS": {
@@ -7343,6 +8671,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.553,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "ECA": {
@@ -7374,6 +8709,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.962,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "TEC": {
@@ -7405,6 +8747,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.705,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "EUU": {
@@ -7436,6 +8785,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.341,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "HPC": {
@@ -7467,6 +8823,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 4.41,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "IBD": {
@@ -7498,6 +8861,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.714,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "IBT": {
@@ -7529,6 +8899,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.3,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "IDB": {
@@ -7560,6 +8937,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.841,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "IDX": {
@@ -7591,6 +8975,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.761,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "IDA": {
@@ -7622,6 +9013,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.788,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "LTE": {
@@ -7653,6 +9051,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.272,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "LCN": {
@@ -7684,6 +9089,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.786,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "LAC": {
@@ -7715,6 +9127,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.813,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "TLA": {
@@ -7746,6 +9165,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.794,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "LDC": {
@@ -7777,6 +9203,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.911,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "LMY": {
@@ -7808,6 +9241,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.329,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "MEA": {
@@ -7839,6 +9279,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.976,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "MNA": {
@@ -7870,6 +9317,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.05,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "TMN": {
@@ -7901,6 +9355,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.048,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "MIC": {
@@ -7932,6 +9393,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.071,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "NAC": {
@@ -7963,6 +9431,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.586,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "OED": {
@@ -7994,6 +9469,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.478,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "OSS": {
@@ -8025,6 +9507,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.016,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "PSS": {
@@ -8056,6 +9545,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.006,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "PST": {
@@ -8087,6 +9583,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.386,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "PRE": {
@@ -8118,6 +9621,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 4.485,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "SST": {
@@ -8149,6 +9659,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.107,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "SAS": {
@@ -8180,6 +9697,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.981,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "TSA": {
@@ -8211,6 +9735,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.981,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "SSF": {
@@ -8242,6 +9773,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 4.264,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "SSA": {
@@ -8273,6 +9811,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 4.264,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "TSS": {
@@ -8304,6 +9849,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 4.264,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "WLD": {
@@ -8335,6 +9887,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.188,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "ASM": {
@@ -8352,6 +9911,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.267,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "AND": {
@@ -8381,6 +9947,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.087,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       },
       "hdi": {
         "value": 0.913,
@@ -8420,6 +9993,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.582,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       },
       "hdi": {
         "value": 0.851,
@@ -8461,6 +10041,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.606,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "BRB": {
@@ -8490,6 +10077,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.708,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       },
       "hdi": {
         "value": 0.811,
@@ -8531,6 +10125,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.405,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "CYM": {
@@ -8562,6 +10163,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.525,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "CHI": {
@@ -8579,6 +10187,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.37,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "CUW": {
@@ -8610,6 +10225,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.4,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "DMA": {
@@ -8639,6 +10261,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.48,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       },
       "hdi": {
         "value": 0.761,
@@ -8680,6 +10309,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.913,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "PYF": {
@@ -8697,6 +10333,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.491,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "GRD": {
@@ -8727,6 +10370,13 @@
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
       },
+      "fertility": {
+        "value": 1.472,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
+      },
       "hdi": {
         "value": 0.791,
         "year": 2023,
@@ -8753,6 +10403,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.748,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "HKG": {
@@ -8783,6 +10440,13 @@
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
       },
+      "fertility": {
+        "value": 0.841,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
+      },
       "hdi": {
         "value": 0.955,
         "year": 2023,
@@ -8809,6 +10473,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.544,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "KIR": {
@@ -8838,6 +10509,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.124,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       },
       "hdi": {
         "value": 0.644,
@@ -8872,6 +10550,13 @@
         "source": "World Bank",
         "indicator": "NY.GNP.PCAP.PP.CD",
         "label": "GNI per capita, PPP (current international $)"
+      },
+      "fertility": {
+        "value": 1.538,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "LIE": {
@@ -8889,6 +10574,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.37,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       },
       "hdi": {
         "value": 0.938,
@@ -8935,6 +10627,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 0.582,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "MHL": {
@@ -8964,6 +10663,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.864,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       },
       "hdi": {
         "value": 0.733,
@@ -9004,6 +10710,13 @@
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
       },
+      "fertility": {
+        "value": 2.743,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
+      },
       "hdi": {
         "value": 0.615,
         "year": 2023,
@@ -9030,6 +10743,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.102,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       },
       "hdi": {
         "value": 0,
@@ -9075,6 +10795,13 @@
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
       },
+      "fertility": {
+        "value": 3.29,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
+      },
       "hdi": {
         "value": 0.703,
         "year": 2023,
@@ -9101,6 +10828,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.324,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "PLW": {
@@ -9130,6 +10864,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.883,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       },
       "hdi": {
         "value": 0.786,
@@ -9170,6 +10911,13 @@
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
       },
+      "fertility": {
+        "value": 1.158,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
+      },
       "hdi": {
         "value": 0.915,
         "year": 2023,
@@ -9208,6 +10956,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.596,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       },
       "hdi": {
         "value": 0.637,
@@ -9249,6 +11004,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.44,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "KNA": {
@@ -9278,6 +11040,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.526,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       },
       "hdi": {
         "value": 0.84,
@@ -9318,6 +11087,13 @@
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
       },
+      "fertility": {
+        "value": 1.385,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
+      },
       "hdi": {
         "value": 0.748,
         "year": 2023,
@@ -9344,6 +11120,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 2.673,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "VCT": {
@@ -9373,6 +11156,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.761,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       },
       "hdi": {
         "value": 0.798,
@@ -9412,6 +11202,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.1,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       },
       "hdi": {
         "value": 0.769,
@@ -9453,6 +11250,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.452,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "TUV": {
@@ -9482,6 +11286,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 3.174,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       },
       "hdi": {
         "value": 0.689,
@@ -9516,6 +11327,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.97,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "VGB": {
@@ -9526,6 +11344,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.048,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     },
     "GIB": {
@@ -9536,6 +11361,13 @@
         "source": "World Bank",
         "indicator": "EN.POP.DNST",
         "label": "Population density (people per sq. km of land area)"
+      },
+      "fertility": {
+        "value": 1.885,
+        "year": 2024,
+        "source": "World Bank",
+        "indicator": "SP.DYN.TFRT.IN",
+        "label": "Fertility rate, total (births per woman)"
       }
     }
   }

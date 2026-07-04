@@ -14,6 +14,7 @@ if (!data.meta?.generatedAt) errors.push("meta.generatedAt is required");
 if (!Array.isArray(data.features)) errors.push("features array is required");
 
 let withDensity = 0;
+let withFertility = 0;
 const ids = new Set();
 for (const [i, f] of (data.features ?? []).entries()) {
   const tag = f.id ?? `features[${i}]`;
@@ -32,6 +33,10 @@ for (const [i, f] of (data.features ?? []).entries()) {
     errors.push(`${tag}: density requires population and a positive areaKm2`);
   }
   if (p.density != null) withDensity++;
+  if (p.fertility != null && (!Number.isFinite(p.fertility) || p.fertility < 0 || p.fertility > 12)) {
+    errors.push(`${tag}: fertility rate out of plausible range`);
+  }
+  if (p.fertility != null) withFertility++;
   if (f.geometry?.type !== "MultiPolygon" || !Array.isArray(f.geometry.coordinates)) {
     errors.push(`${tag}: geometry must be a MultiPolygon`);
     continue;
@@ -58,5 +63,5 @@ if (errors.length) {
   if (errors.length > 40) console.error(`…and ${errors.length - 40} more`);
   process.exitCode = 1;
 } else {
-  console.log(`Validated ${data.features.length} admin-1 regions (${withDensity} with density)`);
+  console.log(`Validated ${data.features.length} admin-1 regions (${withDensity} with density, ${withFertility} with fertility)`);
 }
