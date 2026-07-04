@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "meta": {
-    "sourceLabel": "Wiki Globe heatmap display configuration",
+    "sourceLabel": "Wiki Globe data overlay display configuration",
     "notes": [
       "Weather metrics use valueKey to map sampled Open-Meteo-derived values.",
       "Country metrics use statKey to map generated country-stat rows.",
