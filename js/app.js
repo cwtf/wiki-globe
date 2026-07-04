@@ -437,6 +437,13 @@ function tooltipHtml(id) {
         <div class="tt-line">${esc(m.fmt(s.value))} deaths · ${s.events} event${s.events === 1 ? "" : "s"} in this area</div>
         <div class="tt-note">${esc(s.dyad ?? "")} · ${esc(period)} · ${esc(s.source)} · click for related articles</div>`;
     }
+    if (s.kind === "skyscraper") {
+      const place = [s.city, s.country].filter(Boolean).join(" - ") || "Skyscraper city cell";
+      const rank = s.rank ? `Top city rank: #${s.rank}` : "City-count source";
+      return `<div class="tt-title">${esc(place)}</div>
+        <div class="tt-line">${s.count.toLocaleString("en-US")} skyscraper${s.count === 1 ? "" : "s"} - ${esc(m.fmt(s.value))}</div>
+        <div class="tt-note">${esc(rank)} - >=${s.minHeightM} m - ${esc(s.source)}</div>`;
+    }
     if (s.kind === "country") {
       const source = [s.stat?.source, s.stat?.year].filter(Boolean).join(" ");
       return `<div class="tt-title">${esc(s.name)}</div>

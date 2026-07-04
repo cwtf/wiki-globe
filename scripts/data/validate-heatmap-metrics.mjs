@@ -6,7 +6,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..")
 const FILE = path.join(ROOT, "data/heatmap-metrics.json");
 const FORMATTERS = new Set([
   "money", "degC", "percent", "percent1", "fixed2", "fixed3", "density", "integer",
-  "years", "per1000", "tonnes", "kgOil", "micrograms", "millimetres",
+  "years", "per1000", "tonnes", "kgOil", "micrograms", "millimetres", "towerDensity",
 ]);
 const VALUE_KEYS = new Set(["tw", "t", "rh"]);
 const STAT_KEYS = new Set([
@@ -16,7 +16,7 @@ const STAT_KEYS = new Set([
   "renewableElectricity", "energyUse", "pm25", "annualPrecipitation",
 ]);
 const REGION_KEYS = new Set(["density", "fertility"]);
-const KINDS = new Set(["weather", "country", "region", "conflict"]);
+const KINDS = new Set(["weather", "country", "region", "conflict", "skyscraper"]);
 
 const data = JSON.parse(await readFile(FILE, "utf8"));
 const errors = [];

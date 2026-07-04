@@ -546,6 +546,29 @@
         ["6k+", "#4a7dff"]
       ]
     },
+    "skyscraperDensity": {
+      "label": "Skyscraper density",
+      "kind": "skyscraper",
+      "formatter": "towerDensity",
+      "stops": [
+        [0.5, [79, 195, 247]],
+        [2, [63, 217, 143]],
+        [8, [168, 221, 78]],
+        [25, [250, 204, 21]],
+        [80, [251, 146, 60]],
+        [250, [239, 68, 68]],
+        [800, [217, 70, 239]]
+      ],
+      "legend": [
+        ["0.5", "#4fc3f7"],
+        ["2", "#3fd98f"],
+        ["8", "#a8dd4e"],
+        ["25", "#facc15"],
+        ["80", "#fb923c"],
+        ["250", "#ef4444"],
+        ["800+", "#d946ef"]
+      ]
+    },
     "conflicts": {
       "label": "Conflict deaths",
       "kind": "conflict",

@@ -9,7 +9,8 @@
 // Region metrics (population
 // density, fertility) colour generated admin-1 polygons where data exists
 // and fall back to the country-level statistic elsewhere. The conflict
-// metric aggregates generated UCDP event points into half-degree cells.
+// metric aggregates generated UCDP event points into half-degree cells, while
+// skyscraper density aggregates city counts from Wikidata Q1575895 into half-degree cells.
 // Either way the overlay renders to an equirectangular canvas draped over
 // the globe as a single-tile imagery layer, and valueAt() serves the
 // cursor tooltip.
@@ -42,6 +43,7 @@ const COUNTRY_STATS_URL = "data/country-stats.latest.json";
 const HEATMAP_METRICS_URL = "data/heatmap-metrics.json";
 const ADMIN1_URL = "data/admin1-population.latest.geojson";
 const CONFLICT_URL = "data/conflict-events.latest.json";
+const SKYSCRAPER_URL = "data/skyscraper-density.latest.json";
 const CONFLICT_CELL_DEG = 0.5;        // aggregation cell for events (~55 km)
 
 const TIME_FMT = new Intl.DateTimeFormat("en", {
@@ -58,6 +60,7 @@ const tonnes = (x) => `${x.toFixed(x >= 10 ? 0 : 1)} t`;
 const kgOil = (x) => `${Math.round(x).toLocaleString("en-US")} kg`;
 const micrograms = (x) => `${x.toFixed(x >= 10 ? 0 : 1)} µg/m³`;
 const millimetres = (x) => `${Math.round(x).toLocaleString("en-US")} mm`;
+const towerDensity = (x) => `${x.toFixed(x >= 10 ? 0 : 1)}/10k km2`;
 const perKm2 = (x) =>
   `${x >= 100 ? Math.round(x).toLocaleString("en-US") : x.toFixed(x >= 10 ? 0 : 1)}/km²`;
 
@@ -203,6 +206,19 @@ export const METRICS = {
       ["1", "#facc15"], ["10", "#fb923c"], ["100", "#ef4444"], ["1k+", "#d946ef"],
     ],
   },
+  skyscraperDensity: {
+    label: "Skyscraper density", kind: "skyscraper",
+    fmt: towerDensity,
+    stops: [
+      [0.5, [79, 195, 247]], [2, [63, 217, 143]], [8, [168, 221, 78]],
+      [25, [250, 204, 21]], [80, [251, 146, 60]], [250, [239, 68, 68]],
+      [800, [217, 70, 239]],
+    ],
+    legend: [
+      ["0.5", "#4fc3f7"], ["2", "#3fd98f"], ["8", "#a8dd4e"],
+      ["25", "#facc15"], ["80", "#fb923c"], ["250", "#ef4444"], ["800+", "#d946ef"],
+    ],
+  },
 };
 
 const FORMATTERS = {
@@ -220,6 +236,7 @@ const FORMATTERS = {
   kgOil,
   micrograms,
   millimetres,
+  towerDensity,
 };
 
 const VALUE_GETTERS = {
@@ -278,7 +295,7 @@ function hydrateMetric(key, metric) {
       out.regionKey = metric.regionKey;
       out.regionYearKey = metric.regionYearKey;
     }
-  } else if (metric.kind !== "conflict") {
+  } else if (metric.kind !== "conflict" && metric.kind !== "skyscraper") {
     throw new Error(`unknown metric kind for ${key}: ${metric.kind}`);
   }
   return out;
@@ -306,6 +323,8 @@ export class HeatmapLayer {
     this.regionsMeta = null;
     this.conflict = null;             // aggregated UCDP event cells (lazy)
     this.conflictMeta = null;
+    this.skyscrapers = null;          // aggregated city skyscraper-count cells (lazy)
+    this.skyscrapersMeta = null;
     this.countryStats = legacyCountryStats();
     this.countryStatsMeta = {
       sourceLabel: "bundled IMF/UNDP 2022-23 estimates",
@@ -315,6 +334,7 @@ export class HeatmapLayer {
     this._statsLoading = false;
     this._regionsLoading = false;
     this._conflictLoading = false;
+    this._skyscrapersLoading = false;
     this._retryTimer = null;
     this._rebuildTimer = null;
     this._gen = 0;                    // overlay rebuild generation (latest wins)
@@ -362,6 +382,9 @@ export class HeatmapLayer {
     } else if (this.metric.kind === "conflict") {
       if (this.conflict) this._scheduleRebuild();
       else this._loadConflict();
+    } else if (this.metric.kind === "skyscraper") {
+      if (this.skyscrapers) this._scheduleRebuild();
+      else this._loadSkyscrapers();
     } else {
       // country/region choropleths; region modes also need admin-1 polygons
       const needCountry = !this.geo || this.countryStatsMeta.fallback;
@@ -752,6 +775,63 @@ export class HeatmapLayer {
     };
   }
 
+  // --- skyscraper density --------------------------------------------------------
+
+  // Generated from the city-count table linked by Wikidata Q1575895 (see
+  // scripts/data/update-skyscraper-density.mjs), aggregated into grid cells as
+  // skyscrapers per 10,000 km2. Each cell also carries its highest-count city.
+  async _loadSkyscrapers() {
+    if (this._skyscrapersLoading || this.skyscrapers) return;
+    this._skyscrapersLoading = true;
+    try {
+      const resp = await fetch(SKYSCRAPER_URL);
+      if (!resp.ok) throw new Error(`skyscraper density ${resp.status}`);
+      const data = await resp.json();
+      if (!Array.isArray(data?.cells)) throw new Error("skyscraper payload missing cells");
+      const cellDeg = data.cellDeg ?? 0.5;
+      const cols = Math.round(360 / cellDeg);
+      const cells = new Map();
+      let totalBuildings = 0;
+      let densest = null;
+      for (const row of data.cells) {
+        const [x, y, count, density, cityIdx, countryIdx, rank] = row;
+        if (![x, y, count, density].every(Number.isFinite)) continue;
+        const cell = {
+          x, y, count, density, rank: rank ?? null,
+          city: data.cities?.[cityIdx] ?? null,
+          country: data.countries?.[countryIdx] ?? null,
+        };
+        cells.set(y * cols + x, cell);
+        totalBuildings += count;
+        if (!densest || cell.density > densest.density) densest = cell;
+      }
+      this.skyscrapers = { cells, cellDeg, cols, totalBuildings, densest };
+      this.skyscrapersMeta = {
+        sourceLabel: data.meta?.sourceLabel ?? "Q1575895 city skyscraper counts",
+        generatedAt: data.meta?.generatedAt,
+        minHeightM: data.minHeightM ?? 150,
+      };
+      if (this.metric?.kind === "skyscraper") {
+        this._scheduleRebuild();
+        this.onDataChanged?.();
+      }
+    } catch (e) {
+      console.warn("[heatmap] skyscraper density unavailable:", e.message);
+    } finally {
+      this._skyscrapersLoading = false;
+    }
+  }
+
+  _skyscraperCellAt(lat, lon) {
+    if (!this.skyscrapers) return null;
+    const { cellDeg, cols, cells } = this.skyscrapers;
+    const rows = Math.round(180 / cellDeg);
+    lon = ((lon + 180) % 360 + 360) % 360;
+    const x = Math.min(cols - 1, Math.max(0, Math.floor(lon / cellDeg)));
+    const y = Math.min(rows - 1, Math.max(0, Math.floor((90 - lat) / cellDeg)));
+    return cells.get(y * cols + x) ?? null;
+  }
+
   // --- shared: tooltip lookup, canvas, overlay ------------------------------------
 
   // Weather modes: bilinear interpolation over the sample grid (longitude
@@ -772,6 +852,21 @@ export class HeatmapLayer {
         dyad: cell.dyad,
         period: this.conflictMeta?.period,
         source: this.conflictMeta?.sourceLabel ?? "conflict events",
+      };
+    }
+    if (m.kind === "skyscraper") {
+      const cell = this._skyscraperCellAt(lat, lon);
+      if (!cell) return null;
+      return {
+        kind: "skyscraper",
+        metric: this.mode,
+        value: cell.density,
+        count: cell.count,
+        city: cell.city,
+        country: cell.country,
+        rank: cell.rank,
+        minHeightM: this.skyscrapersMeta?.minHeightM ?? 150,
+        source: this.skyscrapersMeta?.sourceLabel ?? "Q1575895 city skyscraper counts",
       };
     }
     if (m.kind === "country" || m.kind === "region") {
@@ -836,6 +931,7 @@ export class HeatmapLayer {
   _renderCanvas() {
     const kind = this.metric?.kind;
     if (kind === "conflict") return this._renderConflictCanvas();
+    if (kind === "skyscraper") return this._renderSkyscraperCanvas();
     return kind === "country" || kind === "region"
       ? this._renderCountryCanvas()
       : this._renderWeatherCanvas();
@@ -916,6 +1012,26 @@ export class HeatmapLayer {
     return canvas;
   }
 
+  // Skyscraper cells use the same visible-at-a-distance halo treatment as
+  // conflict cells, but colour by city-count skyscrapers per 10,000 km2.
+  _renderSkyscraperCanvas() {
+    const m = this.metric;
+    const canvas = document.createElement("canvas");
+    canvas.width = COUNTRY_W;
+    canvas.height = COUNTRY_H;
+    const ctx = canvas.getContext("2d");
+    if (!this.skyscrapers) return canvas;
+    const px = (COUNTRY_W * this.skyscrapers.cellDeg) / 360;
+    for (const pass of [{ pad: 2, alpha: 0.2 }, { pad: 0, alpha: OVERLAY_ALPHA / 255 }]) {
+      for (const cell of this.skyscrapers.cells.values()) {
+        const [r, g, b] = colorFor(m.stops, cell.density);
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${pass.alpha})`;
+        ctx.fillRect(cell.x * px - pass.pad, cell.y * px - pass.pad, px + 2 * pass.pad, px + 2 * pass.pad);
+      }
+    }
+    return canvas;
+  }
+
   async _rebuildOverlay() {
     if (!this.mode) return;
     const gen = ++this._gen;
@@ -941,6 +1057,20 @@ export class HeatmapLayer {
         detail: `${this.conflict.totalEvents.toLocaleString("en-US")} events · ` +
           `${this.conflict.totalDeaths.toLocaleString("en-US")} deaths` +
           `${p ? ` · ${p.start} → ${p.end}` : ""} · ${this.conflictMeta.sourceLabel}`,
+        source: "data",
+      };
+    }
+    if (m.kind === "skyscraper") {
+      if (!this.skyscrapers) {
+        return { count: 0, detail: "loading skyscraper density...", source: "loading" };
+      }
+      const d = this.skyscrapers.densest;
+      const where = [d?.city, d?.country].filter(Boolean).join(", ");
+      return {
+        count: this.skyscrapers.totalBuildings,
+        detail: `${this.skyscrapers.totalBuildings.toLocaleString("en-US")} skyscrapers ` +
+          `>=${this.skyscrapersMeta.minHeightM} m across ${this.skyscrapers.cells.size.toLocaleString("en-US")} city cells` +
+          `${where ? ` - densest near ${where}` : ""} - ${this.skyscrapersMeta.sourceLabel}`,
         source: "data",
       };
     }
