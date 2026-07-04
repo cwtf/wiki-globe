@@ -3,6 +3,6 @@
     "data:update:country-stats": "node scripts/data/update-country-stats.mjs",
     "data:update:ports": "node scripts/data/update-ports.mjs",
     "data:update": "node scripts/data/update-country-stats.mjs && node scripts/data/update-ports.mjs",
-    "data:validate": "node scripts/data/validate-country-stats.mjs && node scripts/data/validate-ports.mjs"
+    "data:validate": "node scripts/data/validate-country-stats.mjs && node scripts/data/validate-ports.mjs && node scripts/data/validate-heatmap-metrics.mjs"
   }
 }

@@ -5,7 +5,7 @@
 import { SatelliteLayer } from "./layers/satellites.js";
 import { FlightLayer } from "./layers/flights.js";
 import { ShippingLayer } from "./layers/shipping.js";
-import { HeatmapLayer, METRICS, heatStressLabel, RES_STEPS } from "./layers/heatmap.js";
+import { HeatmapLayer, METRICS, heatStressLabel, RES_STEPS, loadHeatmapMetrics } from "./layers/heatmap.js";
 import { TrueSizeLayer } from "./layers/truesize.js";
 import { CountrySearch } from "./search.js";
 import { WikiPanel } from "./wiki-panel.js";
@@ -18,7 +18,9 @@ const AUTOROTATE_RATE = 0.006;        // rad/s
 const AUTOROTATE_IDLE_MS = 8000;
 const AUTOROTATE_MIN_HEIGHT = 1.2e6;  // stop spinning once zoomed into the map
 
-function boot() {
+async function boot() {
+  await loadHeatmapMetrics();
+
   const viewer = new Cesium.Viewer("cesiumContainer", {
     baseLayer: Cesium.ImageryLayer.fromProviderAsync(
       Cesium.SingleTileImageryProvider.fromUrl("assets/earth-night.jpg")
@@ -453,11 +455,9 @@ function esc(s) {
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
-try {
-  boot();
-} catch (e) {
+boot().catch((e) => {
   const el = document.getElementById("error");
   el.hidden = false;
   el.textContent = `Could not start the globe (${e.message}). WebGL is required.`;
   console.error(e);
-}
+});

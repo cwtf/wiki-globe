@@ -35,6 +35,7 @@ const OVERLAY_ALPHA = 160;            // 0-255 baked into the overlay pixels
 const EDGE_FADE_DEG = 7.5;            // fade to transparent at grid edges
 const NO_DATA_FILL = "rgba(125, 135, 150, 0.16)";
 const COUNTRY_STATS_URL = "data/country-stats.latest.json";
+const HEATMAP_METRICS_URL = "data/heatmap-metrics.json";
 
 const TIME_FMT = new Intl.DateTimeFormat("en", {
   month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
@@ -44,7 +45,9 @@ const TIME_FMT = new Intl.DateTimeFormat("en", {
 const money = (x) => `$${Math.round(x).toLocaleString("en-US")}`;
 const degC = (x) => `${x.toFixed(1)} °C`;
 
-// Metric definitions. stops: [value, [r,g,b]] colour ramp (piecewise-linear);
+// Fallback metric definitions. loadHeatmapMetrics() replaces these from
+// data/heatmap-metrics.json during app boot.
+// stops: [value, [r,g,b]] colour ramp (piecewise-linear);
 // legend: evenly spaced [label, css] ticks for the panel gradient bar.
 // Weather metrics read interpolated grid samples via value(); country
 // metrics index generated country-stat rows via statKey.
@@ -148,6 +151,71 @@ export const METRICS = {
     ],
   },
 };
+
+const FORMATTERS = {
+  money,
+  degC,
+  percent: (x) => `${Math.round(x)}%`,
+  fixed3: (x) => x.toFixed(3),
+};
+
+const VALUE_GETTERS = {
+  tw: (v) => v.tw,
+  t: (v) => v.t,
+  rh: (v) => v.rh,
+};
+
+let metricsPromise = null;
+
+export function loadHeatmapMetrics() {
+  metricsPromise ??= fetch(HEATMAP_METRICS_URL)
+    .then((resp) => {
+      if (!resp.ok) throw new Error(`heatmap metrics ${resp.status}`);
+      return resp.json();
+    })
+    .then((data) => {
+      if (!data?.metrics || typeof data.metrics !== "object") {
+        throw new Error("heatmap metrics payload missing metrics");
+      }
+      applyMetricConfig(data.metrics);
+      return METRICS;
+    })
+    .catch((e) => {
+      console.warn("[heatmap] generated metric config unavailable, using bundled fallback:", e.message);
+      metricsPromise = null;
+      return METRICS;
+    });
+  return metricsPromise;
+}
+
+function applyMetricConfig(config) {
+  for (const key of Object.keys(METRICS)) delete METRICS[key];
+  for (const [key, metric] of Object.entries(config)) {
+    METRICS[key] = hydrateMetric(key, metric);
+  }
+}
+
+function hydrateMetric(key, metric) {
+  const fmt = FORMATTERS[metric.formatter];
+  if (!fmt) throw new Error(`unknown formatter for metric ${key}: ${metric.formatter}`);
+  const out = {
+    label: metric.label,
+    kind: metric.kind,
+    fmt,
+    stops: metric.stops,
+    legend: metric.legend,
+  };
+  if (metric.kind === "weather") {
+    const value = VALUE_GETTERS[metric.valueKey];
+    if (!value) throw new Error(`unknown valueKey for metric ${key}: ${metric.valueKey}`);
+    out.value = value;
+  } else if (metric.kind === "country") {
+    out.statKey = metric.statKey;
+  } else {
+    throw new Error(`unknown metric kind for ${key}: ${metric.kind}`);
+  }
+  return out;
+}
 
 export class HeatmapLayer {
   constructor(viewer) {
