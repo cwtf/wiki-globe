@@ -4,9 +4,17 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const FILE = path.join(ROOT, "data/heatmap-metrics.json");
-const FORMATTERS = new Set(["money", "degC", "percent", "fixed2", "fixed3", "density", "integer"]);
+const FORMATTERS = new Set([
+  "money", "degC", "percent", "percent1", "fixed2", "fixed3", "density", "integer",
+  "years", "per1000", "tonnes", "kgOil", "micrograms", "millimetres",
+]);
 const VALUE_KEYS = new Set(["tw", "t", "rh"]);
-const STAT_KEYS = new Set(["gdpNominal", "gdpPpp", "hdi", "ihdi", "gni", "popDensity", "fertility"]);
+const STAT_KEYS = new Set([
+  "gdpNominal", "gdpPpp", "hdi", "ihdi", "gni", "popDensity", "fertility",
+  "popGrowth", "urbanShare", "lifeExpectancy", "infantMortality", "cleanWater",
+  "electricityAccess", "internetUsers", "gini", "poverty", "co2PerCapita",
+  "renewableElectricity", "energyUse", "pm25", "annualPrecipitation",
+]);
 const REGION_KEYS = new Set(["density", "fertility"]);
 const KINDS = new Set(["weather", "country", "region", "conflict"]);
 

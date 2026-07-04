@@ -32,9 +32,75 @@ const WORLD_BANK_INDICATORS = [
     indicator: "SP.DYN.TFRT.IN",
     label: "Fertility rate, total (births per woman)",
   },
+  {
+    key: "popGrowth",
+    indicator: "SP.POP.GROW",
+    label: "Population growth (annual %)",
+  },
+  {
+    key: "urbanShare",
+    indicator: "SP.URB.TOTL.IN.ZS",
+    label: "Urban population (% of total population)",
+  },
+  {
+    key: "lifeExpectancy",
+    indicator: "SP.DYN.LE00.IN",
+    label: "Life expectancy at birth, total (years)",
+  },
+  {
+    key: "infantMortality",
+    indicator: "SP.DYN.IMRT.IN",
+    label: "Mortality rate, infant (per 1,000 live births)",
+  },
+  {
+    key: "cleanWater",
+    indicator: "SH.H2O.BASW.ZS",
+    label: "People using at least basic drinking water services (% of population)",
+  },
+  {
+    key: "electricityAccess",
+    indicator: "EG.ELC.ACCS.ZS",
+    label: "Access to electricity (% of population)",
+  },
+  {
+    key: "internetUsers",
+    indicator: "IT.NET.USER.ZS",
+    label: "Individuals using the Internet (% of population)",
+  },
+  {
+    key: "gini",
+    indicator: "SI.POV.GINI",
+    label: "Gini index",
+  },
+  {
+    key: "poverty",
+    indicator: "SI.POV.DDAY",
+    label: "Poverty headcount ratio at $2.15 a day (2017 PPP) (% of population)",
+  },
+  {
+    key: "renewableElectricity",
+    indicator: "EG.ELC.RNEW.ZS",
+    label: "Renewable electricity output (% of total electricity output)",
+  },
+  {
+    key: "energyUse",
+    indicator: "EG.USE.PCAP.KG.OE",
+    label: "Energy use (kg of oil equivalent per capita)",
+  },
+  {
+    key: "pm25",
+    indicator: "EN.ATM.PM25.MC.M3",
+    label: "PM2.5 air pollution, mean annual exposure (micrograms per cubic meter)",
+  },
+  {
+    key: "annualPrecipitation",
+    indicator: "AG.LND.PRCP.MM",
+    label: "Average precipitation in depth (mm per year)",
+  },
 ];
 
 const HDR_DOWNLOADS = "https://hdr.undp.org/data-center/documentation-and-downloads";
+const OWID_CO2_PER_CAPITA_CSV = "https://ourworldindata.org/grapher/co-emissions-per-capita.csv";
 
 async function main() {
   const legacy = await readLegacyCountryStats();
@@ -54,6 +120,14 @@ async function main() {
     } catch (e) {
       warnings.push(`World Bank ${spec.indicator} failed: ${e.message}`);
     }
+  }
+
+  try {
+    const co2 = await fetchOwidCo2PerCapita();
+    mergeIndicator(countries, co2.values, "co2PerCapita");
+    sources.push(co2.source);
+  } catch (e) {
+    warnings.push(`OWID CO2 per capita failed: ${e.message}`);
   }
 
   try {
@@ -110,6 +184,76 @@ async function main() {
         unit: "children per woman (total fertility rate)",
         defaultSource: "World Bank",
         indicator: "SP.DYN.TFRT.IN",
+      },
+      popGrowth: {
+        unit: "annual percent",
+        defaultSource: "World Bank",
+        indicator: "SP.POP.GROW",
+      },
+      urbanShare: {
+        unit: "percent of population",
+        defaultSource: "World Bank",
+        indicator: "SP.URB.TOTL.IN.ZS",
+      },
+      lifeExpectancy: {
+        unit: "years at birth",
+        defaultSource: "World Bank",
+        indicator: "SP.DYN.LE00.IN",
+      },
+      infantMortality: {
+        unit: "deaths per 1,000 live births",
+        defaultSource: "World Bank",
+        indicator: "SP.DYN.IMRT.IN",
+      },
+      cleanWater: {
+        unit: "percent of population",
+        defaultSource: "World Bank",
+        indicator: "SH.H2O.BASW.ZS",
+      },
+      electricityAccess: {
+        unit: "percent of population",
+        defaultSource: "World Bank",
+        indicator: "EG.ELC.ACCS.ZS",
+      },
+      internetUsers: {
+        unit: "percent of population",
+        defaultSource: "World Bank",
+        indicator: "IT.NET.USER.ZS",
+      },
+      gini: {
+        unit: "index",
+        defaultSource: "World Bank",
+        indicator: "SI.POV.GINI",
+      },
+      poverty: {
+        unit: "percent of population below $2.15/day at 2017 PPP",
+        defaultSource: "World Bank",
+        indicator: "SI.POV.DDAY",
+      },
+      co2PerCapita: {
+        unit: "metric tons per person",
+        defaultSource: "Our World in Data",
+        url: OWID_CO2_PER_CAPITA_CSV,
+      },
+      renewableElectricity: {
+        unit: "percent of electricity output",
+        defaultSource: "World Bank",
+        indicator: "EG.ELC.RNEW.ZS",
+      },
+      energyUse: {
+        unit: "kg of oil equivalent per person",
+        defaultSource: "World Bank",
+        indicator: "EG.USE.PCAP.KG.OE",
+      },
+      pm25: {
+        unit: "micrograms per cubic meter",
+        defaultSource: "World Bank",
+        indicator: "EN.ATM.PM25.MC.M3",
+      },
+      annualPrecipitation: {
+        unit: "millimetres per year",
+        defaultSource: "World Bank",
+        indicator: "AG.LND.PRCP.MM",
       },
     },
     countries,
@@ -183,6 +327,37 @@ function mergeIndicator(countries, values, key) {
     if (countries[iso3].name === iso3 && countryName) countries[iso3].name = countryName;
     countries[iso3][key] = row;
   }
+}
+
+async function fetchOwidCo2PerCapita() {
+  const text = await fetchText(OWID_CO2_PER_CAPITA_CSV);
+  const rows = parseCsv(text);
+  const values = new Map();
+  for (const row of rows) {
+    const iso3 = pick(row, ["code"])?.toUpperCase();
+    const year = Number(pick(row, ["year"]));
+    const value = Number(pick(row, ["co2 emissions per capita", "co₂ emissions per capita"]));
+    if (!/^[A-Z]{3}$/.test(iso3 ?? "") || !Number.isFinite(year) || !Number.isFinite(value)) continue;
+    const prev = values.get(iso3);
+    if (!prev || year > prev.year) {
+      values.set(iso3, {
+        countryName: pick(row, ["entity"]),
+        value: round(value),
+        year,
+        source: "Our World in Data",
+        label: "CO2 emissions per capita",
+      });
+    }
+  }
+  if (values.size < 150) throw new Error(`only ${values.size} ISO3 rows found`);
+  return {
+    values,
+    source: {
+      name: "Our World in Data",
+      url: OWID_CO2_PER_CAPITA_CSV,
+      fields: ["co2PerCapita"],
+    },
+  };
 }
 
 async function fetchHdrData() {

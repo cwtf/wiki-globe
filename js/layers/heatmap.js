@@ -3,9 +3,10 @@
 // humidity) come from Open-Meteo hourly data on an adjustable sample grid
 // with a scrubbable past-days timeline; the wet-bulb value is derived via
 // Stull's 2011 approximation (~35 °C sustained is the theoretical limit of
-// human survivability). Country metrics (GDP per capita, HDI, IHDI, GNI)
-// are drawn as a choropleth from public-domain country polygons coloured by
-// the bundled dataset in country-data.js. Region metrics (population
+// human survivability). Country metrics (economy, development, access,
+// inequality, air/climate, and energy indicators) are drawn as a choropleth
+// from public-domain country polygons coloured by generated country stats.
+// Region metrics (population
 // density, fertility) colour generated admin-1 polygons where data exists
 // and fall back to the country-level statistic elsewhere. The conflict
 // metric aggregates generated UCDP event points into half-degree cells.
@@ -50,6 +51,13 @@ const TIME_FMT = new Intl.DateTimeFormat("en", {
 
 const money = (x) => `$${Math.round(x).toLocaleString("en-US")}`;
 const degC = (x) => `${x.toFixed(1)} °C`;
+const percent1 = (x) => `${x.toFixed(Math.abs(x) >= 10 ? 0 : 1)}%`;
+const years = (x) => `${x.toFixed(1)} years`;
+const per1000 = (x) => `${x.toFixed(x >= 10 ? 0 : 1)}/1k`;
+const tonnes = (x) => `${x.toFixed(x >= 10 ? 0 : 1)} t`;
+const kgOil = (x) => `${Math.round(x).toLocaleString("en-US")} kg`;
+const micrograms = (x) => `${x.toFixed(x >= 10 ? 0 : 1)} µg/m³`;
+const millimetres = (x) => `${Math.round(x).toLocaleString("en-US")} mm`;
 const perKm2 = (x) =>
   `${x >= 100 ? Math.round(x).toLocaleString("en-US") : x.toFixed(x >= 10 ? 0 : 1)}/km²`;
 
@@ -201,10 +209,17 @@ const FORMATTERS = {
   money,
   degC,
   percent: (x) => `${Math.round(x)}%`,
+  percent1,
   fixed2: (x) => x.toFixed(2),
   fixed3: (x) => x.toFixed(3),
   density: perKm2,
   integer: (x) => Math.round(x).toLocaleString("en-US"),
+  years,
+  per1000,
+  tonnes,
+  kgOil,
+  micrograms,
+  millimetres,
 };
 
 const VALUE_GETTERS = {
