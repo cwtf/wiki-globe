@@ -97,8 +97,6 @@ export class TrueSizeLayer {
       curCenter: Cesium.Cartesian3.clone(baseCenter),
       spin: 0, // radians around the outline's own centre
       positions: baseVecs.map((ring) => ring.map(() => new Cesium.Cartesian3())),
-      labelPos: new Cesium.Cartesian3(),
-      labelPosProp: null, // set once the label entity exists
       entities: [],
     };
     this._applyCenter(item, item.curCenter);
@@ -124,28 +122,6 @@ export class TrueSizeLayer {
       item.entities.push(ent);
     }
 
-    item.labelPosProp = new Cesium.ConstantPositionProperty(
-      Cesium.Cartesian3.clone(item.labelPos));
-    const label = this.viewer.entities.add({
-      position: item.labelPosProp,
-      label: {
-        text: `${item.name}\n${item.areaLabel}`,
-        font: "600 12px 'Segoe UI', system-ui, sans-serif",
-        fillColor: Cesium.Color.WHITE,
-        showBackground: true,
-        backgroundColor: new Cesium.Color(0.04, 0.07, 0.12, 0.82),
-        backgroundPadding: new Cesium.Cartesian2(7, 5),
-        horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
-        verticalOrigin: Cesium.VerticalOrigin.CENTER,
-        disableDepthTestDistance: Number.POSITIVE_INFINITY,
-        scaleByDistance: new Cesium.NearFarScalar(2.0e6, 1.0, 4.0e7, 0.62),
-      },
-    });
-    label.kind = "truesize";
-    label.ts = item;
-    item.entities.push(label);
-    item.labelEnt = label;
-    item.baseLabelText = `${item.name}\n${item.areaLabel}`;
     item.dragging = false;
 
     this.items.push(item);
@@ -157,7 +133,6 @@ export class TrueSizeLayer {
     const i = this.items.indexOf(item);
     if (i === -1) return;
     this.items.splice(i, 1);
-    clearTimeout(item._hintTimer);
     for (const ent of item.entities) this.viewer.entities.remove(ent);
     this.onChanged?.();
   }
@@ -176,21 +151,6 @@ export class TrueSizeLayer {
   _spin(item, wheelDelta) {
     item.spin += (wheelDelta / 120) * Cesium.Math.toRadians(SPIN_DEG_PER_NOTCH);
     this._applyTransform(item);
-    // live angle feedback on the overlay's label, normalised to ±180°
-    const deg = ((Math.round(Cesium.Math.toDegrees(item.spin)) % 360) + 540) % 360 - 180;
-    this._setLabelHint(item, `⟳ ${deg}°`);
-    if (!item.dragging) {
-      // parked spin (Shift+scroll): let the angle linger, then tidy the label
-      clearTimeout(item._hintTimer);
-      item._hintTimer = setTimeout(() => this._setLabelHint(item, null), 1500);
-    }
-  }
-
-  // extra guide line under the name/area on the overlay's label
-  _setLabelHint(item, hint) {
-    item.labelEnt.label.text = hint
-      ? `${item.baseLabelText}\n${hint}`
-      : item.baseLabelText;
   }
 
   // move rotation (base centre → current centre) composed with the spin
@@ -208,9 +168,6 @@ export class TrueSizeLayer {
         out[i] = fromUnit(v, HEIGHT, out[i]);
       }
     }
-    fromUnit(item.curCenter, HEIGHT, item.labelPos);
-    // clone: setValue ignores the assignment when handed the mutated original
-    item.labelPosProp?.setValue(Cesium.Cartesian3.clone(item.labelPos));
   }
 
   // --- dragging ---------------------------------------------------------------
@@ -273,8 +230,6 @@ export class TrueSizeLayer {
     ctl.enableRotate = ctl.enableTranslate = ctl.enableTilt = ctl.enableZoom = false;
     this.viewer.canvas.style.cursor = "grabbing";
     item.dragging = true;
-    clearTimeout(item._hintTimer);
-    this._setLabelHint(item, "⟳ scroll to rotate");
   }
 
   _move(pos) {
@@ -292,7 +247,6 @@ export class TrueSizeLayer {
     if (!this._drag) return;
     const item = this._drag.item;
     item.dragging = false;
-    this._setLabelHint(item, null);
     this._drag = null;
     const ctl = this.viewer.scene.screenSpaceCameraController;
     ctl.enableRotate = this._saved.rotate;
