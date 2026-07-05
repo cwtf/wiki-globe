@@ -31,6 +31,7 @@ won't work — the texture and module fetches need an HTTP origin.)
 | Satellites | [CelesTrak](https://celestrak.org) TLEs ("visual" group), propagated client-side with SGP4 via satellite.js | Synthetic orbits (LEO constellation, sun-sync, MEO nav, GEO) |
 | Flights | [OpenSky Network](https://opensky-network.org) anonymous state vectors, refreshed every 2 min and dead-reckoned in between; routes per callsign via [adsbdb](https://www.adsbdb.com) | ~200 great-circle flights between major world airports |
 | Data overlay | A dropdown of overlay modes, off by default. **Weather** (live): wet-bulb temperature (Stull 2011 approximation; ~35 °C is the theoretical human survivability limit), air temperature, or relative humidity — [Open-Meteo](https://open-meteo.com) hourly data on a global grid (resolution slider: 20° down to 7.5°) with the past 3 days scrubbable via day + hour sliders (a "Viewing …" readout shows the selected UTC time), bilinearly interpolated and draped over the globe; hover anywhere for the local reading. **Country and regional indicators**: economy, development, demographics, health/access, inequality, climate/air, and energy metrics from World Bank, OWID, UNDP, and generated admin-1 data; hover a country or region for its value. **Built environment**: city skyscraper-count cells from Wikidata Q1575895 / Wikipedia, supplemented by grouped Wikidata Q11303 records for unlisted cities and normalized as towers per 10,000 km². **Conflict**: recent UCDP event cells with click-through to related Wikipedia articles. | Weather falls back to a localStorage cache of the last good fetch when rate-limited |
+| Moon | Position from the Simon 1994 analytic lunar ephemeris evaluated at the real-time scene clock (IAU 2000 orientation), so it sits where the Moon actually is right now; lunar Wikipedia article markers from a Wikidata SPARQL query (Moon-globe coordinates with an English Wikipedia sitelink, ranked by sitelink count) | Bundled list of famous lunar sites (Apollo sites, major craters, maria) |
 | Shipping | Live AIS: [aisstream.io](https://aisstream.io) WebSocket (global; paste a free API key via the "key" link or `?aiskey=`) or [Digitraffic Finland](https://www.digitraffic.fi/en/marine-traffic/) open REST data (no key, Baltic coverage), dead-reckoned between reports. Hover shows name, type, flag state, speed, heading. "Destination routes" resolves each vessel's reported AIS destination against a built-in port gazetteer and draws the path. | Simulated vessels along 17 curated corridors (which stay visible as a dim reference layer in live mode) |
 
 OpenSky's public REST API does not currently expose `states/all` to arbitrary
@@ -61,6 +62,14 @@ readable on the night side.
   800 km — past 10 km it blends in city / region / country context articles
   resolved via Nominatim reverse geocoding. Esc or × dismisses without moving
   the camera.
+- **Moon**: rendered at its true live position and scale with NASA LRO imagery
+  (CGI Moon Kit). Click the Moon to fly there (auto-rotate keeps orbiting it
+  when idle); lunar Wikipedia markers load on the first visit and dot the whole
+  surface while the Moon has focus. Click the surface or a marker for nearby
+  lunar articles, and use "Back to Earth" to return. Its day/night cycle (real
+  solar terminator) toggles independently. Layers are scoped to the focused
+  body: Earth overlays (satellites, flights, shipping, data overlays) pause at
+  the Moon and resume on return; lunar markers never show from Earth.
 
 ## Data & attribution
 
@@ -74,6 +83,9 @@ readable on the night side.
   supplemented by grouped Wikidata Q11303 records for cities not in that list.
 - Night Earth texture from the [three-globe](https://github.com/vasturiano/three-globe)
   examples (NASA Earth Observatory "Black Marble").
+- Moon texture: [NASA SVS CGI Moon Kit](https://svs.gsfc.nasa.gov/4720/)
+  (Lunar Reconnaissance Orbiter camera mosaic, public domain). Lunar article
+  coordinates: Wikidata / Wikipedia.
 - Vessel positions are simulated along real corridors at an accelerated clock —
   there is no free global live AIS feed.
 
@@ -90,7 +102,9 @@ js/layers/heatmap.js    data overlays: Open-Meteo weather grid, choropleths, and
 js/country-data.js      bundled per-country GDP/HDI/IHDI/GNI estimates
 js/shipping-lanes.js    generated shipping-lane GeoJSON loader + fallback
 js/demo-data.js         demo flights/satellites generators, airports
+js/layers/moon.js       live-ephemeris Moon + Wikidata lunar article markers
 js/wiki-panel.js        geosearch + Nominatim context articles, radius slider
 data/shipping-lanes.latest.geojson  curated shipping corridor baseline
 assets/earth-night.jpg  night base texture
+assets/moon.jpg         NASA LRO color mosaic (CGI Moon Kit)
 ```

@@ -79,7 +79,8 @@
         "True-size country and continent comparison with draggable outlines",
         "Country and continent search with fly-to zoom",
         "OpenStreetMap zoom transition",
-        "Nearby Wikipedia article discovery"
+        "Nearby Wikipedia article discovery",
+        "Live-position Moon with NASA LRO imagery and lunar Wikipedia articles"
       ]
     }
   </script>
@@ -111,7 +112,7 @@
   <div id="panel">
     <h1 class="panel-title">WIKI GLOBE<span>satellites · flights · shipping</span></h1>
 
-    <div class="layer">
+    <div class="layer earth-only">
       <label class="row main">
         <input type="checkbox" id="chk-sats" checked />
         <span class="dot dot-sat"></span>
@@ -125,7 +126,7 @@
       </label>
     </div>
 
-    <div class="layer">
+    <div class="layer earth-only">
       <label class="row main">
         <input type="checkbox" id="chk-flights" checked />
         <span class="dot dot-flight"></span>
@@ -139,7 +140,7 @@
       </label>
     </div>
 
-    <div class="layer">
+    <div class="layer earth-only">
       <label class="row main">
         <input type="checkbox" id="chk-ships" checked />
         <span class="dot dot-ship"></span>
@@ -153,7 +154,7 @@
       </label>
     </div>
 
-    <div class="layer">
+    <div class="layer earth-only">
       <label class="row main" for="sel-heatmap">
         <span class="dot dot-heat"></span>
         <span class="name">Data overlay</span>
@@ -229,7 +230,7 @@
       </div>
     </div>
 
-    <div class="layer">
+    <div class="layer earth-only">
       <label class="row main">
         <input type="checkbox" id="chk-truesize" />
         <span class="dot dot-size"></span>
@@ -245,6 +246,24 @@
       </div>
     </div>
 
+    <div class="layer moon-only">
+      <label class="row main">
+        <input type="checkbox" id="chk-moon" checked />
+        <span class="dot dot-moon"></span>
+        <span class="name">Moon</span>
+        <span class="badge loading" id="badge-moon">…</span>
+        <span class="count" id="count-moon">0</span>
+      </label>
+      <label class="row sub">
+        <input type="checkbox" id="chk-moon-wiki" checked />
+        <span class="name">Wiki articles</span>
+      </label>
+      <label class="row sub">
+        <input type="checkbox" id="chk-moon-daynight" checked />
+        <span class="name">Day/night cycle</span>
+      </label>
+    </div>
+
     <div class="layer">
       <label class="row main">
         <input type="checkbox" id="chk-rotate" checked />
@@ -252,7 +271,7 @@
       </label>
     </div>
 
-    <div class="layer">
+    <div class="layer earth-only">
       <label class="row main">
         <input type="checkbox" id="chk-daynight" checked />
         <span class="name">Day/night cycle</span>
@@ -271,7 +290,7 @@
     </details>
 
     <div class="attrib">
-      CelesTrak · OpenSky · adsbdb · Open-Meteo · World Bank / OWID / UNDP · Wikidata · AIS: aisstream / Digitraffic
+      CelesTrak · OpenSky · adsbdb · Open-Meteo · World Bank / OWID / UNDP · Wikidata · NASA LRO · AIS: aisstream / Digitraffic
       (<a href="#" id="ais-key-link" title="Set an aisstream.io API key for global live ship coverage">key</a>)<br />
       <a href="https://github.com/cwtf/" target="_blank" rel="noopener noreferrer">GitHub</a> · Wikipedia · © OpenStreetMap contributors
     </div>
@@ -296,6 +315,8 @@
   </div>
 
   <div id="hint">Drag to rotate &nbsp;·&nbsp; Scroll to zoom into the map &nbsp;·&nbsp; Click anywhere to explore Wikipedia</div>
+
+  <button id="moon-back" hidden>&larr; Back to Earth</button>
 
   <div id="error" hidden></div>
   </main>

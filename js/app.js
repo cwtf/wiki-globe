@@ -7,6 +7,7 @@ import { FlightLayer } from "./layers/flights.js";
 import { ShippingLayer } from "./layers/shipping.js";
 import { HeatmapLayer, METRICS, heatStressLabel, RES_STEPS, loadHeatmapMetrics } from "./layers/heatmap.js";
 import { TrueSizeLayer } from "./layers/truesize.js";
+import { MoonLayer } from "./layers/moon.js";
 import { CountrySearch } from "./search.js";
 import { WikiPanel } from "./wiki-panel.js";
 import { getAisKey, setAisKey } from "./ais.js";
@@ -82,11 +83,42 @@ async function boot() {
   const ships = new ShippingLayer(viewer);
   const heat = new HeatmapLayer(viewer); // lazy: fetches when a mode is selected
   const truesize = new TrueSizeLayer(viewer);
+  const moon = new MoonLayer(viewer);
   const wiki = new WikiPanel(viewer);
 
   ships.init();
   sats.init();
   flights.init();
+  moon.init();
+
+  // "Back to Earth" appears while the camera is parked at the moon
+  const moonBack = document.getElementById("moon-back");
+  moonBack.addEventListener("click", () => moon.blur());
+
+  // Focus scoping: only the body under the camera keeps its overlays. Earth
+  // layers are parked (checkboxes untouched) while the moon has focus, and
+  // lunar article markers exist only there — first visit triggers their load.
+  // References layer toggles declared later in boot; runs only on user input.
+  let heatModeSuspended = null;
+  moon.onFocusChanged = (focused) => {
+    moonBack.hidden = !focused;
+    document.body.classList.toggle("moon-focus", focused);
+    wiki.close();
+    moon.setArticlesVisible(focused);
+    if (focused) {
+      sats.setVisible(false);
+      flights.setVisible(false);
+      ships.setVisible(false);
+      heatModeSuspended = heat.mode;
+      if (heatModeSuspended) heat.setMode(null);
+    } else {
+      sats.setVisible(layerToggles.sats.checked);
+      flights.setVisible(layerToggles.flights.checked);
+      ships.setVisible(layerToggles.ships.checked);
+      if (heatModeSuspended) heat.setMode(heatModeSuspended);
+      heatModeSuspended = null;
+    }
+  };
 
   // --- per-frame loop ---------------------------------------------------------
   let lastFrame = 0;
@@ -118,6 +150,7 @@ async function boot() {
     sats.tick(now);
     flights.tick(now);
     ships.tick(now);
+    moon.tick();
 
     const height = viewer.camera.positionCartographic.height;
     osmLayer.alpha = Cesium.Math.clamp((FADE_START - height) / (FADE_START - FADE_END), 0, 1);
@@ -130,10 +163,14 @@ async function boot() {
     if (
       rotateEnabled && dt > 0 &&
       now - lastInteraction > AUTOROTATE_IDLE_MS &&
-      !wiki.isOpen() &&
-      height > AUTOROTATE_MIN_HEIGHT
+      !wiki.isOpen()
     ) {
-      viewer.camera.rotate(Cesium.Cartesian3.UNIT_Z, -AUTOROTATE_RATE * dt);
+      if (moon.tracking) {
+        // orbit the moon inside its look-at frame
+        viewer.camera.rotateLeft(-AUTOROTATE_RATE * dt);
+      } else if (!moon.focused && height > AUTOROTATE_MIN_HEIGHT) {
+        viewer.camera.rotate(Cesium.Cartesian3.UNIT_Z, -AUTOROTATE_RATE * dt);
+      }
     }
   });
 
@@ -209,6 +246,24 @@ async function boot() {
       wiki.focusArticle(id.article); // highlight the matching result row
       return;
     }
+    if (id?.kind === "moonwiki") {
+      // an article dot on the moon: fly there (if not already) and open it
+      moon.focus();
+      moon.openArticle(id.article, wiki);
+      return;
+    }
+    if (id?.kind === "moon") {
+      if (!moon.focused) {
+        moon.focus();
+      } else if (moon.wikiEnabled) {
+        const c = moon.pickMoon(click.position);
+        if (c) moon.openArticlesAt(c.lat, c.lon, wiki);
+      }
+      return;
+    }
+    // while parked at the moon, stray clicks shouldn't geosearch the Earth
+    // that happens to sit behind the lunar sky
+    if (moon.focused) return;
 
     // empty globe (or a lane — lanes blanket the oceans): open the wiki panel
     sats.select(null);
@@ -346,6 +401,13 @@ async function boot() {
     tsHelp.hidden = !(truesize.enabled || truesize.items.length > 0);
   };
 
+  bind("chk-moon", (v) => moon.setVisible(v));
+  bind("chk-moon-wiki", (v) => {
+    moon.setWikiEnabled(v);
+    if (!v && wiki.moonMode) wiki.close();
+  });
+  bind("chk-moon-daynight", (v) => moon.setDayNight(v));
+
   bind("chk-rotate", (v) => { rotateEnabled = v; });
   bind("chk-daynight", (v) => {
     dayNightEnabled = v;
@@ -371,12 +433,14 @@ async function boot() {
     flights: document.getElementById("badge-flights"),
     ships: document.getElementById("badge-ships"),
     heat: document.getElementById("badge-heat"),
+    moon: document.getElementById("badge-moon"),
   };
   const countEls = {
     sats: document.getElementById("count-sats"),
     flights: document.getElementById("count-flights"),
     ships: document.getElementById("count-ships"),
     heat: document.getElementById("count-heat"),
+    moon: document.getElementById("count-moon"),
   };
 
   function setBadge(el, source) {
@@ -389,6 +453,7 @@ async function boot() {
       blocked: ["CORS", "demo"],    // browser origin cannot read the feed
       cache: ["CACHED", "static"],  // serving the last good dataset
       data: ["DATA", "static"],     // bundled statistics, not a live feed
+      idle: ["—", "static"],        // loads on first visit (moon articles)
     };
     const [label, cls] = map[source] ?? map.loading;
     el.textContent = label;
@@ -418,13 +483,17 @@ async function boot() {
     setBadge(badgeEls.heat, hc.source);
     countEls.heat.textContent = hc.count;
     countEls.heat.title = hc.detail;
+
+    const mc = moon.counts();
+    setBadge(badgeEls.moon, mc.source);
+    countEls.moon.textContent = mc.count;
   }, 1000);
 
   // fade the onboarding hint after a while
   setTimeout(() => document.getElementById("hint").classList.add("faded"), 15000);
 
   // handy for debugging from the console
-  window.__globe = { viewer, sats, flights, ships, heat, wiki, truesize, search };
+  window.__globe = { viewer, sats, flights, ships, heat, wiki, truesize, search, moon };
 }
 
 function enhanceHeatmapSelect(select) {
@@ -714,6 +783,20 @@ function tooltipHtml(id) {
     const tier = id.lane.type === "middle" ? "Secondary" : "Major";
     return `<div class="tt-title">${esc(id.lane.name)}</div>
       <div class="tt-note">${tier} shipping corridor · ${Math.round(id.lane.lengthKm).toLocaleString()} km</div>`;
+  }
+  if (id.kind === "moon") {
+    const distKm = id.moon.distanceKm();
+    return `<div class="tt-title">The Moon</div>
+      <div class="tt-line">${Math.round(distKm).toLocaleString()} km from Earth right now</div>
+      <div class="tt-note">Simon 1994 ephemeris · NASA LRO imagery · click to visit</div>`;
+  }
+  if (id.kind === "moonwiki") {
+    const a = id.article;
+    const lat = `${Math.abs(a.lat).toFixed(1)}° ${a.lat >= 0 ? "N" : "S"}`;
+    const lon = `${Math.abs(a.lon).toFixed(1)}° ${a.lon >= 0 ? "E" : "W"}`;
+    return `<div class="tt-title">${esc(a.title)}</div>
+      <div class="tt-line">${lat}, ${lon} · the Moon</div>
+      <div class="tt-note">Wikipedia · click to open in the panel</div>`;
   }
   if (id.kind === "wiki") {
     const a = id.article;

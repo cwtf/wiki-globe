@@ -35,6 +35,7 @@ export class WikiPanel {
     this.selected = null;
     this.searchSeq = 0;
     this.debounce = null;
+    this.moonMode = false;       // lunar list: no Earth overlays, no geosearch
 
     this.pin = null;             // centre "you clicked here" entity
     this.circle = null;          // translucent radius disc entity
@@ -59,7 +60,7 @@ export class WikiPanel {
       this._recomputeRing();
       clearTimeout(this.debounce);
       this.debounce = setTimeout(() => {
-        if (this.isOpen()) this.search();
+        if (this.isOpen() && !this.moonMode) this.search();
       }, 450);
     });
     this.radiusLabel.textContent = formatKm(this.radiusKm());
@@ -87,9 +88,32 @@ export class WikiPanel {
     return MIN_KM * Math.pow(MAX_KM / MIN_KM, t);
   }
 
+  // Lunar mode: the MoonLayer hands us a ready-made, distance-sorted article
+  // list (markers already live on the moon itself), so there's no geosearch,
+  // radius slider, or Earth overlay to manage.
+  openMoon(lat, lon, items) {
+    this.searchSeq++;            // cancel any in-flight Earth search
+    this.moonMode = true;
+    this.conflict = null;
+    this.center = null;
+    this._clearPin();
+    this._clearCircle();
+    this._clearMarkers();
+    this.el.classList.add("open", "moon");
+    this.coordsEl.textContent =
+      `Moon · ${Math.abs(lat).toFixed(2)}° ${lat >= 0 ? "N" : "S"},  ` +
+      `${Math.abs(lon).toFixed(2)}° ${lon >= 0 ? "E" : "W"}`;
+    this.items = items.slice(0, 25);
+    this.items.forEach((it, i) => { it._index = i; });
+    this.selected = null;
+    this._renderList(null);
+  }
+
   // opts.conflict: aggregated UCDP cell from HeatmapLayer.conflictAt() — when
   // set, the result list opens with articles about that zone's conflicts.
   open(lat, lon, opts = {}) {
+    this.moonMode = false;
+    this.el.classList.remove("moon");
     this.conflict = opts.conflict ?? null;
     this.center = { lat, lon };
     this.coordsEl.textContent =
@@ -103,7 +127,8 @@ export class WikiPanel {
   }
 
   close() {
-    this.el.classList.remove("open");
+    this.el.classList.remove("open", "moon");
+    this.moonMode = false;
     this.searchSeq++;
     this._clearPin();
     this._clearCircle();
@@ -281,8 +306,9 @@ export class WikiPanel {
         `${this.conflict.period ? ` (${escapeHtml(this.conflict.period.start)} → ${escapeHtml(this.conflict.period.end)})` : ""}</div>`
       : "";
     if (this.items.length === 0) {
-      this.resultsEl.innerHTML = zoneNote +
-        `<div class="wp-status">No articles found within ${formatKm(radiusKm)}.<br/>Try widening the radius.</div>`;
+      this.resultsEl.innerHTML = zoneNote + (radiusKm == null
+        ? `<div class="wp-status">No articles found near this point.</div>`
+        : `<div class="wp-status">No articles found within ${formatKm(radiusKm)}.<br/>Try widening the radius.</div>`);
       return;
     }
     this.resultsEl.innerHTML = zoneNote + this.items.map((it) => `
