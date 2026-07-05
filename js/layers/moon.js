@@ -62,6 +62,14 @@ const CATEGORY_LABELS = new Map(CATEGORY_DEFS.map((c) => [c.value, c.label]));
 // ecliptic north pole in ICRF coordinates, for the tidal-lock fallback frame
 const ECLIPTIC_NORTH = new Cesium.Cartesian3(0, -0.3977772, 0.9174821);
 
+// EllipsoidGeometry starts its texture seam on the body-fixed +X axis, which
+// lands the map's central meridian (the near side) at longitude 180°. Spin
+// the textured geometry half a turn so map longitude 0 sits on +X, where the
+// IAU frame, the article markers, and pickMoon() all put selenographic 0°.
+// Measured: without this, the lon-0 face renders far-side highlands.
+const TEXTURE_SEAM_ROT = Cesium.Matrix4.fromRotationTranslation(
+  Cesium.Matrix3.fromRotationZ(Math.PI), Cesium.Cartesian3.ZERO);
+
 // Offline fallback only — famous, stable lunar locations
 // ([title, lat, lon, country?, Commons flag file?]).
 const FALLBACK_SITES = [
@@ -120,6 +128,7 @@ export class MoonLayer {
       rot: new Cesium.Matrix3(),
       pos: new Cesium.Cartesian3(),
       inv: new Cesium.Matrix4(),
+      prim: new Cesium.Matrix4(),
       offset: new Cesium.Cartesian3(),
       center: new Cesium.Cartesian3(),
     };
@@ -149,7 +158,8 @@ export class MoonLayer {
         id: { kind: "moon", moon: this },
       }),
       appearance: this.dayNight ? this.litAppearance : this.flatAppearance,
-      modelMatrix: this.modelMatrix,
+      modelMatrix: Cesium.Matrix4.multiply(
+        this.modelMatrix, TEXTURE_SEAM_ROT, new Cesium.Matrix4()),
       asynchronous: false,
       allowPicking: true,
     }));
@@ -195,7 +205,10 @@ export class MoonLayer {
     if (!this.primitive) return;
     const time = this.viewer.clock.currentTime;
     this._updateTransform(time);
-    this.primitive.modelMatrix = this.modelMatrix;
+    // the textured sphere alone carries the half-turn seam correction; the
+    // markers, flags, and picking stay in the true selenographic frame
+    this.primitive.modelMatrix = Cesium.Matrix4.multiply(
+      this.modelMatrix, TEXTURE_SEAM_ROT, this._scratch.prim);
     this.points.modelMatrix = this.modelMatrix;
     this.flags.modelMatrix = this.modelMatrix;
 
