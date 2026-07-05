@@ -226,6 +226,25 @@ async function boot() {
 
   // --- control panel wiring -----------------------------------------------------
   const bind = (idStr, fn) => document.getElementById(idStr).addEventListener("change", (e) => fn(e.target.checked));
+  const layerToggles = {
+    sats: document.getElementById("chk-sats"),
+    flights: document.getElementById("chk-flights"),
+    ships: document.getElementById("chk-ships"),
+  };
+  const autoHideSources = new Set(["limited", "blocked"]);
+  const liveLimitedAutoHidden = new Set();
+  const hideIfLiveLimited = (key, status, setVisible) => {
+    if (!autoHideSources.has(status.source)) {
+      liveLimitedAutoHidden.delete(key);
+      return;
+    }
+    if (liveLimitedAutoHidden.has(key)) return;
+    liveLimitedAutoHidden.add(key);
+    if (!layerToggles[key]?.checked) return;
+    layerToggles[key].checked = false;
+    setVisible(false);
+    return true;
+  };
   bind("chk-sats", (v) => sats.setVisible(v));
   bind("chk-sat-paths", (v) => sats.setPathsVisible(v));
   bind("chk-flights", (v) => flights.setVisible(v));
@@ -356,6 +375,7 @@ async function boot() {
       static: ["ROUTES", "static"],
       loading: ["…", "loading"],
       limited: ["LIMIT", "demo"],   // API quota hit, backing off
+      blocked: ["CORS", "demo"],    // browser origin cannot read the feed
       cache: ["CACHED", "static"],  // serving the last good dataset
       data: ["DATA", "static"],     // bundled statistics, not a live feed
     };
@@ -365,15 +385,19 @@ async function boot() {
   }
 
   setInterval(() => {
-    const sc = sats.counts();
+    let sc = sats.counts();
+    if (hideIfLiveLimited("sats", sc, (v) => sats.setVisible(v))) sc = sats.counts();
     setBadge(badgeEls.sats, sc.source);
     countEls.sats.textContent = sc.count;
 
-    const fc = flights.counts();
+    let fc = flights.counts();
+    if (hideIfLiveLimited("flights", fc, (v) => flights.setVisible(v))) fc = flights.counts();
     setBadge(badgeEls.flights, fc.source);
+    badgeEls.flights.title = fc.detail ?? "";
     countEls.flights.textContent = fc.count;
 
-    const shc = ships.counts();
+    let shc = ships.counts();
+    if (hideIfLiveLimited("ships", shc, (v) => ships.setVisible(v))) shc = ships.counts();
     setBadge(badgeEls.ships, shc.source);
     countEls.ships.textContent = shc.count;
     countEls.ships.title = shc.detail;

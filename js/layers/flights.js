@@ -5,8 +5,11 @@
 
 import { makeDemoFlights } from "../demo-data.js";
 
-const OPENSKY_URL = "https://opensky-network.org/api/states/all";
+const DEFAULT_OPENSKY_URL = "https://opensky-network.org/api/states/all";
+const OPENSKY_URL = configuredOpenSkyUrl();
 const REFRESH_MS = 120 * 1000;
+const CORS_RETRY_MS = 60 * 60 * 1000;
+const ERROR_RETRY_MS = 5 * 60 * 1000;
 const MAX_LIVE = 2500;
 const UPDATE_SLICES = 60;
 const ROUTES_PER_FRAME = 16;
@@ -31,16 +34,20 @@ export class FlightLayer {
     this.routeCache = new Map(); // callsign -> {origin, destination} | null
     this.hoverToken = 0;
     this.selected = null;
+    this.nextLiveAttempt = 0;
+    this.statusDetail = "Loading OpenSky aircraft states";
   }
 
   async init() {
-    const live = await this._fetchLive();
-    if (live) {
+    const result = await this._fetchLive();
+    if (result.data) {
       this.source = "live";
-      this._applyLiveStates(live);
+      this.statusDetail = "OpenSky live aircraft states";
+      this._applyLiveStates(result.data);
     } else {
-      console.warn("[flights] OpenSky unavailable, using demo flights until it responds");
-      this.source = "demo";
+      console.warn(`[flights] ${result.detail}`);
+      this.source = result.source;
+      this.statusDetail = result.detail;
       this._buildDemo();
     }
     // one timer both refreshes live states and re-tries OpenSky from demo mode
@@ -52,8 +59,14 @@ export class FlightLayer {
     const next = await this._fetchLive();
     // on failure keep extrapolating the last snapshot (or keep the demo
     // traffic animating) and retry on the next tick
-    if (!next) return;
-    if (this.source === "demo") {
+    if (!next.data) {
+      if (next.source === "limited" || this.source !== "live") {
+        this.source = next.source;
+        this.statusDetail = next.detail;
+      }
+      return;
+    }
+    if (this.source !== "live") {
       // retire the demo arcs; live routes are drawn per hover/selection
       this.routeQueue = [];
       this.routeLines.removeAll();
@@ -63,21 +76,71 @@ export class FlightLayer {
       console.info("[flights] OpenSky recovered, demo flights retired");
     }
     this.source = "live";
-    this._applyLiveStates(next);
+    this.statusDetail = "OpenSky live aircraft states";
+    this._applyLiveStates(next.data);
   }
 
   async _fetchLive() {
+    if (Date.now() < this.nextLiveAttempt) {
+      return {
+        source: this.source === "limited" ? "limited" : this.source,
+        detail: this.statusDetail,
+      };
+    }
+
+    if (isDirectOpenSkyBlockedByCors()) {
+      this.nextLiveAttempt = Date.now() + CORS_RETRY_MS;
+      return {
+        source: "blocked",
+        detail: "OpenSky does not allow this browser origin to read states/all; using demo flights. Configure an OpenSky proxy URL for live flights.",
+      };
+    }
+
+    let timeout = null;
     try {
       const ctl = new AbortController();
-      const t = setTimeout(() => ctl.abort(), 25000);
+      timeout = setTimeout(() => ctl.abort(), 25000);
       const res = await fetch(OPENSKY_URL, { signal: ctl.signal });
-      clearTimeout(t);
-      if (!res.ok) return null;
+      if (!res.ok) {
+        if (res.status === 429) {
+          const retrySeconds = Number(res.headers.get("x-rate-limit-retry-after-seconds"));
+          this.nextLiveAttempt = Date.now() + (
+            Number.isFinite(retrySeconds) && retrySeconds > 0
+              ? retrySeconds * 1000
+              : ERROR_RETRY_MS
+          );
+          return {
+            source: "limited",
+            detail: "OpenSky rate limit reached; using demo flights until the quota window reopens.",
+          };
+        }
+        this.nextLiveAttempt = Date.now() + ERROR_RETRY_MS;
+        return {
+          source: "demo",
+          detail: `OpenSky returned HTTP ${res.status}; using demo flights.`,
+        };
+      }
       const data = await res.json();
-      if (!data || !Array.isArray(data.states)) return null;
-      return data;
-    } catch {
-      return null;
+      if (!data || !Array.isArray(data.states)) {
+        this.nextLiveAttempt = Date.now() + ERROR_RETRY_MS;
+        return {
+          source: "demo",
+          detail: "OpenSky returned an unexpected response; using demo flights.",
+        };
+      }
+      this.nextLiveAttempt = 0;
+      return { data };
+    } catch (e) {
+      this.nextLiveAttempt = Date.now() + ERROR_RETRY_MS;
+      const reason = e?.name === "AbortError"
+        ? "OpenSky request timed out"
+        : "OpenSky request failed";
+      return {
+        source: "demo",
+        detail: `${reason}; using demo flights.`,
+      };
+    } finally {
+      if (timeout) clearTimeout(timeout);
     }
   }
 
@@ -266,8 +329,38 @@ export class FlightLayer {
   }
 
   counts() {
-    return { count: this.visible ? this.flights.length : 0, source: this.source };
+    return {
+      count: this.visible ? this.flights.length : 0,
+      source: this.source,
+      detail: this.statusDetail,
+    };
   }
+}
+
+function configuredOpenSkyUrl() {
+  if (typeof window === "undefined") return DEFAULT_OPENSKY_URL;
+  let stored = null;
+  try {
+    stored = window.localStorage.getItem("wikiGlobeOpenSkyUrl");
+  } catch {
+    stored = null;
+  }
+  const params = new URLSearchParams(window.location.search);
+  return (
+    cleanUrl(window.WIKI_GLOBE_OPENSKY_URL) ||
+    cleanUrl(params.get("openskyUrl")) ||
+    cleanUrl(stored) ||
+    DEFAULT_OPENSKY_URL
+  );
+}
+
+function cleanUrl(value) {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function isDirectOpenSkyBlockedByCors() {
+  if (typeof window === "undefined" || OPENSKY_URL !== DEFAULT_OPENSKY_URL) return false;
+  return window.location.origin !== "https://opensky-network.org";
 }
 
 // Stylized great-circle arc, gently elevated so routes read at globe scale.
