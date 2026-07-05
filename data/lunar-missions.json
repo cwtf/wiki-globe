@@ -1,0 +1,366 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "sourceLabel": "Curated lunar surface mission supplement",
+    "sources": [
+      {
+        "name": "NASA catalogue of manmade material on the Moon",
+        "url": "https://www.nasa.gov/wp-content/uploads/2024/02/final-catalogue-of-manmade-material-on-the-moon.pdf"
+      },
+      {
+        "name": "Wikipedia list of artificial objects on the Moon",
+        "url": "https://en.wikipedia.org/wiki/List_of_artificial_objects_on_the_Moon"
+      },
+      {
+        "name": "NASA NSSDC Master Catalog",
+        "url": "https://nssdc.gsfc.nasa.gov/nmc/"
+      }
+    ],
+    "notes": [
+      "These records attach mission articles to surface touchdown, impact, or crash locations when the mission article's Wikidata item has no direct Moon-globe coordinate.",
+      "Longitudes use the same east-positive convention as the Moon layer; west longitudes are negative.",
+      "Orbiters and flybys with unknown or non-surface endpoints are intentionally omitted."
+    ]
+  },
+  "missions": [
+    {
+      "title": "Luna 2",
+      "lat": 29.1,
+      "lon": 0,
+      "country": "Soviet Union",
+      "flagFile": "Flag of the Soviet Union.svg",
+      "kind": "impactor"
+    },
+    {
+      "title": "Ranger 4",
+      "lat": -15.5,
+      "lon": -130.7,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "crash"
+    },
+    {
+      "title": "Ranger 6",
+      "lat": 9.39,
+      "lon": 21.48,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "impactor"
+    },
+    {
+      "title": "Ranger 7",
+      "lat": -10.35,
+      "lon": -20.58,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "impactor"
+    },
+    {
+      "title": "Ranger 8",
+      "lat": 2.64,
+      "lon": 24.76,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "impactor"
+    },
+    {
+      "title": "Ranger 9",
+      "lat": -12.83,
+      "lon": -2.37,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "impactor"
+    },
+    {
+      "title": "Luna 9",
+      "lat": 7.13,
+      "lon": -64.37,
+      "country": "Soviet Union",
+      "flagFile": "Flag of the Soviet Union.svg",
+      "kind": "soft landing"
+    },
+    {
+      "title": "Surveyor 1",
+      "lat": -2.47,
+      "lon": -43.34,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "soft landing"
+    },
+    {
+      "title": "Luna 13",
+      "lat": 18.87,
+      "lon": -62.05,
+      "country": "Soviet Union",
+      "flagFile": "Flag of the Soviet Union.svg",
+      "kind": "soft landing"
+    },
+    {
+      "title": "Surveyor 3",
+      "lat": -3.016,
+      "lon": -23.417,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "soft landing"
+    },
+    {
+      "title": "Surveyor 5",
+      "lat": 1.455,
+      "lon": 23.194,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "soft landing"
+    },
+    {
+      "title": "Surveyor 6",
+      "lat": 0.49,
+      "lon": -1.4,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "soft landing"
+    },
+    {
+      "title": "Surveyor 7",
+      "lat": -41.01,
+      "lon": -11.41,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "soft landing"
+    },
+    {
+      "title": "Apollo 11",
+      "siteTitle": "Tranquility Base",
+      "lat": 0.6741,
+      "lon": 23.473,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "crewed landing"
+    },
+    {
+      "title": "Apollo 12",
+      "lat": -3.0124,
+      "lon": -23.4216,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "crewed landing"
+    },
+    {
+      "title": "Luna 16",
+      "lat": -0.5137,
+      "lon": 56.3638,
+      "country": "Soviet Union",
+      "flagFile": "Flag of the Soviet Union.svg",
+      "kind": "sample return"
+    },
+    {
+      "title": "Luna 17",
+      "lat": 38.315,
+      "lon": -35.008,
+      "country": "Soviet Union",
+      "flagFile": "Flag of the Soviet Union.svg",
+      "kind": "rover landing"
+    },
+    {
+      "title": "Lunokhod 1",
+      "lat": 38.315,
+      "lon": -35.008,
+      "country": "Soviet Union",
+      "flagFile": "Flag of the Soviet Union.svg",
+      "kind": "rover"
+    },
+    {
+      "title": "Apollo 14",
+      "lat": -3.6453,
+      "lon": -17.4714,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "crewed landing"
+    },
+    {
+      "title": "Apollo 15",
+      "siteTitle": "Hadley-Apennine",
+      "lat": 26.1322,
+      "lon": 3.6339,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "crewed landing"
+    },
+    {
+      "title": "Luna 20",
+      "lat": 3.7863,
+      "lon": 56.6242,
+      "country": "Soviet Union",
+      "flagFile": "Flag of the Soviet Union.svg",
+      "kind": "sample return"
+    },
+    {
+      "title": "Apollo 16",
+      "lat": -8.973,
+      "lon": 15.501,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "crewed landing"
+    },
+    {
+      "title": "Apollo 17",
+      "siteTitle": "Taurus-Littrow",
+      "lat": 20.1908,
+      "lon": 30.7717,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "crewed landing"
+    },
+    {
+      "title": "Luna 21",
+      "lat": 25.85,
+      "lon": 30.45,
+      "country": "Soviet Union",
+      "flagFile": "Flag of the Soviet Union.svg",
+      "kind": "rover landing"
+    },
+    {
+      "title": "Lunokhod 2",
+      "lat": 25.85,
+      "lon": 30.45,
+      "country": "Soviet Union",
+      "flagFile": "Flag of the Soviet Union.svg",
+      "kind": "rover"
+    },
+    {
+      "title": "Luna 23",
+      "lat": 12.67,
+      "lon": 62.15,
+      "country": "Soviet Union",
+      "flagFile": "Flag of the Soviet Union.svg",
+      "kind": "sample return attempt"
+    },
+    {
+      "title": "Luna 24",
+      "lat": 12.75,
+      "lon": 62.2,
+      "country": "Soviet Union",
+      "flagFile": "Flag of the Soviet Union.svg",
+      "kind": "sample return"
+    },
+    {
+      "title": "SMART-1",
+      "lat": -34.262,
+      "lon": -46.193,
+      "country": "European Space Agency",
+      "flagFile": "Flag of Europe.svg",
+      "kind": "planned impact"
+    },
+    {
+      "title": "SELENE",
+      "lat": 65.5,
+      "lon": 80.4,
+      "country": "Japan",
+      "flagFile": "Flag of Japan.svg",
+      "kind": "planned impact"
+    },
+    {
+      "title": "Chandrayaan-1",
+      "lat": -89.76,
+      "lon": 39.4,
+      "country": "India",
+      "flagFile": "Flag of India.svg",
+      "kind": "impactor"
+    },
+    {
+      "title": "LCROSS",
+      "lat": -84.675,
+      "lon": -48.725,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "impactor"
+    },
+    {
+      "title": "Chang'e 3",
+      "lat": 44.1214,
+      "lon": -19.5117,
+      "country": "China",
+      "flagFile": "Flag of the People's Republic of China.svg",
+      "kind": "soft landing"
+    },
+    {
+      "title": "LADEE",
+      "lat": 11.8494,
+      "lon": -93.7425,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "planned impact"
+    },
+    {
+      "title": "Chang'e 4",
+      "lat": -45.5,
+      "lon": 177.6,
+      "country": "China",
+      "flagFile": "Flag of the People's Republic of China.svg",
+      "kind": "soft landing"
+    },
+    {
+      "title": "Beresheet",
+      "lat": 32.5956,
+      "lon": 19.3496,
+      "country": "Israel",
+      "flagFile": "Flag of Israel.svg",
+      "kind": "crash"
+    },
+    {
+      "title": "Chandrayaan-2",
+      "lat": -70.881,
+      "lon": 22.784,
+      "country": "India",
+      "flagFile": "Flag of India.svg",
+      "kind": "crash"
+    },
+    {
+      "title": "Chang'e 5",
+      "lat": 43.0576,
+      "lon": -51.9161,
+      "country": "China",
+      "flagFile": "Flag of the People's Republic of China.svg",
+      "kind": "sample return"
+    },
+    {
+      "title": "Luna 25",
+      "lat": -57.87,
+      "lon": 61.36,
+      "country": "Russia",
+      "flagFile": "Flag of Russia.svg",
+      "kind": "crash"
+    },
+    {
+      "title": "Chandrayaan-3",
+      "lat": -69.373,
+      "lon": 32.319,
+      "country": "India",
+      "flagFile": "Flag of India.svg",
+      "kind": "soft landing"
+    },
+    {
+      "title": "SLIM (spacecraft)",
+      "lat": -13.316,
+      "lon": 25.251,
+      "country": "Japan",
+      "flagFile": "Flag of Japan.svg",
+      "kind": "soft landing"
+    },
+    {
+      "title": "IM-1",
+      "lat": -80.13,
+      "lon": 1.44,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "soft landing"
+    },
+    {
+      "title": "Chang'e 6",
+      "lat": -41.6385,
+      "lon": -153.9852,
+      "country": "China",
+      "flagFile": "Flag of the People's Republic of China.svg",
+      "kind": "sample return"
+    }
+  ]
+}

@@ -12,6 +12,7 @@
 // A small bundled list of famous sites is the offline fallback only.
 
 const TEXTURE_URL = "assets/moon.jpg"; // NASA LRO / CGI Moon Kit (public domain)
+const MISSION_SUPPLEMENT_URL = "data/lunar-missions.json";
 const MOON_RADIUS = 1737400;           // mean radius, metres
 const MARKER_ALT = 15000;              // lift dots off the surface so they don't z-fight
 const MAX_ARTICLES = 400;
@@ -396,17 +397,79 @@ export class MoonLayer {
       }));
     }
 
-    for (const item of items) {
-      item.category = moonArticleCategory(item);
-      item.categoryLabel = CATEGORY_LABELS.get(item.category) ?? "Other";
-    }
+    await this._applyMissionSupplements(items);
 
     // de-dup by title (Wikidata can hold several coordinate statements)
     const seen = new Set();
     this.articles = items.filter((a) =>
       seen.has(a.title) ? false : (seen.add(a.title), true));
+    for (const item of this.articles) {
+      item.category = moonArticleCategory(item);
+      item.categoryLabel = CATEGORY_LABELS.get(item.category) ?? "Other";
+    }
     await this._resolveFlags(this.articles);
     this._buildMarkers();
+  }
+
+  async _applyMissionSupplements(items) {
+    let data = null;
+    try {
+      const res = await fetch(MISSION_SUPPLEMENT_URL);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      data = await res.json();
+    } catch (e) {
+      console.warn("[moon] mission supplement failed:", e.message);
+      return;
+    }
+
+    if (data?.schemaVersion !== 1 || !Array.isArray(data.missions)) return;
+    const byTitle = new Map(items.map((a) => [titleKey(a.title), a]));
+
+    for (const m of data.missions) {
+      const title = String(m.title ?? "").trim();
+      if (!title) continue;
+
+      const existing = byTitle.get(titleKey(title));
+      const site = m.siteTitle ? byTitle.get(titleKey(m.siteTitle)) : null;
+      const lat = Number.isFinite(Number(m.lat)) ? Number(m.lat) : site?.lat;
+      const lonRaw = Number.isFinite(Number(m.lon)) ? Number(m.lon) : site?.lon;
+      const lon = normalizeMoonLon(lonRaw);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+
+      const country = cleanString(m.country) ?? existing?.country ?? site?.country ?? null;
+      const flagFile = cleanString(m.flagFile) ?? existing?._flagFile ?? site?._flagFile ?? null;
+      const missionKind = cleanString(m.kind);
+
+      if (existing) {
+        if (!Number.isFinite(existing.lat)) existing.lat = lat;
+        if (!Number.isFinite(existing.lon)) existing.lon = lon;
+        existing.country = country;
+        existing.badge = country ?? existing.badge;
+        existing._flagFile = flagFile;
+        existing.missionSupplement = true;
+        existing.missionKind = missionKind;
+        existing.siteTitle = cleanString(m.siteTitle) ?? existing.siteTitle;
+        continue;
+      }
+
+      const item = {
+        title,
+        lat,
+        lon,
+        url: cleanString(m.url) ?? wikiArticleUrl(title),
+        moon: true,
+        extract: undefined,
+        country,
+        badge: country ?? undefined,
+        flagUrl: null,
+        _flagFile: flagFile,
+        missionSupplement: true,
+        missionKind,
+        siteTitle: cleanString(m.siteTitle),
+      };
+      items.push(item);
+      byTitle.set(titleKey(title), item);
+    }
   }
 
   // Batch-resolve Commons flag file names to direct thumbnail URLs that WebGL
@@ -565,6 +628,7 @@ export class MoonLayer {
 
 function moonArticleCategory(article) {
   const title = article.title.toLowerCase();
+  if (article.missionSupplement) return "missions";
   if (
     article.country ||
     /\b(apollo|luna|chang'?e|surveyor|ranger|lunokhod|chandrayaan|smart-1|clementine|beresheet|hakuto|mission|landing|lander|probe|spacecraft)\b/.test(title)
@@ -580,4 +644,26 @@ function moonArticleCategory(article) {
   }
   if (/\b(basin|regio|region|highland|terra|pole)\b/.test(title)) return "basins";
   return "other";
+}
+
+function titleKey(title) {
+  return String(title ?? "")
+    .normalize("NFKC")
+    .replace(/[_\s]+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function cleanString(value) {
+  const s = String(value ?? "").trim();
+  return s || null;
+}
+
+function normalizeMoonLon(lon) {
+  if (!Number.isFinite(lon)) return NaN;
+  return lon > 180 ? lon - 360 : lon;
+}
+
+function wikiArticleUrl(title) {
+  return `https://en.wikipedia.org/wiki/${encodeURIComponent(title.replace(/ /g, "_"))}`;
 }
