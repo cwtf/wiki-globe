@@ -431,7 +431,6 @@ async function boot() {
     moon.setCategory(e.target.value);
     if (wiki.moonMode) wiki.close();
   });
-  bind("chk-moon-daynight", (v) => moon.setDayNight(v));
 
   bind("chk-rotate", (v) => { rotateEnabled = v; });
   bind("chk-daynight", (v) => {

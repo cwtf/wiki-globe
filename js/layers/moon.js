@@ -97,14 +97,13 @@ export class MoonLayer {
     this.viewer = viewer;
     this.scene = viewer.scene;
     this.visible = true;
-    this.dayNight = true;
     this.focused = false;
     this.tracking = false;
     this.articles = [];
     this.source = "idle";            // articles load on first lunar visit
     this.articlesVisible = false;    // camera focus grants article context
     this.wikiEnabled = true;         // user toggle: wiki articles on the moon
-    this.category = CATEGORY_ALL;
+    this.category = "missions";
     this._articlesRequested = false;
     this.modelMatrix = Cesium.Matrix4.clone(Cesium.Matrix4.IDENTITY);
     this.onFocusChanged = null;
@@ -137,13 +136,8 @@ export class MoonLayer {
 
   init() {
     const material = Cesium.Material.fromType("Image", { image: TEXTURE_URL });
-    // lit = real solar illumination (the lunar terminator tracks the actual
-    // sun via scene lighting); flat = evenly lit, i.e. day/night cycle off
-    this.litAppearance = new Cesium.MaterialAppearance({
+    this.appearance = new Cesium.MaterialAppearance({
       material, translucent: false, closed: true,
-    });
-    this.flatAppearance = new Cesium.MaterialAppearance({
-      material, flat: true, translucent: false, closed: true,
     });
 
     this._updateTransform(this.viewer.clock.currentTime);
@@ -158,7 +152,7 @@ export class MoonLayer {
         }),
         id: { kind: "moon", moon: this },
       }),
-      appearance: this.dayNight ? this.litAppearance : this.flatAppearance,
+      appearance: this.appearance,
       modelMatrix: Cesium.Matrix4.multiply(
         this.modelMatrix, TEXTURE_SEAM_ROT, new Cesium.Matrix4()),
       asynchronous: false,
@@ -312,13 +306,6 @@ export class MoonLayer {
     if (this.primitive) this.primitive.show = v;
     this._syncArticles();
     if (!v) this.blur();
-  }
-
-  setDayNight(v) {
-    this.dayNight = v;
-    if (this.primitive) {
-      this.primitive.appearance = v ? this.litAppearance : this.flatAppearance;
-    }
   }
 
   // Ray-cast a screen position against the lunar sphere → { lat, lon } in
