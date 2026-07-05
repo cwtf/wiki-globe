@@ -35,7 +35,7 @@ export class WikiPanel {
     this.selected = null;
     this.searchSeq = 0;
     this.debounce = null;
-    this.moonMode = false;       // lunar list: no Earth overlays, no geosearch
+    this.moonMode = false;       // off-Earth list: no Earth overlays, no geosearch
 
     this.pin = null;             // centre "you clicked here" entity
     this.circle = null;          // translucent radius disc entity
@@ -88,10 +88,10 @@ export class WikiPanel {
     return MIN_KM * Math.pow(MAX_KM / MIN_KM, t);
   }
 
-  // Lunar mode: the MoonLayer hands us a ready-made, distance-sorted article
-  // list (markers already live on the moon itself), so there's no geosearch,
-  // radius slider, or Earth overlay to manage.
-  openMoon(lat, lon, items) {
+  // Off-Earth body mode: a body layer hands us a ready-made, distance-sorted
+  // article list (markers already live on the body itself), so there's no
+  // geosearch, radius slider, or Earth overlay to manage.
+  openBody(bodyName, lat, lon, items) {
     this.searchSeq++;            // cancel any in-flight Earth search
     this.moonMode = true;
     this.conflict = null;
@@ -101,12 +101,16 @@ export class WikiPanel {
     this._clearMarkers();
     this.el.classList.add("open", "moon");
     this.coordsEl.textContent =
-      `Moon · ${Math.abs(lat).toFixed(2)}° ${lat >= 0 ? "N" : "S"},  ` +
+      `${bodyName} · ${Math.abs(lat).toFixed(2)}° ${lat >= 0 ? "N" : "S"},  ` +
       `${Math.abs(lon).toFixed(2)}° ${lon >= 0 ? "E" : "W"}`;
     this.items = items.slice(0, 25);
     this.items.forEach((it, i) => { it._index = i; });
     this.selected = null;
     this._renderList(null);
+  }
+
+  openMoon(lat, lon, items) {
+    this.openBody("Moon", lat, lon, items);
   }
 
   // opts.conflict: aggregated UCDP cell from HeatmapLayer.conflictAt() — when

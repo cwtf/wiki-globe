@@ -8,6 +8,7 @@ import { ShippingLayer } from "./layers/shipping.js";
 import { HeatmapLayer, METRICS, heatStressLabel, RES_STEPS, loadHeatmapMetrics } from "./layers/heatmap.js";
 import { TrueSizeLayer } from "./layers/truesize.js";
 import { MoonLayer } from "./layers/moon.js";
+import { MarsLayer } from "./layers/mars.js";
 import { CountrySearch } from "./search.js";
 import { WikiPanel } from "./wiki-panel.js";
 import { getAisKey, setAisKey } from "./ais.js";
@@ -42,6 +43,7 @@ async function boot() {
   scene.globe.enableLighting = false;
   scene.globe.showGroundAtmosphere = true;
   scene.globe.baseColor = Cesium.Color.fromCssColorString("#06090f");
+  scene.camera.frustum.far = 1e13;
   scene.screenSpaceCameraController.minimumZoomDistance = 120;
   scene.screenSpaceCameraController.maximumZoomDistance = 4.5e7;
 
@@ -84,51 +86,91 @@ async function boot() {
   const heat = new HeatmapLayer(viewer); // lazy: fetches when a mode is selected
   const truesize = new TrueSizeLayer(viewer);
   const moon = new MoonLayer(viewer);
+  const mars = new MarsLayer(viewer);
   const wiki = new WikiPanel(viewer);
 
   ships.init();
   sats.init();
   flights.init();
   moon.init();
+  mars.init();
 
-  // "Back to Earth" appears while the camera is parked at the moon
+  // "Back to Earth" appears while the camera is parked off Earth.
   const moonBack = document.getElementById("moon-back");
-  moonBack.addEventListener("click", () => moon.blur());
+  moonBack.textContent = "< Back to Earth";
+
+  const bodyLayers = { moon, mars };
+  let focusedBody = "earth";
+
+  function currentBodyLayer() {
+    return bodyLayers[focusedBody] ?? null;
+  }
+
+  function focusBody(body) {
+    if (body === focusedBody) return;
+    const current = currentBodyLayer();
+    if (body === "earth") {
+      current?.blur();
+      return;
+    }
+    if (current) current.blur({ flyHome: false });
+    bodyLayers[body]?.focus();
+  }
+
+  function returnEarth() {
+    focusBody("earth");
+  }
+
+  moonBack.addEventListener("click", returnEarth);
 
   // body switcher next to the search bar; stays in sync with click-driven
   // focus changes so it always names the world under the camera
   const selBody = document.getElementById("sel-body");
-  selBody.addEventListener("change", () => {
-    if (selBody.value === "moon") moon.focus();
-    else moon.blur();
-  });
+  selBody.addEventListener("change", () => focusBody(selBody.value));
 
   // Focus scoping: only the body under the camera keeps its overlays. Earth
-  // layers are parked (checkboxes untouched) while the moon has focus, and
-  // lunar article markers exist only there â€” first visit triggers their load.
+  // layers are parked (checkboxes untouched) while another body has focus, and
+  // body article markers exist only in their own focus context.
   // References layer toggles declared later in boot; runs only on user input.
   let heatModeSuspended = null;
-  moon.onFocusChanged = (focused) => {
-    moonBack.hidden = !focused;
-    selBody.value = focused ? "moon" : "earth";
-    document.body.classList.toggle("moon-focus", focused);
-    wiki.close();
-    moon.setArticlesVisible(focused);
+  function onBodyFocusChanged(body, focused) {
     if (focused) {
+      focusedBody = body;
+      moonBack.hidden = false;
+      selBody.value = body;
+      document.body.dataset.focus = body;
+      document.body.classList.add("body-focus");
+      document.body.classList.toggle("moon-focus", body === "moon");
+      wiki.close();
+      moon.setArticlesVisible(body === "moon");
+      mars.setArticlesVisible(body === "mars");
       sats.setVisible(false);
       flights.setVisible(false);
       ships.setVisible(false);
-      heatModeSuspended = heat.mode;
+      if (heatModeSuspended == null) heatModeSuspended = heat.mode;
       if (heatModeSuspended) heat.setMode(null);
-    } else {
-      sats.setVisible(layerToggles.sats.checked);
-      flights.setVisible(layerToggles.flights.checked);
-      ships.setVisible(layerToggles.ships.checked);
-      if (heatModeSuspended) heat.setMode(heatModeSuspended);
-      heatModeSuspended = null;
+      return;
     }
-  };
 
+    if (focusedBody === body) focusedBody = "earth";
+    const active = currentBodyLayer();
+    if (active) return;
+
+    moonBack.hidden = true;
+    selBody.value = "earth";
+    document.body.dataset.focus = "earth";
+    document.body.classList.remove("body-focus", "moon-focus");
+    wiki.close();
+    moon.setArticlesVisible(false);
+    mars.setArticlesVisible(false);
+    sats.setVisible(layerToggles.sats.checked);
+    flights.setVisible(layerToggles.flights.checked);
+    ships.setVisible(layerToggles.ships.checked);
+    if (heatModeSuspended) heat.setMode(heatModeSuspended);
+    heatModeSuspended = null;
+  }
+  moon.onFocusChanged = (focused) => onBodyFocusChanged("moon", focused);
+  mars.onFocusChanged = (focused) => onBodyFocusChanged("mars", focused);
   // --- per-frame loop ---------------------------------------------------------
   let lastFrame = 0;
   let lastInteraction = Date.now();
@@ -160,6 +202,7 @@ async function boot() {
     flights.tick(now);
     ships.tick(now);
     moon.tick();
+    mars.tick();
 
     const height = viewer.camera.positionCartographic.height;
     osmLayer.alpha = Cesium.Math.clamp((FADE_START - height) / (FADE_START - FADE_END), 0, 1);
@@ -174,10 +217,11 @@ async function boot() {
       now - lastInteraction > AUTOROTATE_IDLE_MS &&
       !wiki.isOpen()
     ) {
-      if (moon.tracking) {
-        // orbit the moon inside its look-at frame
+      const activeBody = currentBodyLayer();
+      if (activeBody?.tracking) {
+        // orbit the focused body inside its look-at frame
         viewer.camera.rotateLeft(-AUTOROTATE_RATE * dt);
-      } else if (!moon.focused && height > AUTOROTATE_MIN_HEIGHT) {
+      } else if (!activeBody && height > AUTOROTATE_MIN_HEIGHT) {
         viewer.camera.rotate(Cesium.Cartesian3.UNIT_Z, -AUTOROTATE_RATE * dt);
       }
     }
@@ -209,8 +253,8 @@ async function boot() {
     let earthHover = false;
     if (hovered) {
       html = tooltipHtml(hovered);
-    } else if (moon.focused) {
-      // from the moon, the Earth in the sky is the way home
+    } else if (focusedBody !== "earth") {
+      // from another body, the Earth in the sky is the way home
       earthHover = !!viewer.camera.pickEllipsoid(movement.endPosition, scene.globe.ellipsoid);
       if (earthHover) {
         html = `<div class="tt-title">Earth</div>
@@ -265,24 +309,37 @@ async function boot() {
     }
     if (id?.kind === "moonwiki") {
       // an article dot on the moon: fly there (if not already) and open it
-      moon.focus();
+      focusBody("moon");
       moon.openArticle(id.article, wiki);
+      return;
+    }
+    if (id?.kind === "marswiki") {
+      focusBody("mars");
+      mars.openArticle(id.article, wiki);
       return;
     }
     if (id?.kind === "moon") {
       if (!moon.focused) {
-        moon.focus();
+        focusBody("moon");
       } else if (moon.wikiEnabled) {
         const c = moon.pickMoon(click.position);
         if (c) moon.openArticlesAt(c.lat, c.lon, wiki);
       }
       return;
     }
-    // from the moon, clicking Earth flies home â€” the mirror of clicking the
-    // moon from Earth; anything else in the lunar sky is a no-op
-    if (moon.focused) {
+    if (id?.kind === "body" && id.body === "mars") {
+      if (!mars.focused) {
+        focusBody("mars");
+      } else if (mars.wikiEnabled) {
+        const c = mars.pickMars(click.position);
+        if (c) mars.openArticlesAt(c.lat, c.lon, wiki);
+      }
+      return;
+    }
+    // from another body, clicking Earth flies home; anything else in that sky is a no-op
+    if (focusedBody !== "earth") {
       const cart = viewer.camera.pickEllipsoid(click.position, scene.globe.ellipsoid);
-      if (cart) moon.blur();
+      if (cart) returnEarth();
       return;
     }
 
@@ -423,6 +480,12 @@ async function boot() {
   };
 
   bind("chk-moon", (v) => moon.setVisible(v));
+  bind("chk-mars", (v) => mars.setVisible(v));
+  bind("chk-mars-wiki", (v) => {
+    mars.setWikiEnabled(v);
+    if (!v && wiki.moonMode) wiki.close();
+  });
+  bind("chk-mars-daynight", (v) => mars.setDayNightEnabled(v));
   bind("chk-moon-wiki", (v) => {
     moon.setWikiEnabled(v);
     if (!v && wiki.moonMode) wiki.close();
@@ -458,6 +521,7 @@ async function boot() {
     ships: document.getElementById("badge-ships"),
     heat: document.getElementById("badge-heat"),
     moon: document.getElementById("badge-moon"),
+    mars: document.getElementById("badge-mars"),
   };
   const countEls = {
     sats: document.getElementById("count-sats"),
@@ -465,6 +529,7 @@ async function boot() {
     ships: document.getElementById("count-ships"),
     heat: document.getElementById("count-heat"),
     moon: document.getElementById("count-moon"),
+    mars: document.getElementById("count-mars"),
   };
 
   function setBadge(el, source) {
@@ -511,13 +576,17 @@ async function boot() {
     const mc = moon.counts();
     setBadge(badgeEls.moon, mc.source);
     countEls.moon.textContent = mc.count;
+
+    const mac = mars.counts();
+    setBadge(badgeEls.mars, mac.source);
+    countEls.mars.textContent = mac.count;
   }, 1000);
 
   // fade the onboarding hint after a while
   setTimeout(() => document.getElementById("hint").classList.add("faded"), 15000);
 
   // handy for debugging from the console
-  window.__globe = { viewer, sats, flights, ships, heat, wiki, truesize, search, moon };
+  window.__globe = { viewer, sats, flights, ships, heat, wiki, truesize, search, moon, mars };
 }
 
 function enhanceHeatmapSelect(select) {
@@ -814,6 +883,12 @@ function tooltipHtml(id) {
       <div class="tt-line">${Math.round(distKm).toLocaleString()} km from Earth right now</div>
       <div class="tt-note">Simon 1994 ephemeris Â· NASA LRO imagery Â· click to visit</div>`;
   }
+  if (id.kind === "body" && id.body === "mars") {
+    const distKm = id.layer.distanceKm();
+    return `<div class="tt-title">Mars</div>
+      <div class="tt-line">${Math.round(distKm).toLocaleString()} km from Earth right now</div>
+      <div class="tt-note">astronomy-engine ephemeris · Solar System Scope imagery · click to visit</div>`;
+  }
   if (id.kind === "moonwiki") {
     const a = id.article;
     const lat = `${Math.abs(a.lat).toFixed(1)}Â° ${a.lat >= 0 ? "N" : "S"}`;
@@ -823,6 +898,15 @@ function tooltipHtml(id) {
     return `<div class="tt-title">${esc(a.title)}</div>
       <div class="tt-line">${lat}, ${lon} Â· the Moon${origin}</div>
       <div class="tt-note">Wikipedia${category} Â· click to open in the panel</div>`;
+  }
+  if (id.kind === "marswiki") {
+    const a = id.article;
+    const lat = `${Math.abs(a.lat).toFixed(1)}° ${a.lat >= 0 ? "N" : "S"}`;
+    const lon = `${Math.abs(a.lon).toFixed(1)}° ${a.lon >= 0 ? "E" : "W"}`;
+    const origin = a.country ? ` · mission of ${esc(a.country)}` : "";
+    return `<div class="tt-title">${esc(a.title)}</div>
+      <div class="tt-line">${lat}, ${lon} · Mars${origin}</div>
+      <div class="tt-note">Wikipedia · click to open in the panel</div>`;
   }
   if (id.kind === "wiki") {
     const a = id.article;

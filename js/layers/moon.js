@@ -199,6 +199,13 @@ export class MoonLayer {
   tick() {
     if (!this.primitive) return;
     const time = this.viewer.clock.currentTime;
+    const s = this._scratch;
+    if (this.tracking) {
+      // Preserve the camera offset in the old lunar frame before recomputing
+      // the Moon's fast-moving Earth-fixed transform.
+      Cesium.Cartesian3.clone(this.viewer.camera.position, s.offset);
+    }
+
     this._updateTransform(time);
     // the textured sphere alone carries the half-turn seam correction; the
     // markers, flags, and picking stay in the true selenographic frame
@@ -210,13 +217,9 @@ export class MoonLayer {
     // camera follows the moon while focused: re-anchor the look-at frame to
     // the fresh model matrix, preserving the camera's offset within it
     if (this.tracking) {
-      const s = this._scratch;
-      Cesium.Matrix4.inverseTransformation(this.modelMatrix, s.inv);
-      Cesium.Matrix4.multiplyByPoint(s.inv, this.viewer.camera.positionWC, s.offset);
       this.viewer.camera.lookAtTransform(this.modelMatrix, s.offset);
     }
   }
-
   // Earth-fixed model matrix: Simon 1994 position + IAU orientation, exactly
   // as Cesium's built-in Moon primitive derives it.
   _updateTransform(time) {
@@ -280,13 +283,17 @@ export class MoonLayer {
           if (!this.focused) return;
           this.scene.screenSpaceCameraController.minimumZoomDistance =
             MOON_RADIUS + 30000;
+          const s = this._scratch;
+          Cesium.Matrix4.inverseTransformation(this.modelMatrix, s.inv);
+          Cesium.Matrix4.multiplyByPoint(s.inv, camera.positionWC, s.offset);
+          camera.lookAtTransform(this.modelMatrix, s.offset);
           this.tracking = true;
         },
       }
     );
   }
 
-  blur() {
+  blur(opts = {}) {
     if (!this.focused) return;
     this.focused = false;
     this.tracking = false;
@@ -294,11 +301,13 @@ export class MoonLayer {
     const sscc = this.scene.screenSpaceCameraController;
     if (this.savedMinZoom != null) sscc.minimumZoomDistance = this.savedMinZoom;
     this.viewer.camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
-    this.viewer.camera.flyTo({
-      destination: Cesium.Cartesian3.fromDegrees(
-        HOME_VIEW.lon, HOME_VIEW.lat, HOME_VIEW.height),
-      duration: 3.0,
-    });
+    if (opts.flyHome !== false) {
+      this.viewer.camera.flyTo({
+        destination: Cesium.Cartesian3.fromDegrees(
+          HOME_VIEW.lon, HOME_VIEW.lat, HOME_VIEW.height),
+        duration: 3.0,
+      });
+    }
   }
 
   setVisible(v) {
