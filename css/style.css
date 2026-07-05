@@ -518,6 +518,28 @@ body:not(.moon-focus) .layer.moon-only { display: none; }
 #search-input::placeholder { color: var(--text-dim); }
 #search-input:focus { border-color: rgba(110, 243, 255, 0.45); }
 
+/* body switcher: sits just right of the (centred) search bar and stays put
+   when the search hides at the moon */
+#sel-body {
+  position: absolute;
+  top: 16px;
+  left: calc(50% + clamp(210px, 19vw, 280px) + 10px);
+  z-index: 7;
+  background: var(--bg-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--stroke);
+  border-radius: 18px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 8px 12px;
+  outline: none;
+  cursor: pointer;
+  color-scheme: dark;
+}
+#sel-body:focus { border-color: rgba(110, 243, 255, 0.45); }
+
 #search-results {
   margin-top: 6px;
   background: var(--bg-glass-2);
@@ -852,5 +874,11 @@ body:not(.moon-focus) .layer.moon-only { display: none; }
     transform: none;
     width: calc(100vw - 272px);
     min-width: 130px;
+  }
+  /* switcher drops below the search bar on narrow screens */
+  #sel-body {
+    top: 54px;
+    left: auto;
+    right: 16px;
   }
 }

@@ -95,6 +95,14 @@ async function boot() {
   const moonBack = document.getElementById("moon-back");
   moonBack.addEventListener("click", () => moon.blur());
 
+  // body switcher next to the search bar; stays in sync with click-driven
+  // focus changes so it always names the world under the camera
+  const selBody = document.getElementById("sel-body");
+  selBody.addEventListener("change", () => {
+    if (selBody.value === "moon") moon.focus();
+    else moon.blur();
+  });
+
   // Focus scoping: only the body under the camera keeps its overlays. Earth
   // layers are parked (checkboxes untouched) while the moon has focus, and
   // lunar article markers exist only there — first visit triggers their load.
@@ -102,6 +110,7 @@ async function boot() {
   let heatModeSuspended = null;
   moon.onFocusChanged = (focused) => {
     moonBack.hidden = !focused;
+    selBody.value = focused ? "moon" : "earth";
     document.body.classList.toggle("moon-focus", focused);
     wiki.close();
     moon.setArticlesVisible(focused);
@@ -197,8 +206,16 @@ async function boot() {
     }
 
     let html = null;
+    let earthHover = false;
     if (hovered) {
       html = tooltipHtml(hovered);
+    } else if (moon.focused) {
+      // from the moon, the Earth in the sky is the way home
+      earthHover = !!viewer.camera.pickEllipsoid(movement.endPosition, scene.globe.ellipsoid);
+      if (earthHover) {
+        html = `<div class="tt-title">Earth</div>
+          <div class="tt-note">click to return</div>`;
+      }
     } else if (heat.visible) {
       // nothing under the cursor: read the heat-map overlay instead
       const cart = viewer.camera.pickEllipsoid(movement.endPosition, scene.globe.ellipsoid);
@@ -225,7 +242,7 @@ async function boot() {
     viewer.canvas.style.cursor =
       hovered?.kind === "truesize"
         ? (hovered.ts.dragging ? "grabbing" : "grab")
-        : hovered ? "pointer" : "default";
+        : hovered || earthHover ? "pointer" : "default";
   }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
   handler.setInputAction((click) => {
@@ -261,9 +278,13 @@ async function boot() {
       }
       return;
     }
-    // while parked at the moon, stray clicks shouldn't geosearch the Earth
-    // that happens to sit behind the lunar sky
-    if (moon.focused) return;
+    // from the moon, clicking Earth flies home — the mirror of clicking the
+    // moon from Earth; anything else in the lunar sky is a no-op
+    if (moon.focused) {
+      const cart = viewer.camera.pickEllipsoid(click.position, scene.globe.ellipsoid);
+      if (cart) moon.blur();
+      return;
+    }
 
     // empty globe (or a lane — lanes blanket the oceans): open the wiki panel
     sats.select(null);
