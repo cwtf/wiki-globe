@@ -399,6 +399,7 @@ async function boot() {
     let shc = ships.counts();
     if (hideIfLiveLimited("ships", shc, (v) => ships.setVisible(v))) shc = ships.counts();
     setBadge(badgeEls.ships, shc.source);
+    badgeEls.ships.title = shc.detail ?? "";
     countEls.ships.textContent = shc.count;
     countEls.ships.title = shc.detail;
 

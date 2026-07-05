@@ -55,6 +55,7 @@ export class ShippingLayer {
     this.lastTick = 0;
     this.mode = "sim";
     this.source = "loading";
+    this.statusDetail = "Loading live AIS";
   }
 
   async init() {
@@ -73,6 +74,7 @@ export class ShippingLayer {
       console.warn("[shipping] no live AIS feed reachable, using simulated vessels");
       this.mode = "sim";
       this.source = "demo";
+      this.statusDetail = "No live AIS feed reachable; using simulated vessels";
       this._buildSimVessels();
       this.retryTimer = setInterval(() => this._retryLive(), AIS_RETRY_MS);
     }
@@ -81,6 +83,7 @@ export class ShippingLayer {
   _enterLiveMode() {
     this.mode = "live";
     this.source = "live";
+    this.statusDetail = this.live?.detail ?? "Live AIS";
     // live vessels are the foreground now; mute the reference lanes
     this.lines.removeAll();
     this._buildLanes(LANE_COLOR_DIM, POLAR_COLOR_DIM);
@@ -387,11 +390,11 @@ export class ShippingLayer {
   }
 
   counts() {
-    if (!this.visible) return { count: 0, detail: "", source: this.source };
+    if (!this.visible) return { count: 0, detail: this.statusDetail, source: this.source };
     const vesselCount = this.mode === "sim" ? this.simVessels.length : this.vessels.size;
     return {
       count: vesselCount,
-      detail: `${vesselCount} vessels · ${this.lanes.length} reference lanes`,
+      detail: `${this.statusDetail} · ${vesselCount} vessels · ${this.lanes.length} reference lanes`,
       source: this.source,
     };
   }

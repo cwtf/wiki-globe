@@ -5,7 +5,7 @@
 // Returns null when neither works; the shipping layer then falls back to
 // simulated vessels.
 
-const AISSTREAM_WS = "wss://stream.aisstream.io/v0/stream";
+const DEFAULT_AISSTREAM_WS = "wss://stream.aisstream.io/v0/stream";
 const DIGITRAFFIC_LOCATIONS = "https://meri.digitraffic.fi/api/ais/v1/locations";
 const DIGITRAFFIC_VESSELS = "https://meri.digitraffic.fi/api/ais/v1/vessels";
 const LOCATION_POLL_MS = 60 * 1000;
@@ -33,8 +33,9 @@ export function setAisKey(key) {
 //            onStatic({mmsi, name?, typeCode?, destination?})
 export async function createLiveAis(callbacks) {
   const key = getAisKey();
-  if (key) {
-    const ws = await tryAisstream(key, callbacks);
+  const aisstreamUrl = getAisstreamWsUrl();
+  if (key || aisstreamUrl !== DEFAULT_AISSTREAM_WS) {
+    const ws = await tryAisstream(aisstreamUrl, key, callbacks);
     if (ws) return ws;
     console.warn("[ais] aisstream connection failed, trying Digitraffic");
   }
@@ -43,11 +44,34 @@ export async function createLiveAis(callbacks) {
 
 // --- aisstream.io (global, WebSocket) ---------------------------------------
 
-function tryAisstream(key, cb) {
+function getAisstreamWsUrl() {
+  const params = new URLSearchParams(location.search);
+  const fromUrl = cleanUrl(params.get("aisstreamWs"));
+  if (fromUrl) {
+    try { localStorage.setItem("wikiglobe.aisstreamWs", fromUrl); } catch { /* private mode */ }
+    return fromUrl;
+  }
+  let stored = null;
+  try {
+    stored = localStorage.getItem("wikiglobe.aisstreamWs");
+  } catch { /* private mode */ }
+  return (
+    cleanUrl(window.WIKI_GLOBE_AISSTREAM_WS) ||
+    cleanUrl(stored) ||
+    DEFAULT_AISSTREAM_WS
+  );
+}
+
+function cleanUrl(value) {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function tryAisstream(url, key, cb) {
   return new Promise((resolve) => {
     let settled = false;
     let stopped = false;
     let ws = null;
+    let usableMessages = 0;
 
     const settle = (value) => {
       if (!settled) { settled = true; resolve(value); }
@@ -56,21 +80,32 @@ function tryAisstream(key, cb) {
     const connect = () => {
       if (stopped) return;
       try {
-        ws = new WebSocket(AISSTREAM_WS);
+        ws = new WebSocket(url);
       } catch {
         settle(null);
         return;
       }
       ws.onopen = () => {
-        ws.send(JSON.stringify({
-          APIKey: key,
+        const payload = {
           BoundingBoxes: [[[-90, -180], [90, 180]]],
           FilterMessageTypes: ["PositionReport", "ShipStaticData"],
-        }));
+        };
+        if (key) payload.APIKey = key;
+        ws.send(JSON.stringify(payload));
       };
       ws.onmessage = (ev) => {
-        settle({ kind: "aisstream", stop });
-        try { handleAisstream(JSON.parse(ev.data), cb); } catch { /* skip bad frame */ }
+        try {
+          if (handleAisstream(JSON.parse(ev.data), cb)) {
+            usableMessages++;
+            settle({
+              kind: "aisstream",
+              detail: url === DEFAULT_AISSTREAM_WS
+                ? "aisstream.io global AIS"
+                : "AIS proxy global feed",
+              stop,
+            });
+          }
+        } catch { /* skip bad frame */ }
       };
       ws.onerror = () => settle(null);
       ws.onclose = () => {
@@ -85,17 +120,22 @@ function tryAisstream(key, cb) {
     };
 
     // bad keys often produce a silent connection that never sends data
-    setTimeout(() => { if (!settled) { stop(); settle(null); } }, 15000);
+    setTimeout(() => {
+      if (!settled || usableMessages === 0) {
+        stop();
+        settle(null);
+      }
+    }, 15000);
     connect();
   });
 }
 
 function handleAisstream(msg, cb) {
   const meta = msg.MetaData;
-  if (!meta?.MMSI) return;
+  if (!meta?.MMSI) return false;
   if (msg.MessageType === "PositionReport") {
     const pr = msg.Message?.PositionReport;
-    if (!pr || pr.Latitude == null) return;
+    if (!pr || pr.Latitude == null) return false;
     const heading = pr.TrueHeading != null && pr.TrueHeading !== 511 ? pr.TrueHeading : pr.Cog;
     cb.onPosition({
       mmsi: meta.MMSI,
@@ -107,16 +147,19 @@ function handleAisstream(msg, cb) {
       ts: Date.now(),
       name: (meta.ShipName ?? "").trim() || undefined,
     });
+    return true;
   } else if (msg.MessageType === "ShipStaticData") {
     const sd = msg.Message?.ShipStaticData;
-    if (!sd) return;
+    if (!sd) return false;
     cb.onStatic({
       mmsi: meta.MMSI,
       name: (sd.Name ?? meta.ShipName ?? "").trim() || undefined,
       typeCode: sd.Type,
       destination: (sd.Destination ?? "").trim() || undefined,
     });
+    return true;
   }
+  return false;
 }
 
 // --- Digitraffic Finland (Baltic, REST polling) ------------------------------
@@ -167,6 +210,7 @@ async function tryDigitraffic(cb) {
 
   return {
     kind: "digitraffic",
+    detail: "Digitraffic Finland AIS (Baltic/regional)",
     stop() { clearInterval(locTimer); clearInterval(metaTimer); },
   };
 }
