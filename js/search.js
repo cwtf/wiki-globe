@@ -1,8 +1,9 @@
-// Country search bar: type-ahead over the shared country-boundary dataset.
-// Choosing a result flies the camera to the country and flashes its outline;
-// the “+ compare” button drops a draggable true-size overlay instead.
+// Place search bar: type-ahead over country boundaries plus country-assembled
+// continents and regions. Choosing a result flies the camera to it; the
+// "+ compare" button drops a draggable true-size overlay instead.
 
 import { loadCountryGeo, countryAreaKm2, formatArea } from "./country-geo.js";
+import { buildContinentGeo } from "./continent-geo.js";
 
 const MAX_RESULTS = 8;
 const HIGHLIGHT_MS = 5000;
@@ -16,6 +17,7 @@ export class CountrySearch {
     this.truesize = truesize;
     this.onInteract = onInteract ?? (() => {});
     this.geo = null;
+    this.entries = [];
     this.results = [];
     this.active = -1;
     this._highlight = [];
@@ -36,9 +38,13 @@ export class CountrySearch {
     if (this.geo) return;
     try {
       this.geo = await loadCountryGeo();
+      this.entries = [
+        ...buildContinentGeo(this.geo),
+        ...this.geo.map((f) => ({ ...f, type: "Country", searchKind: "country" })),
+      ];
       this._update(); // the user may have typed while the list loaded
     } catch (e) {
-      console.warn("[search] country data failed to load:", e.message);
+      console.warn("[search] place data failed to load:", e.message);
     }
   }
 
@@ -50,13 +56,13 @@ export class CountrySearch {
     }
     if (!this.geo) {
       this._ensureGeo();
-      this.box.innerHTML = `<div class="sr-empty">Loading country list…</div>`;
+      this.box.innerHTML = `<div class="sr-empty">Loading places...</div>`;
       this.box.hidden = false;
       return;
     }
     const starts = [];
     const contains = [];
-    for (const f of this.geo) {
+    for (const f of this.entries) {
       const n = f.name.toLowerCase();
       if (n.startsWith(q)) starts.push(f);
       else if (n.includes(q)) contains.push(f);
@@ -69,7 +75,7 @@ export class CountrySearch {
   _render() {
     this.box.innerHTML = "";
     if (this.results.length === 0) {
-      this.box.innerHTML = `<div class="sr-empty">No matching country</div>`;
+      this.box.innerHTML = `<div class="sr-empty">No matching place</div>`;
       this.box.hidden = false;
       return;
     }
@@ -83,13 +89,17 @@ export class CountrySearch {
 
       const area = document.createElement("span");
       area.className = "sr-area";
-      area.textContent = formatArea(countryAreaKm2(f));
+      area.textContent = formatArea(areaKm2(f));
+
+      const type = document.createElement("span");
+      type.className = `sr-type ${f.searchKind ?? "country"}`;
+      type.textContent = f.type ?? "Country";
 
       const add = document.createElement("button");
       add.className = "sr-add";
       add.type = "button";
       add.textContent = "+ compare";
-      add.title = "Add a draggable true-size outline of this country";
+      add.title = `Add a draggable true-size outline of ${f.name}`;
       add.addEventListener("click", (e) => {
         e.stopPropagation();
         this.truesize.add(f);
@@ -97,7 +107,7 @@ export class CountrySearch {
         add.disabled = true;
       });
 
-      row.append(name, area, add);
+      row.append(name, type, area, add);
       // pointerdown would blur the input before click fires — keep focus
       row.addEventListener("pointerdown", (e) => e.preventDefault());
       row.addEventListener("click", () => this._choose(f));
@@ -179,4 +189,8 @@ export class CountrySearch {
     this.results = [];
     this.active = -1;
   }
+}
+
+function areaKm2(f) {
+  return f.areaKm2 ?? countryAreaKm2(f);
 }

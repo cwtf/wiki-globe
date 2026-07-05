@@ -419,6 +419,21 @@ html, body {
   font-family: Consolas, "Cascadia Mono", monospace;
   font-size: 10px;
 }
+.sr-type {
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 8px;
+  color: #aebbd0;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 2px 5px;
+  text-transform: uppercase;
+}
+.sr-type.region {
+  border-color: rgba(255, 209, 102, 0.32);
+  color: #ffd166;
+}
 .sr-add {
   flex: 0 0 auto;
   background: rgba(110, 243, 255, 0.1);

@@ -90,7 +90,7 @@ export class TrueSizeLayer {
 
     const item = {
       name: feature.name,
-      areaLabel: formatArea(countryAreaKm2(feature)),
+      areaLabel: formatArea(feature.areaKm2 ?? countryAreaKm2(feature)),
       color,
       baseVecs,
       baseCenter,

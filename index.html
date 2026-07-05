@@ -76,8 +76,8 @@
         "Flight tracking and route arcs",
         "Shipping lanes and AIS vessel positions",
         "Live wet-bulb temperature heat-stress overlay",
-        "True-size country comparison with draggable outlines",
-        "Country search with fly-to zoom",
+        "True-size country and continent comparison with draggable outlines",
+        "Country and continent search with fly-to zoom",
         "OpenStreetMap zoom transition",
         "Nearby Wikipedia article discovery"
       ]
@@ -94,15 +94,15 @@
 
   <div id="cesiumContainer"></div>
 
-  <!-- Country search -->
+  <!-- Place search -->
   <div id="search" role="search">
     <input
       id="search-input"
       type="search"
-      placeholder="Search a country…"
+      placeholder="Search a country or continent..."
       autocomplete="off"
       spellcheck="false"
-      aria-label="Search for a country to fly to"
+      aria-label="Search for a country, continent, or region to fly to"
     />
     <div id="search-results" hidden></div>
   </div>
@@ -237,9 +237,10 @@
         <span class="count" id="count-truesize">0</span>
       </label>
       <div class="ts-help" id="ts-help" hidden>
-        Click a country to copy its outline, then drag the copy anywhere to
-        compare real sizes. Shift+scroll (or scroll while dragging) rotates
-        a copy; right-click removes it.
+        Click a country to copy its outline, or search for a country,
+        continent, or region and use + compare. Drag copies anywhere to compare
+        real sizes. Shift+scroll (or scroll while dragging) rotates a copy;
+        right-click removes it.
         <a href="#" id="ts-clear">Clear all</a>
       </div>
     </div>
