@@ -365,7 +365,8 @@ html, body {
   top: 16px;
   left: 50%;
   transform: translateX(-50%);
-  width: 300px;
+  width: clamp(420px, 38vw, 560px);
+  max-width: calc(100vw - 32px);
   z-index: 7;
 }
 #search-input {
@@ -398,7 +399,8 @@ html, body {
 }
 #search-results[hidden] { display: none; }
 .sr-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
@@ -407,11 +409,9 @@ html, body {
 }
 .sr-item:hover, .sr-item.active { background: rgba(255, 255, 255, 0.07); }
 .sr-name {
-  flex: 1;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 .sr-area {
   flex: 0 0 auto;

@@ -26,7 +26,10 @@ export class CountrySearch {
     this.input = document.getElementById("search-input");
     this.box = document.getElementById("search-results");
 
-    this.input.addEventListener("focus", () => this._ensureGeo());
+    this.input.addEventListener("focus", () => {
+      if (this.geo) this._update();
+      else this._ensureGeo();
+    });
     this.input.addEventListener("input", () => this._update());
     this.input.addEventListener("keydown", (e) => this._key(e));
     document.addEventListener("pointerdown", (e) => {
@@ -50,14 +53,16 @@ export class CountrySearch {
 
   _update() {
     const q = this.input.value.trim().toLowerCase();
-    if (!q) {
-      this._close();
-      return;
-    }
     if (!this.geo) {
       this._ensureGeo();
       this.box.innerHTML = `<div class="sr-empty">Loading places...</div>`;
       this.box.hidden = false;
+      return;
+    }
+    if (!q) {
+      this.results = this.entries.filter((f) => f.searchKind === "region");
+      this.active = this.results.length ? 0 : -1;
+      this._render();
       return;
     }
     const starts = [];
