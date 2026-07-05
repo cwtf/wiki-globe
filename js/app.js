@@ -260,6 +260,7 @@ async function boot() {
   // heat-map mode dropdown: weather modes show the resolution/timeline rows,
   // country modes only the legend
   const selHeat = document.getElementById("sel-heatmap");
+  enhanceHeatmapSelect(selHeat);
   const wbControls = document.getElementById("wb-controls");
   const wbWeatherRows = document.getElementById("wb-weather-rows");
   const wbBar = wbControls.querySelector(".wb-bar");
@@ -424,6 +425,207 @@ async function boot() {
 
   // handy for debugging from the console
   window.__globe = { viewer, sats, flights, ships, heat, wiki, truesize, search };
+}
+
+function enhanceHeatmapSelect(select) {
+  if (!select || select.dataset.enhanced === "true") return;
+  select.dataset.enhanced = "true";
+  select.classList.add("is-enhanced");
+  select.tabIndex = -1;
+  select.setAttribute("aria-hidden", "true");
+
+  const entries = [];
+  for (const child of select.children) {
+    if (child.tagName === "OPTION") {
+      entries.push({
+        value: child.value,
+        label: child.textContent,
+        group: "",
+        keywords: `${child.textContent} ${child.value}`.toLowerCase(),
+      });
+    } else if (child.tagName === "OPTGROUP") {
+      for (const option of child.children) {
+        entries.push({
+          value: option.value,
+          label: option.textContent,
+          group: child.label,
+          keywords: `${option.textContent} ${option.value} ${child.label}`.toLowerCase(),
+        });
+      }
+    }
+  }
+
+  const combo = document.createElement("div");
+  combo.className = "heat-combo";
+
+  const button = document.createElement("button");
+  button.className = "heat-combo-button";
+  button.type = "button";
+  button.setAttribute("aria-haspopup", "listbox");
+  button.setAttribute("aria-expanded", "false");
+
+  const valueText = document.createElement("span");
+  valueText.className = "heat-combo-value";
+  const chevron = document.createElement("span");
+  chevron.className = "heat-combo-chevron";
+  chevron.setAttribute("aria-hidden", "true");
+  chevron.textContent = "▾";
+  button.append(valueText, chevron);
+
+  const menu = document.createElement("div");
+  menu.className = "heat-combo-menu";
+  menu.hidden = true;
+
+  const search = document.createElement("input");
+  search.className = "heat-combo-search";
+  search.type = "search";
+  search.autocomplete = "off";
+  search.spellcheck = false;
+  search.placeholder = "Search overlays...";
+  search.setAttribute("aria-label", "Search data overlays");
+
+  const list = document.createElement("div");
+  list.className = "heat-combo-list";
+  list.setAttribute("role", "listbox");
+  menu.append(search, list);
+  combo.append(button, menu);
+  select.after(combo);
+
+  let optionButtons = [];
+  let active = -1;
+
+  function syncLabel() {
+    valueText.textContent =
+      select.selectedOptions[0]?.textContent ??
+      entries.find((entry) => entry.value === select.value)?.label ??
+      "None";
+  }
+
+  function setActive(idx) {
+    if (optionButtons.length === 0) {
+      active = -1;
+      return;
+    }
+    active = (idx + optionButtons.length) % optionButtons.length;
+    optionButtons.forEach((el, i) => {
+      const isActive = i === active;
+      el.classList.toggle("active", isActive);
+      el.tabIndex = isActive ? 0 : -1;
+      if (isActive) el.scrollIntoView({ block: "nearest" });
+    });
+  }
+
+  function render() {
+    const q = search.value.trim().toLowerCase();
+    const grouped = new Map();
+    for (const entry of entries) {
+      if (q && !entry.keywords.includes(q)) continue;
+      if (!grouped.has(entry.group)) grouped.set(entry.group, []);
+      grouped.get(entry.group).push(entry);
+    }
+
+    list.textContent = "";
+    optionButtons = [];
+    for (const [group, matches] of grouped) {
+      if (group) {
+        const header = document.createElement("div");
+        header.className = "heat-combo-group";
+        header.textContent = group;
+        list.appendChild(header);
+      }
+      for (const entry of matches) {
+        const option = document.createElement("button");
+        option.className = "heat-combo-option";
+        option.type = "button";
+        option.setAttribute("role", "option");
+        option.dataset.value = entry.value;
+        option.setAttribute("aria-selected", String(entry.value === select.value));
+        option.textContent = entry.label;
+        option.addEventListener("pointerdown", (e) => e.preventDefault());
+        option.addEventListener("click", () => choose(entry.value));
+        list.appendChild(option);
+        optionButtons.push(option);
+      }
+    }
+
+    if (optionButtons.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "heat-combo-empty";
+      empty.textContent = "No matching overlay";
+      list.appendChild(empty);
+      active = -1;
+      return;
+    }
+
+    const selectedIdx = optionButtons.findIndex((el) => el.dataset.value === select.value);
+    setActive(selectedIdx >= 0 ? selectedIdx : 0);
+  }
+
+  function openMenu() {
+    menu.hidden = false;
+    button.setAttribute("aria-expanded", "true");
+    search.value = "";
+    render();
+    requestAnimationFrame(() => search.focus());
+  }
+
+  function closeMenu(restoreFocus = false) {
+    if (menu.hidden) return;
+    menu.hidden = true;
+    button.setAttribute("aria-expanded", "false");
+    if (restoreFocus) button.focus();
+  }
+
+  function choose(value) {
+    select.value = value;
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+    syncLabel();
+    closeMenu(true);
+  }
+
+  button.addEventListener("click", () => {
+    if (menu.hidden) openMenu();
+    else closeMenu();
+  });
+  button.addEventListener("keydown", (e) => {
+    if (["ArrowDown", "Enter", " "].includes(e.key)) {
+      e.preventDefault();
+      openMenu();
+    }
+  });
+  search.addEventListener("input", render);
+  search.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      closeMenu(true);
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActive(active + 1);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActive(active - 1);
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      setActive(0);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      setActive(optionButtons.length - 1);
+    } else if (e.key === "Enter" && active >= 0) {
+      e.preventDefault();
+      optionButtons[active].click();
+    }
+  });
+  document.addEventListener("pointerdown", (e) => {
+    if (!combo.contains(e.target)) closeMenu();
+  });
+  for (const label of select.labels ?? []) {
+    label.addEventListener("click", (e) => {
+      e.preventDefault();
+      openMenu();
+    });
+  }
+  select.addEventListener("change", syncLabel);
+  syncLabel();
 }
 
 function tooltipHtml(id) {

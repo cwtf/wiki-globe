@@ -126,6 +126,130 @@ html, body {
   color-scheme: dark;
 }
 .heat-select:focus { outline: 1px solid #4aa3ff; }
+.heat-select.is-enhanced {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.heat-combo {
+  position: relative;
+  width: calc(100% - 24px);
+  margin: 2px 0 4px 24px;
+}
+.heat-combo-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 25px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--stroke);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 11.5px;
+  padding: 3px 6px;
+  cursor: pointer;
+}
+.heat-combo-button:focus-visible {
+  outline: 1px solid #4aa3ff;
+  outline-offset: 1px;
+}
+.heat-combo-value {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.heat-combo-chevron {
+  flex: 0 0 auto;
+  color: #cbd5e1;
+  font-size: 12px;
+  line-height: 1;
+}
+.heat-combo-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  overflow: hidden;
+  background: var(--bg-glass-2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--stroke);
+  border-radius: 10px;
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.48);
+}
+.heat-combo-menu[hidden] { display: none; }
+.heat-combo-search {
+  width: calc(100% - 8px);
+  margin: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 7px;
+  color: var(--text);
+  color-scheme: dark;
+  font-family: inherit;
+  font-size: 11.5px;
+  outline: none;
+  padding: 5px 7px;
+}
+.heat-combo-search::placeholder { color: var(--text-dim); }
+.heat-combo-search:focus { border-color: rgba(110, 243, 255, 0.5); }
+.heat-combo-list {
+  max-height: min(335px, calc(100vh - 150px));
+  overflow: hidden auto;
+  padding: 0 4px 4px;
+}
+.heat-combo-group {
+  padding: 7px 8px 3px;
+  color: var(--text-dim);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+.heat-combo-option {
+  display: block;
+  width: 100%;
+  min-height: 27px;
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11.5px;
+  line-height: 1.25;
+  padding: 5px 8px;
+  text-align: left;
+}
+.heat-combo-option:hover,
+.heat-combo-option.active {
+  background: rgba(110, 243, 255, 0.12);
+}
+.heat-combo-option[aria-selected="true"] {
+  color: var(--cyan);
+}
+.heat-combo-option::before {
+  content: "";
+  display: inline-block;
+  width: 14px;
+}
+.heat-combo-option[aria-selected="true"]::before { content: "✓"; }
+.heat-combo-empty {
+  padding: 12px 8px;
+  color: var(--text-dim);
+  font-size: 11.5px;
+}
 
 /* baseline popup theming (any browser): dark navy rows instead of UA gray.
    Group headers are the optgroup's own text style; options reset what they
