@@ -92,6 +92,15 @@ async function boot() {
   let lastFrame = 0;
   let lastInteraction = Date.now();
   let rotateEnabled = document.getElementById("chk-rotate").checked;
+  let dayNightEnabled = document.getElementById("chk-daynight").checked;
+
+  function syncDayNight() {
+    dayLayer.nightAlpha = dayNightEnabled ? 0 : 1;
+    const wantLighting = dayNightEnabled && osmLayer.alpha < 0.8 && !heat.visible;
+    if (scene.globe.enableLighting !== wantLighting) {
+      scene.globe.enableLighting = wantLighting;
+    }
+  }
 
   for (const evt of ["pointerdown", "wheel", "touchstart"]) {
     viewer.canvas.addEventListener(evt, () => { lastInteraction = Date.now(); }, { passive: true });
@@ -116,10 +125,7 @@ async function boot() {
     // keep the street map readable at night: drop sun lighting once the
     // camera is in map territory (or while a heat-map overlay is shown,
     // so the overlay isn't dimmed on the night side)
-    const wantLighting = osmLayer.alpha < 0.8 && !heat.visible;
-    if (scene.globe.enableLighting !== wantLighting) {
-      scene.globe.enableLighting = wantLighting;
-    }
+    syncDayNight();
 
     if (
       rotateEnabled && dt > 0 &&
@@ -340,6 +346,10 @@ async function boot() {
   };
 
   bind("chk-rotate", (v) => { rotateEnabled = v; });
+  bind("chk-daynight", (v) => {
+    dayNightEnabled = v;
+    syncDayNight();
+  });
 
   // optional aisstream.io key for global live ship coverage
   document.getElementById("ais-key-link").addEventListener("click", (e) => {
