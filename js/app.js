@@ -815,8 +815,9 @@ function tooltipHtml(id) {
     const a = id.article;
     const lat = `${Math.abs(a.lat).toFixed(1)}° ${a.lat >= 0 ? "N" : "S"}`;
     const lon = `${Math.abs(a.lon).toFixed(1)}° ${a.lon >= 0 ? "E" : "W"}`;
+    const origin = a.country ? ` · mission of ${esc(a.country)}` : "";
     return `<div class="tt-title">${esc(a.title)}</div>
-      <div class="tt-line">${lat}, ${lon} · the Moon</div>
+      <div class="tt-line">${lat}, ${lon} · the Moon${origin}</div>
       <div class="tt-note">Wikipedia · click to open in the panel</div>`;
   }
   if (id.kind === "wiki") {

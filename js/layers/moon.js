@@ -18,8 +18,10 @@ const MAX_ARTICLES = 400;
 const HOME_VIEW = { lon: 10, lat: 22, height: 2.3e7 };
 
 const SPARQL_URL = "https://query.wikidata.org/sparql";
+// country of origin (P495) + its flag (P41) tag lunar missions with their
+// nation; geographic features simply have neither
 const SPARQL_QUERY = `
-SELECT ?lat ?lon ?links ?article WHERE {
+SELECT ?lat ?lon ?links ?article ?countryName ?flag WHERE {
   ?item p:P625 ?st .
   ?st psv:P625 ?v .
   ?v wikibase:geoGlobe wd:Q405 ;
@@ -28,17 +30,32 @@ SELECT ?lat ?lon ?links ?article WHERE {
   ?item wikibase:sitelinks ?links .
   ?article schema:about ?item ;
            schema:isPartOf <https://en.wikipedia.org/> .
+  OPTIONAL {
+    ?item wdt:P495 ?country .
+    OPTIONAL { ?country wdt:P41 ?flag . }
+    OPTIONAL { ?country rdfs:label ?countryName FILTER(LANG(?countryName) = "en") }
+  }
 }
 ORDER BY DESC(?links)
-LIMIT ${MAX_ARTICLES}`;
+LIMIT ${MAX_ARTICLES + 20}`;
+
+// Commons media values arrive as http://commons.wikimedia.org/wiki/Special:FilePath/<file>.
+// The FilePath redirect is CORS-hostile for WebGL textures, so we keep just
+// the file name and later resolve it to a direct upload.wikimedia.org
+// thumbnail through the Commons API (which is CORS-friendly via origin=*).
+function flagFileName(url) {
+  const file = url?.split("Special:FilePath/")[1];
+  return file ? decodeURIComponent(file) : null;
+}
 
 const DOT_COLOR = Cesium.Color.fromCssColorString("#ff5470");
 // ecliptic north pole in ICRF coordinates, for the tidal-lock fallback frame
 const ECLIPTIC_NORTH = new Cesium.Cartesian3(0, -0.3977772, 0.9174821);
 
-// Offline fallback only — famous, stable lunar locations.
+// Offline fallback only — famous, stable lunar locations
+// ([title, lat, lon, country?, Commons flag file?]).
 const FALLBACK_SITES = [
-  ["Tranquility Base", 0.6875, 23.4333],
+  ["Tranquility Base", 0.6875, 23.4333, "United States", "Flag of the United States.svg"],
   ["Tycho (crater)", -43.31, -11.36],
   ["Copernicus (lunar crater)", 9.62, -20.08],
   ["Kepler (lunar crater)", 8.12, -38.01],
@@ -52,8 +69,8 @@ const FALLBACK_SITES = [
   ["Oceanus Procellarum", 18.4, -57.4],
   ["Montes Apenninus", 18.9, -3.7],
   ["South Pole–Aitken basin", -53.0, 169.0],
-  ["Chang'e 4", -45.5, 177.6],
-  ["Luna 2", 29.1, 0.0],
+  ["Chang'e 4", -45.5, 177.6, "China", "Flag of the People's Republic of China.svg"],
+  ["Luna 2", 29.1, 0.0, "Soviet Union", "Flag of the Soviet Union.svg"],
 ];
 
 export class MoonLayer {
@@ -78,6 +95,9 @@ export class MoonLayer {
 
     this.points = this.scene.primitives.add(new Cesium.PointPrimitiveCollection());
     this.points.show = false; // no lunar markers while Earth has focus
+    // mission origin-country flags, riding alongside their article markers
+    this.flags = this.scene.primitives.add(new Cesium.BillboardCollection());
+    this.flags.show = false;
 
     // orientation model: IAU 2000 lunar axes when the build exports it
     this.axes = typeof Cesium.IauOrientationAxes === "function"
@@ -145,6 +165,7 @@ export class MoonLayer {
       this._loadArticles();
     }
     this.points.show = this.visible && want;
+    this.flags.show = this.visible && want;
   }
 
   // --- per-frame ---------------------------------------------------------------
@@ -155,6 +176,7 @@ export class MoonLayer {
     this._updateTransform(time);
     this.primitive.modelMatrix = this.modelMatrix;
     this.points.modelMatrix = this.modelMatrix;
+    this.flags.modelMatrix = this.modelMatrix;
 
     // camera follows the moon while focused: re-anchor the look-at frame to
     // the fresh model matrix, preserving the camera's offset within it
@@ -304,6 +326,7 @@ export class MoonLayer {
           const slug = articleUrl.split("/wiki/")[1] ?? "";
           let lon = Number(b.lon.value);
           if (lon > 180) lon -= 360; // some lunar coords use 0–360°E
+          const country = b.countryName?.value ?? null;
           return {
             title: decodeURIComponent(slug).replace(/_/g, " "),
             lat: Number(b.lat.value),
@@ -311,6 +334,10 @@ export class MoonLayer {
             url: articleUrl,
             moon: true,
             extract: undefined,
+            country,
+            badge: country ?? undefined, // origin chip in the panel list
+            flagUrl: null,
+            _flagFile: flagFileName(b.flag?.value),
           };
         }).filter((a) => a.title && Number.isFinite(a.lat) && Number.isFinite(a.lon));
       }
@@ -323,11 +350,15 @@ export class MoonLayer {
     } else {
       console.warn("[moon] using bundled fallback lunar sites");
       this.source = "data";
-      items = FALLBACK_SITES.map(([title, lat, lon]) => ({
+      items = FALLBACK_SITES.map(([title, lat, lon, country, flagFile]) => ({
         title, lat, lon,
         url: `https://en.wikipedia.org/wiki/${encodeURIComponent(title.replace(/ /g, "_"))}`,
         moon: true,
         extract: undefined,
+        country: country ?? null,
+        badge: country ?? undefined,
+        flagUrl: null,
+        _flagFile: flagFile ?? null,
       }));
     }
 
@@ -335,13 +366,52 @@ export class MoonLayer {
     const seen = new Set();
     this.articles = items.filter((a) =>
       seen.has(a.title) ? false : (seen.add(a.title), true));
+    await this._resolveFlags(this.articles);
     this._buildMarkers();
+  }
+
+  // Batch-resolve Commons flag file names to direct thumbnail URLs that WebGL
+  // can actually consume (upload.wikimedia.org serves CORS headers).
+  async _resolveFlags(items) {
+    const files = [...new Set(items.map((a) => a._flagFile).filter(Boolean))].slice(0, 50);
+    if (files.length === 0) return;
+    try {
+      const url = new URL("https://commons.wikimedia.org/w/api.php");
+      url.search = new URLSearchParams({
+        action: "query",
+        titles: files.map((f) => `File:${f}`).join("|"),
+        prop: "imageinfo", iiprop: "url", iiurlwidth: "48",
+        format: "json", origin: "*",
+      });
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const thumbs = new Map();
+      for (const p of Object.values(data?.query?.pages ?? {})) {
+        const thumb = p.imageinfo?.[0]?.thumburl;
+        if (thumb) thumbs.set(p.title.replace(/^File:/, ""), thumb);
+      }
+      // the API normalizes titles (underscores → spaces etc.)
+      const norm = new Map();
+      for (const n of data?.query?.normalized ?? []) {
+        norm.set(n.from.replace(/^File:/, ""), n.to.replace(/^File:/, ""));
+      }
+      for (const a of items) {
+        if (!a._flagFile) continue;
+        const title = norm.get(a._flagFile) ?? a._flagFile;
+        a.flagUrl = thumbs.get(title) ?? null;
+      }
+    } catch (e) {
+      console.warn("[moon] flag thumbnail resolution failed:", e.message);
+    }
   }
 
   _buildMarkers() {
     this.points.removeAll();
+    this.flags.removeAll();
     const rad = Cesium.Math.RADIANS_PER_DEGREE;
     const r = MOON_RADIUS + MARKER_ALT;
+    const scale = new Cesium.NearFarScalar(3.0e6, 1.3, 4.4e8, 0.45);
     for (const a of this.articles) {
       const clat = Math.cos(a.lat * rad);
       // moon-fixed position; the collection's modelMatrix carries it to the sky
@@ -356,12 +426,29 @@ export class MoonLayer {
         color: DOT_COLOR,
         outlineColor: Cesium.Color.WHITE.withAlpha(0.6),
         outlineWidth: 1,
-        scaleByDistance: new Cesium.NearFarScalar(3.0e6, 1.3, 4.4e8, 0.45),
+        scaleByDistance: scale,
         id: { kind: "moonwiki", article: a },
       });
+      // missions carry their origin-country flag beside the dot
+      if (a.flagUrl) {
+        this.flags.add({
+          position: a._moonPos,
+          image: a.flagUrl,
+          width: 21,
+          height: 14,
+          horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
+          verticalOrigin: Cesium.VerticalOrigin.CENTER,
+          pixelOffset: new Cesium.Cartesian2(8, 0),
+          scaleByDistance: scale,
+          id: { kind: "moonwiki", article: a },
+        });
+      }
     }
-    this.points.show = this.visible && this.articlesVisible && this.wikiEnabled;
+    const show = this.visible && this.articlesVisible && this.wikiEnabled;
+    this.points.show = show;
+    this.flags.show = show;
     this.points.modelMatrix = this.modelMatrix;
+    this.flags.modelMatrix = this.modelMatrix;
   }
 
   // Great-circle nearest articles on the lunar sphere.

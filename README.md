@@ -66,8 +66,10 @@ readable on the night side.
   (CGI Moon Kit). Click the Moon to fly there (auto-rotate keeps orbiting it
   when idle); lunar Wikipedia markers load on the first visit and dot the whole
   surface while the Moon has focus. Click the surface or a marker for nearby
-  lunar articles, and use "Back to Earth" to return. Its day/night cycle (real
-  solar terminator) toggles independently. Layers are scoped to the focused
+  lunar articles, and use "Back to Earth" to return. Lunar-mission markers
+  (landers, probes, impact sites) carry the flag of their country of origin
+  (Wikidata P495 → Commons flag thumbnails). Its day/night cycle (real solar
+  terminator) toggles independently. Layers are scoped to the focused
   body: Earth overlays (satellites, flights, shipping, data overlays) pause at
   the Moon and resume on return; lunar markers never show from Earth.
 
