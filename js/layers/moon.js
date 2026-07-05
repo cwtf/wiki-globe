@@ -49,6 +49,16 @@ function flagFileName(url) {
 }
 
 const DOT_COLOR = Cesium.Color.fromCssColorString("#ff5470");
+const CATEGORY_ALL = "all";
+const CATEGORY_DEFS = [
+  { value: "missions", label: "Missions & landing sites" },
+  { value: "craters", label: "Craters" },
+  { value: "maria", label: "Maria & plains" },
+  { value: "mountains", label: "Mountains & valleys" },
+  { value: "basins", label: "Basins & regions" },
+  { value: "other", label: "Other" },
+];
+const CATEGORY_LABELS = new Map(CATEGORY_DEFS.map((c) => [c.value, c.label]));
 // ecliptic north pole in ICRF coordinates, for the tidal-lock fallback frame
 const ECLIPTIC_NORTH = new Cesium.Cartesian3(0, -0.3977772, 0.9174821);
 
@@ -85,6 +95,7 @@ export class MoonLayer {
     this.source = "idle";            // articles load on first lunar visit
     this.articlesVisible = false;    // camera focus grants article context
     this.wikiEnabled = true;         // user toggle: wiki articles on the moon
+    this.category = CATEGORY_ALL;
     this._articlesRequested = false;
     this.modelMatrix = Cesium.Matrix4.clone(Cesium.Matrix4.IDENTITY);
     this.onFocusChanged = null;
@@ -155,6 +166,16 @@ export class MoonLayer {
   setWikiEnabled(v) {
     this.wikiEnabled = v;
     this._syncArticles();
+  }
+
+  setCategory(category) {
+    this.category = CATEGORY_LABELS.has(category) ? category : CATEGORY_ALL;
+    this._buildMarkers();
+  }
+
+  filteredArticles() {
+    if (this.category === CATEGORY_ALL) return this.articles;
+    return this.articles.filter((a) => a.category === this.category);
   }
 
   _syncArticles() {
@@ -362,6 +383,11 @@ export class MoonLayer {
       }));
     }
 
+    for (const item of items) {
+      item.category = moonArticleCategory(item);
+      item.categoryLabel = CATEGORY_LABELS.get(item.category) ?? "Other";
+    }
+
     // de-dup by title (Wikidata can hold several coordinate statements)
     const seen = new Set();
     this.articles = items.filter((a) =>
@@ -412,7 +438,7 @@ export class MoonLayer {
     const rad = Cesium.Math.RADIANS_PER_DEGREE;
     const r = MOON_RADIUS + MARKER_ALT;
     const scale = new Cesium.NearFarScalar(3.0e6, 1.3, 4.4e8, 0.45);
-    for (const a of this.articles) {
+    for (const a of this.filteredArticles()) {
       const clat = Math.cos(a.lat * rad);
       // moon-fixed position; the collection's modelMatrix carries it to the sky
       a._moonPos = new Cesium.Cartesian3(
@@ -455,7 +481,7 @@ export class MoonLayer {
   nearest(lat, lon, n) {
     const rad = Cesium.Math.RADIANS_PER_DEGREE;
     const la1 = lat * rad, lo1 = lon * rad;
-    return this.articles
+    return this.filteredArticles()
       .map((a) => {
         const la2 = a.lat * rad, lo2 = a.lon * rad;
         const h = Math.sin((la2 - la1) / 2) ** 2 +
@@ -520,6 +546,25 @@ export class MoonLayer {
   }
 
   counts() {
-    return { source: this.source, count: this.articles.length };
+    return { source: this.source, count: this.filteredArticles().length };
   }
+}
+
+function moonArticleCategory(article) {
+  const title = article.title.toLowerCase();
+  if (
+    article.country ||
+    /\b(apollo|luna|chang'?e|surveyor|ranger|lunokhod|chandrayaan|smart-1|clementine|beresheet|hakuto|mission|landing|lander|probe|spacecraft)\b/.test(title)
+  ) {
+    return "missions";
+  }
+  if (/\bcrater\b/.test(title)) return "craters";
+  if (/^(mare|oceanus|lacus|palus|sinus)\b/.test(title) || /\b(lunar mare|lunar maria|plain|plains)\b/.test(title)) {
+    return "maria";
+  }
+  if (/^(montes|mons|vallis|rima|rimae|rupes|dorsum|dorsa|catena)\b/.test(title) || /\b(mountain|valley|rille|scarp|wrinkle ridge)\b/.test(title)) {
+    return "mountains";
+  }
+  if (/\b(basin|regio|region|highland|terra|pole)\b/.test(title)) return "basins";
+  return "other";
 }

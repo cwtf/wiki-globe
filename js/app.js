@@ -427,6 +427,10 @@ async function boot() {
     moon.setWikiEnabled(v);
     if (!v && wiki.moonMode) wiki.close();
   });
+  document.getElementById("sel-moon-category").addEventListener("change", (e) => {
+    moon.setCategory(e.target.value);
+    if (wiki.moonMode) wiki.close();
+  });
   bind("chk-moon-daynight", (v) => moon.setDayNight(v));
 
   bind("chk-rotate", (v) => { rotateEnabled = v; });
@@ -816,9 +820,10 @@ function tooltipHtml(id) {
     const lat = `${Math.abs(a.lat).toFixed(1)}° ${a.lat >= 0 ? "N" : "S"}`;
     const lon = `${Math.abs(a.lon).toFixed(1)}° ${a.lon >= 0 ? "E" : "W"}`;
     const origin = a.country ? ` · mission of ${esc(a.country)}` : "";
+    const category = a.categoryLabel ? ` · ${esc(a.categoryLabel)}` : "";
     return `<div class="tt-title">${esc(a.title)}</div>
       <div class="tt-line">${lat}, ${lon} · the Moon${origin}</div>
-      <div class="tt-note">Wikipedia · click to open in the panel</div>`;
+      <div class="tt-note">Wikipedia${category} · click to open in the panel</div>`;
   }
   if (id.kind === "wiki") {
     const a = id.article;
