@@ -851,7 +851,8 @@ LIMIT ${(this.config.maxArticles ?? 400) + 20}`;
     wikiPanel.openBody(this.name, lat, lon, items);
   }
 
-  async openArticle(article, wikiPanel) {
+  async openArticle(article, wikiPanel, opts = {}) {
+    if (opts.openPopup) wikiPanel.openArticlePopup(article);
     const items = this.nearest(article.lat, article.lon, 20);
     const rest = items.filter((a) => a !== article);
     await this._ensureExtracts([article, ...rest]);

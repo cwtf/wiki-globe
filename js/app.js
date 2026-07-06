@@ -410,25 +410,25 @@ async function boot() {
     if (id?.kind === "vessel") return; // details are in the hover tooltip
     if (id?.kind === "truesize") return; // drag / right-click handled by the layer
     if (id?.kind === "wiki") {
-      wiki.focusArticle(id.article); // highlight the matching result row
+      wiki.focusArticle(id.article, { openPopup: true }); // highlight row + open article
       return;
     }
     if (id?.kind === "moonwiki") {
       // an article dot on the moon: fly there (if not already) and open it
       focusBody("moon");
-      moon.openArticle(id.article, wiki);
+      moon.openArticle(id.article, wiki, { openPopup: true });
       return;
     }
     if (id?.kind === "marswiki") {
       focusBody("mars");
-      mars.openArticle(id.article, wiki);
+      mars.openArticle(id.article, wiki, { openPopup: true });
       return;
     }
     if (id?.kind === "bodywiki") {
       const layer = id.layer ?? bodyLayers[id.body];
       if (!layer) return;
       focusBody(id.body);
-      layer.openArticle(id.article, wiki);
+      layer.openArticle(id.article, wiki, { openPopup: true });
       return;
     }
     if (id?.kind === "moon") {
@@ -1036,7 +1036,7 @@ function tooltipHtml(id) {
     const category = a.categoryLabel ? ` · ${esc(a.categoryLabel)}` : "";
     return `<div class="tt-title">${esc(a.title)}</div>
       <div class="tt-line">${lat}, ${lon} · the Moon${origin}</div>
-      <div class="tt-note">Wikipedia${category} · click to open in the panel</div>`;
+      <div class="tt-note">Wikipedia${category} · click to open article</div>`;
   }
   if (id.kind === "marswiki") {
     const a = id.article;
@@ -1045,7 +1045,7 @@ function tooltipHtml(id) {
     const origin = a.country ? ` � mission of ${esc(a.country)}` : "";
     return `<div class="tt-title">${esc(a.title)}</div>
       <div class="tt-line">${lat}, ${lon} � Mars${origin}</div>
-      <div class="tt-note">Wikipedia � click to open in the panel</div>`;
+      <div class="tt-note">Wikipedia · click to open article</div>`;
   }
   if (id.kind === "bodywiki") {
     const a = id.article;
@@ -1056,7 +1056,7 @@ function tooltipHtml(id) {
     const category = a.categoryLabel ? ` - ${esc(a.categoryLabel)}` : "";
     return `<div class="tt-title">${esc(a.title)}</div>
       <div class="tt-line">${lat}, ${lon} - ${esc(bodyName)}${origin}</div>
-      <div class="tt-note">Wikipedia${category} - click to open in the panel</div>`;
+      <div class="tt-note">Wikipedia${category} - click to open article</div>`;
   }
   if (id.kind === "wiki") {
     const a = id.article;
@@ -1065,7 +1065,7 @@ function tooltipHtml(id) {
       : (a.badge ?? "Wikipedia");
     return `<div class="tt-title">${esc(a.title)}</div>
       <div class="tt-line">${esc(dist)}</div>
-      <div class="tt-note">Wikipedia · click to open in the panel</div>`;
+      <div class="tt-note">Wikipedia · click to open article</div>`;
   }
   return "";
 }

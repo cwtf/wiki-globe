@@ -259,8 +259,13 @@ export class WikiPanel {
   }
 
   // Called from the globe when an article marker is clicked.
-  focusArticle(article) {
+  focusArticle(article, opts = {}) {
     this._select(article, true);
+    if (opts.openPopup) openArticlePopup(article);
+  }
+
+  openArticlePopup(article) {
+    openArticlePopup(article);
   }
 
   // --- search ----------------------------------------------------------------
@@ -549,6 +554,27 @@ function formatKm(km) {
   if (km < 1) return `${Math.round(km * 1000)} m`;
   if (km < 20) return `${km.toFixed(1)} km`;
   return `${Math.round(km)} km`;
+}
+
+function openArticlePopup(article) {
+  const url = article?.url || wikiArticleUrl(article?.title);
+  if (!url) return;
+
+  const width = Math.min(980, Math.max(420, Math.round(window.screen.availWidth * 0.72)));
+  const height = Math.min(820, Math.max(520, Math.round(window.screen.availHeight * 0.82)));
+  const left = Math.max(0, Math.round((window.screen.availWidth - width) / 2));
+  const top = Math.max(0, Math.round((window.screen.availHeight - height) / 2));
+  const popup = window.open(
+    url,
+    "wikiGlobeArticle",
+    `popup=yes,width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+  );
+  popup?.focus();
+}
+
+function wikiArticleUrl(title) {
+  if (!title) return "";
+  return `https://en.wikipedia.org/wiki/${encodeURIComponent(title).replace(/%20/g, "_")}`;
 }
 
 function escapeHtml(s) {
