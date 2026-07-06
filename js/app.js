@@ -485,7 +485,10 @@ async function boot() {
     mars.setWikiEnabled(v);
     if (!v && wiki.moonMode) wiki.close();
   });
-  bind("chk-mars-daynight", (v) => mars.setDayNightEnabled(v));
+  document.getElementById("sel-mars-category").addEventListener("change", (e) => {
+    mars.setCategory(e.target.value);
+    if (wiki.moonMode) wiki.close();
+  });
   bind("chk-moon-wiki", (v) => {
     moon.setWikiEnabled(v);
     if (!v && wiki.moonMode) wiki.close();

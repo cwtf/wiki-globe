@@ -292,10 +292,17 @@
         <input type="checkbox" id="chk-mars-wiki" checked />
         <span class="name">Wiki articles</span>
       </label>
-      <label class="row sub">
-        <input type="checkbox" id="chk-mars-daynight" checked />
-        <span class="name">Day/night cycle</span>
+      <label class="row sub moon-category-row" for="sel-mars-category">
+        <span class="name">Category</span>
       </label>
+      <select id="sel-mars-category" class="heat-select moon-select" aria-label="Filter Mars wiki articles by category">
+        <option value="all">All categories</option>
+        <option value="missions" selected>Missions &amp; landing sites</option>
+        <option value="craters">Craters</option>
+        <option value="mountains">Mountains &amp; valleys</option>
+        <option value="regions">Regions &amp; plains</option>
+        <option value="other">Other</option>
+      </select>
     </div>
     <div class="layer">
       <label class="row main">

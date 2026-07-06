@@ -3,7 +3,7 @@
 
 const TEXTURE_URL = "assets/mars.jpg"; // Solar System Scope, CC BY 4.0
 const MARS_RADIUS = 3389500;           // mean radius, metres
-const MARKER_ALT = 25000;
+const MARKER_ALT = 120000;
 const MAX_ARTICLES = 420;
 const AU = 1.495978707e11;
 const HOME_VIEW = { lon: 10, lat: 22, height: 2.3e7 };
@@ -44,11 +44,28 @@ const FALLBACK_SITES = [
 
 const DOT_COLOR = Cesium.Color.fromCssColorString("#c1583c");
 const SKY_DOT_COLOR = Cesium.Color.fromCssColorString("#c1583c");
+const CATEGORY_ALL = "all";
+const CATEGORY_DEFS = [
+  { value: "missions", label: "Missions & landing sites" },
+  { value: "craters", label: "Craters" },
+  { value: "mountains", label: "Mountains & valleys" },
+  { value: "regions", label: "Regions & plains" },
+  { value: "other", label: "Other" },
+];
+const CATEGORY_LABELS = new Map(CATEGORY_DEFS.map((c) => [c.value, c.label]));
 
 function flagFileName(url) {
   const file = url?.split("Special:FilePath/")[1];
   return file ? decodeURIComponent(file) : null;
 }
+
+// EllipsoidGeometry starts its texture seam on the body-fixed +X axis, which
+// lands the map's central meridian (the near side) at longitude 180°. Spin
+// the textured geometry half a turn so map longitude 0 sits on +X, where the
+// IAU frame, the article markers, and pickMoon() all put selenographic 0°.
+// Measured: without this, the lon-0 face renders far-side highlands.
+const TEXTURE_SEAM_ROT = Cesium.Matrix4.fromRotationTranslation(
+  Cesium.Matrix3.fromRotationZ(Math.PI), Cesium.Cartesian3.ZERO);
 
 export class MarsLayer {
   constructor(viewer) {
@@ -61,11 +78,12 @@ export class MarsLayer {
     this.source = "idle";
     this.articlesVisible = false;
     this.wikiEnabled = true;
-    this.dayNightEnabled = true;
+    this.category = "missions";
     this._articlesRequested = false;
     this.onFocusChanged = null;
     this.savedMinZoom = null;
     this._transitioning = false;
+    this._trueFocused = false;
     this.proxyModelMatrix = Cesium.Matrix4.clone(Cesium.Matrix4.IDENTITY);
     this.modelMatrix = Cesium.Matrix4.clone(Cesium.Matrix4.IDENTITY);
 
@@ -75,6 +93,14 @@ export class MarsLayer {
     this.flags.show = false;
     this.skyPoints = this.scene.primitives.add(new Cesium.PointPrimitiveCollection());
     this.skyLabels = this.scene.primitives.add(new Cesium.LabelCollection());
+    // { article, point, flag } for every currently-built marker: article
+    // markers are kept in Mars-fixed local coordinates and re-projected to
+    // absolute world position every tick (see _updateMarkerPositions), rather
+    // than relying on the collections' modelMatrix for the huge Earth→Mars
+    // translation — at real interplanetary distance (~1e11 m) that matrix
+    // multiply loses enough float32 precision on the GPU to scatter 120km-alt
+    // markers off-target, while the CPU-side double-precision math here does not.
+    this._markerRefs = [];
 
     this._scratch = {
       icrf: new Cesium.Matrix3(),
@@ -89,10 +115,15 @@ export class MarsLayer {
       prim: new Cesium.Matrix4(),
       proxyPos: new Cesium.Cartesian3(),
       proxyRot: new Cesium.Matrix3(),
+      markerWorld: new Cesium.Cartesian3(),
     };
   }
 
   init() {
+    const material = Cesium.Material.fromType("Image", { image: TEXTURE_URL });
+    this.appearance = new Cesium.MaterialAppearance({
+      material, translucent: false, closed: true,
+    });
     this._updateTransform(this.viewer.clock.currentTime);
     this._createAppearances();
 
@@ -106,8 +137,9 @@ export class MarsLayer {
         }),
         id: { kind: "body", body: "mars", layer: this },
       }),
-      appearance: this.litAppearance,
-      modelMatrix: this.modelMatrix,
+      appearance: this.appearance,
+      modelMatrix: Cesium.Matrix4.multiply(
+        this.modelMatrix, TEXTURE_SEAM_ROT, new Cesium.Matrix4()),
       asynchronous: false,
       allowPicking: true,
       show: false,
@@ -157,7 +189,7 @@ export class MarsLayer {
 
   _createAppearances() {
     const material = Cesium.Material.fromType("Image", { image: TEXTURE_URL });
-    this.litAppearance = new Cesium.MaterialAppearance({
+    this.appearance = new Cesium.MaterialAppearance({
       material, translucent: false, closed: true,
     });
     this.proxyAppearance = new Cesium.MaterialAppearance({
@@ -179,11 +211,14 @@ export class MarsLayer {
     this._syncArticles();
   }
 
-  setDayNightEnabled(v) {
-    this.dayNightEnabled = v;
-    if (this.primitive) {
-      this.primitive.appearance = v ? this.litAppearance : this.flatAppearance;
-    }
+  setCategory(category) {
+    this.category = CATEGORY_LABELS.has(category) ? category : CATEGORY_ALL;
+    this._buildMarkers();
+  }
+
+  filteredArticles() {
+    if (this.category === CATEGORY_ALL) return this.articles;
+    return this.articles.filter((a) => a.category === this.category);
   }
 
   _syncArticles() {
@@ -208,9 +243,9 @@ export class MarsLayer {
     }
 
     this._updateTransform(time);
-    this.primitive.modelMatrix = this.modelMatrix;
-    this.points.modelMatrix = this.modelMatrix;
-    this.flags.modelMatrix = this.modelMatrix;
+    this.primitive.modelMatrix = Cesium.Matrix4.multiply(
+      this.modelMatrix, TEXTURE_SEAM_ROT, this._scratch.prim);
+    this._updateMarkerPositions();
     this._updateProxyTransform();
     if (this.proxyPrimitive) this.proxyPrimitive.modelMatrix = this.proxyModelMatrix;
 
@@ -222,6 +257,19 @@ export class MarsLayer {
 
     if (this.tracking) {
       this.viewer.camera.lookAtTransform(this.modelMatrix, s.offset);
+    }
+  }
+
+  // Re-project every marker's Mars-fixed local position to absolute world
+  // coordinates via this.modelMatrix, in JS double precision, instead of
+  // handing the GPU the local position plus a huge modelMatrix to multiply.
+  _updateMarkerPositions() {
+    if (this._markerRefs.length === 0) return;
+    const world = this._scratch.markerWorld;
+    for (const ref of this._markerRefs) {
+      Cesium.Matrix4.multiplyByPoint(this.modelMatrix, ref.article._bodyPos, world);
+      ref.point.position = world;
+      if (ref.flag) ref.flag.position = world;
     }
   }
   _updateTransform(time) {
@@ -273,10 +321,10 @@ export class MarsLayer {
     if (this.primitive) this.primitive.show = this.visible;
     this._updateTransform(this.viewer.clock.currentTime);
     this.primitive.modelMatrix = this.modelMatrix;
-    this.points.modelMatrix = this.modelMatrix;
-    this.flags.modelMatrix = this.modelMatrix;
+    this._updateMarkerPositions();
     const offset = new Cesium.Cartesian3(0, -MARS_RADIUS * 4.4, MARS_RADIUS * 0.55);
     this.viewer.camera.lookAtTransform(this.modelMatrix, offset);
+    this._trueFocused = true;
     this.tracking = true;
     this._syncArticles();
   }
@@ -285,7 +333,10 @@ export class MarsLayer {
     this.focused = true;
     this.tracking = false;
     this._transitioning = true;
+    this._trueFocused = false;
     this.primitive.show = false;
+    this.points.show = false;
+    this.flags.show = false;
     this.skyPoints.show = false;
     this.skyLabels.show = false;
     this.onFocusChanged?.(true);
@@ -319,9 +370,12 @@ export class MarsLayer {
     this.focused = false;
     this.tracking = false;
     this._transitioning = false;
+    this._trueFocused = false;
     this.viewer.camera.cancelFlight?.();
     if (this.proxyPrimitive) this.proxyPrimitive.show = false;
     if (this.primitive) this.primitive.show = false;
+    this.points.show = false;
+    this.flags.show = false;
     this.skyPoints.show = this.visible;
     this.skyLabels.show = this.visible;
     this.onFocusChanged?.(false);
@@ -339,7 +393,8 @@ export class MarsLayer {
     this.visible = v;
     this.skyPoints.show = v && !this.focused;
     this.skyLabels.show = v && !this.focused;
-    if (this.primitive) this.primitive.show = v && this.focused;
+    if (this.primitive) this.primitive.show = v && this._trueFocused;
+    if (this.proxyPrimitive) this.proxyPrimitive.show = v && this._transitioning;
     this._syncArticles();
     if (!v) this.blur();
   }
@@ -419,6 +474,10 @@ export class MarsLayer {
     const seen = new Set();
     this.articles = items.filter((a) =>
       seen.has(a.title) ? false : (seen.add(a.title), true));
+    for (const item of this.articles) {
+      item.category = marsArticleCategory(item);
+      item.categoryLabel = CATEGORY_LABELS.get(item.category) ?? "Other";
+    }
     await this._resolveFlags(this.articles);
     this._buildMarkers();
   }
@@ -459,28 +518,33 @@ export class MarsLayer {
   _buildMarkers() {
     this.points.removeAll();
     this.flags.removeAll();
+    this._markerRefs = [];
     const rad = Cesium.Math.RADIANS_PER_DEGREE;
     const r = MARS_RADIUS + MARKER_ALT;
     const scale = new Cesium.NearFarScalar(5.0e6, 1.3, 7.5e8, 0.45);
-    for (const a of this.articles) {
+    const world = new Cesium.Cartesian3();
+    for (const a of this.filteredArticles()) {
       const clat = Math.cos(a.lat * rad);
       a._bodyPos = new Cesium.Cartesian3(
         r * clat * Math.cos(a.lon * rad),
         r * clat * Math.sin(a.lon * rad),
         r * Math.sin(a.lat * rad)
       );
-      this.points.add({
-        position: a._bodyPos,
+      Cesium.Matrix4.multiplyByPoint(this.modelMatrix, a._bodyPos, world);
+      const point = this.points.add({
+        position: world,
         pixelSize: 5,
         color: DOT_COLOR,
         outlineColor: Cesium.Color.WHITE.withAlpha(0.6),
         outlineWidth: 1,
         scaleByDistance: scale,
+        disableDepthTestDistance: Number.POSITIVE_INFINITY,
         id: { kind: "marswiki", article: a },
       });
+      let flag = null;
       if (a.flagUrl) {
-        this.flags.add({
-          position: a._bodyPos,
+        flag = this.flags.add({
+          position: world,
           image: a.flagUrl,
           width: 21,
           height: 14,
@@ -488,20 +552,20 @@ export class MarsLayer {
           verticalOrigin: Cesium.VerticalOrigin.CENTER,
           pixelOffset: new Cesium.Cartesian2(8, 0),
           scaleByDistance: scale,
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
           id: { kind: "marswiki", article: a },
         });
       }
+      this._markerRefs.push({ article: a, point, flag });
     }
     this.points.show = this.visible && this.articlesVisible && this.wikiEnabled;
     this.flags.show = this.points.show;
-    this.points.modelMatrix = this.modelMatrix;
-    this.flags.modelMatrix = this.modelMatrix;
   }
 
   nearest(lat, lon, n) {
     const rad = Cesium.Math.RADIANS_PER_DEGREE;
     const la1 = lat * rad, lo1 = lon * rad;
-    return this.articles
+    return this.filteredArticles()
       .map((a) => {
         const la2 = a.lat * rad, lo2 = a.lon * rad;
         const h = Math.sin((la2 - la1) / 2) ** 2 +
@@ -562,6 +626,24 @@ export class MarsLayer {
   }
 
   counts() {
-    return { source: this.source, count: this.articles.length };
+    return { source: this.source, count: this.filteredArticles().length };
   }
+}
+
+function marsArticleCategory(article) {
+  const title = article.title.toLowerCase();
+  if (
+    article.country ||
+    /\b(viking|pathfinder|sojourner|spirit|opportunity|curiosity|perseverance|insight|phoenix|beagle|schiaparelli|zhurong|tianwen|mars \d|lander|landing|rover|probe|spacecraft|mission)\b/.test(title)
+  ) {
+    return "missions";
+  }
+  if (/\bcrater\b/.test(title)) return "craters";
+  if (/^(mons|montes|vallis|valles|chasma|chasmata|rupes|scopulus|scopuli|dorsum|dorsa|labes)\b/.test(title) || /\b(mountain|valley|canyon|scarp)\b/.test(title)) {
+    return "mountains";
+  }
+  if (/^(planitia|planum|terra|regio|vastitas|mare|palus)\b/.test(title) || /\b(region|plain|plains|basin|quadrangle|polar cap)\b/.test(title)) {
+    return "regions";
+  }
+  return "other";
 }
