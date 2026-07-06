@@ -50,6 +50,8 @@ function flagFileName(url) {
 }
 
 const DOT_COLOR = Cesium.Color.fromCssColorString("#ff5470");
+const FLAG_RIGHT_OFFSET = new Cesium.Cartesian2(8, 0);
+const FLAG_LEFT_OFFSET = new Cesium.Cartesian2(-8, 0);
 const CATEGORY_ALL = "all";
 const CATEGORY_DEFS = [
   { value: "missions", label: "Missions & landing sites" },
@@ -117,6 +119,7 @@ export class MoonLayer {
     // mission origin-country flags, riding alongside their article markers
     this.flags = this.scene.primitives.add(new Cesium.BillboardCollection());
     this.flags.show = false;
+    this._markerRefs = [];
 
     // orientation model: IAU 2000 lunar axes when the build exports it
     this.axes = typeof Cesium.IauOrientationAxes === "function"
@@ -131,6 +134,9 @@ export class MoonLayer {
       prim: new Cesium.Matrix4(),
       offset: new Cesium.Cartesian3(),
       center: new Cesium.Cartesian3(),
+      markerWorld: new Cesium.Cartesian3(),
+      moonWindow: new Cesium.Cartesian2(),
+      markerWindow: new Cesium.Cartesian2(),
     };
   }
 
@@ -213,6 +219,7 @@ export class MoonLayer {
       this.modelMatrix, TEXTURE_SEAM_ROT, this._scratch.prim);
     this.points.modelMatrix = this.modelMatrix;
     this.flags.modelMatrix = this.modelMatrix;
+    this._updateFlagPositions();
 
     // camera follows the moon while focused: re-anchor the look-at frame to
     // the fresh model matrix, preserving the camera's offset within it
@@ -259,6 +266,28 @@ export class MoonLayer {
 
   position() {
     return Cesium.Matrix4.getTranslation(this.modelMatrix, this._scratch.center);
+  }
+
+  _updateFlagPositions() {
+    const s = this._scratch;
+    const centerWindow = Cesium.SceneTransforms.wgs84ToWindowCoordinates(
+      this.scene, this.position(), s.moonWindow);
+    for (const ref of this._markerRefs) {
+      if (!ref.flag) continue;
+      Cesium.Matrix4.multiplyByPoint(this.modelMatrix, ref.article._moonPos, s.markerWorld);
+      const markerWindow = centerWindow
+        ? Cesium.SceneTransforms.wgs84ToWindowCoordinates(
+            this.scene, s.markerWorld, s.markerWindow)
+        : null;
+      const side = markerWindow && markerWindow.x < centerWindow.x ? "left" : "right";
+      if (ref.flagSide !== side) {
+        ref.flag.horizontalOrigin = side === "left"
+          ? Cesium.HorizontalOrigin.RIGHT
+          : Cesium.HorizontalOrigin.LEFT;
+        ref.flag.pixelOffset = side === "left" ? FLAG_LEFT_OFFSET : FLAG_RIGHT_OFFSET;
+        ref.flagSide = side;
+      }
+    }
   }
 
   distanceKm() {
@@ -507,6 +536,7 @@ export class MoonLayer {
   _buildMarkers() {
     this.points.removeAll();
     this.flags.removeAll();
+    this._markerRefs = [];
     const rad = Cesium.Math.RADIANS_PER_DEGREE;
     const r = MOON_RADIUS + MARKER_ALT;
     const scale = new Cesium.NearFarScalar(3.0e6, 1.3, 4.4e8, 0.45);
@@ -528,25 +558,28 @@ export class MoonLayer {
         id: { kind: "moonwiki", article: a },
       });
       // missions carry their origin-country flag beside the dot
+      let flag = null;
       if (a.flagUrl) {
-        this.flags.add({
+        flag = this.flags.add({
           position: a._moonPos,
           image: a.flagUrl,
           width: 21,
           height: 14,
           horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
           verticalOrigin: Cesium.VerticalOrigin.CENTER,
-          pixelOffset: new Cesium.Cartesian2(8, 0),
+          pixelOffset: FLAG_RIGHT_OFFSET,
           scaleByDistance: scale,
           id: { kind: "moonwiki", article: a },
         });
       }
+      this._markerRefs.push({ article: a, flag, flagSide: "right" });
     }
     const show = this.visible && this.articlesVisible && this.wikiEnabled;
     this.points.show = show;
     this.flags.show = show;
     this.points.modelMatrix = this.modelMatrix;
     this.flags.modelMatrix = this.modelMatrix;
+    this._updateFlagPositions();
   }
 
   // Great-circle nearest articles on the lunar sphere.

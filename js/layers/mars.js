@@ -44,6 +44,8 @@ const FALLBACK_SITES = [
 
 const DOT_COLOR = Cesium.Color.fromCssColorString("#c1583c");
 const SKY_DOT_COLOR = Cesium.Color.fromCssColorString("#c1583c");
+const FLAG_RIGHT_OFFSET = new Cesium.Cartesian2(8, 0);
+const FLAG_LEFT_OFFSET = new Cesium.Cartesian2(-8, 0);
 const CATEGORY_ALL = "all";
 const CATEGORY_DEFS = [
   { value: "missions", label: "Missions & landing sites" },
@@ -117,6 +119,8 @@ export class MarsLayer {
       proxyPos: new Cesium.Cartesian3(),
       proxyRot: new Cesium.Matrix3(),
       markerWorld: new Cesium.Cartesian3(),
+      marsWindow: new Cesium.Cartesian2(),
+      markerWindow: new Cesium.Cartesian2(),
     };
   }
 
@@ -266,10 +270,26 @@ export class MarsLayer {
   // handing the GPU the local position plus a huge modelMatrix to multiply.
   _updateMarkerPositions() {
     const world = this._scratch.markerWorld;
+    const centerWindow = Cesium.SceneTransforms.wgs84ToWindowCoordinates(
+      this.scene, this.position(), this._scratch.marsWindow);
     for (const ref of this._markerRefs) {
       Cesium.Matrix4.multiplyByPoint(this.modelMatrix, ref.article._bodyPos, world);
       ref.point.position = world;
-      if (ref.flag) ref.flag.position = world;
+      if (ref.flag) {
+        ref.flag.position = world;
+        const markerWindow = centerWindow
+          ? Cesium.SceneTransforms.wgs84ToWindowCoordinates(
+              this.scene, world, this._scratch.markerWindow)
+          : null;
+        const side = markerWindow && markerWindow.x < centerWindow.x ? "left" : "right";
+        if (ref.flagSide !== side) {
+          ref.flag.horizontalOrigin = side === "left"
+            ? Cesium.HorizontalOrigin.RIGHT
+            : Cesium.HorizontalOrigin.LEFT;
+          ref.flag.pixelOffset = side === "left" ? FLAG_LEFT_OFFSET : FLAG_RIGHT_OFFSET;
+          ref.flagSide = side;
+        }
+      }
     }
   }
   _updateTransform(time) {
@@ -549,12 +569,12 @@ export class MarsLayer {
           height: 14,
           horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
           verticalOrigin: Cesium.VerticalOrigin.CENTER,
-          pixelOffset: new Cesium.Cartesian2(8, 0),
+          pixelOffset: FLAG_RIGHT_OFFSET,
           scaleByDistance: scale,
           id: { kind: "marswiki", article: a },
         });
       }
-      this._markerRefs.push({ article: a, point, flag });
+      this._markerRefs.push({ article: a, point, flag, flagSide: "right" });
     }
     this.points.show = this.visible && this.articlesVisible && this.wikiEnabled;
     this.flags.show = this.points.show;
