@@ -363,13 +363,9 @@ html, body {
 .dot-moon { background: #cfd6e4; box-shadow: 0 0 6px #cfd6e4; }
 .dot-mars { background: #c1583c; box-shadow: 0 0 6px #c1583c; }
 
-/* focus scoping: the sidebar only offers what applies to the body under the
-   camera. Earth rows and country search hide off Earth; body-specific blocks
-   only appear once that body has focus. */
-body.body-focus .layer.earth-only,
-body.body-focus #search { display: none; }
-body:not([data-focus="moon"]) .layer.moon-only { display: none; }
-body:not([data-focus="mars"]) .layer.mars-only { display: none; }
+/* focus scoping: app.js toggles [hidden] on data-scoped controls to match
+   body[data-focus]. Rows without data-scope stay universal. */
+[data-scope][hidden] { display: none; }
 
 .ts-help {
   margin: 2px 0 4px 24px;

@@ -1,6 +1,6 @@
 # Design spec: extending Wiki Globe to the rest of the solar system
 
-Status: **Mars shipped; BodyLayer refactor done; remaining planets TODO.** This document is a
+Status: **Mars shipped; BodyLayer + focus scoping refactors done; remaining planets TODO.** This document is a
 self-contained hand-off. It records the design philosophy already shipped for
 Earth + Moon + Mars, the exact patterns to reuse, the data that has already
 been downloaded, and the technical decisions (with pitfalls) for adding
@@ -20,8 +20,8 @@ today for the Moon and/or Mars; the job is to generalize it.
 | Generic body layer | `js/layers/body.js` | Shared off-Earth body behavior extracted from Moon/Mars: live transform composition, focus/tracking, optional proxy transition and sky dot, Wikidata/Wikipedia loading, mission supplements, flags, categories, nearest-article sorting, and marker projection modes. |
 | App wiring | `js/app.js` | Click routing by `picked.id.kind`, focus-change handler (layer suspension + sidebar scoping), body switcher, tooltips, per-frame `tick()` calls. |
 | Wiki panel | `js/wiki-panel.js` | `openBody(bodyName, lat, lon, items)` renders a pre-built, distance-sorted article list with no Earth geosearch. |
-| Sidebar scoping | `index.html` + `css/style.css` | `.layer.earth-only`, `.layer.moon-only`, and `.layer.mars-only` rows scope controls to the focused body. Generic `data-scope` is still the desired refactor before adding many more bodies. |
-| Body switcher | `index.html` `#sel-body` | Dropdown next to the search bar: `earth` / `moon` / `mars`. Two-way synced with focus in `app.js`. Designed to grow — add one `<option>` per new body. |
+| Sidebar scoping | `index.html` + `css/style.css` + `js/app.js` | Generic `data-scope` rows are shown/hidden from `body[data-focus]`; rows without a scope remain universal. |
+| Body switcher | `index.html` `#sel-body` + `js/app.js` | Dropdown next to the search bar is populated from `BODY_CHOICES` and two-way synced with focus. Designed to grow by adding one body entry. |
 | Textures | `assets/` | **Already downloaded** for all planets + Pluto (see §7). |
 | Mars mission supplement | `data/mars-missions.json` | Curated surface mission and named landing-site records merged into Mars' live Wikidata results so the `Missions & landing sites` category is complete and stable. |
 
@@ -124,11 +124,10 @@ near this point".
 - `#sel-body` gains one option per body, in solar-system order:
   ☿ Mercury, ♀ Venus, 🌍 Earth, 🌕 Moon, ♂ Mars, ♃ Jupiter, ♄ Saturn,
   ♅ Uranus, ♆ Neptune, ♇ Pluto (emoji optional; text labels are what matter).
-- Replace the binary `earth-only` / `moon-only` CSS classes with a generic
-  mechanism, e.g. `document.body.dataset.focus = "mars"` plus
-  `.layer[data-scope]` rows shown only when `data-scope` matches the current
-  focus (`data-scope="earth"`, `data-scope="mars"`, …; rows without
-  `data-scope` are universal, like Auto-rotate).
+- Sidebar scoping now uses a generic mechanism:
+  `document.body.dataset.focus = "mars"` plus `[data-scope]` controls toggled
+  to match the current focus (`data-scope="earth"`, `data-scope="mars"`, …);
+  rows without `data-scope` are universal, like Auto-rotate.
 - Each planet's sidebar block: visibility checkbox, `Wiki articles` sub-toggle,
   optional category filter, badge + count, and only body-specific controls that
   genuinely apply. Moon/Mars deliberately has no `Day/night cycle` row.
@@ -165,11 +164,11 @@ Jupiter 69,911,000 · Saturn 58,232,000 · Uranus 25,362,000 ·
 Neptune 24,622,000 · Pluto 1,188,300. (Oblateness can wait; spheres shipped
 fine for the Moon.)
 
-A tiny `FocusManager` in `app.js` replaces the current moon-only handler:
-tracks `focusedBody` (`"earth"` or a BODIES key), runs the suspend/restore
-logic, syncs `#sel-body`, the back button, and `document.body.dataset.focus`.
-Only one body is ever focused; switching planet→planet goes through the same
-code path (blur current → focus next; no need to route via Earth).
+The focus helpers in `app.js` track `focusedBody` (`"earth"` or a body key),
+run the suspend/restore logic, sync `#sel-body`, the back button, and
+`document.body.dataset.focus`. Only one body is ever focused; switching
+planet→planet goes through the same code path (blur current → focus next; no
+need to route via Earth).
 
 Per-frame cost: each body's `tick()` recomputes ephemeris + model matrix.
 Nine bodies × cheap analytic math is fine; if profiling says otherwise,
@@ -381,9 +380,10 @@ spot-check a known feature per body (e.g. Olympus Mons ≈ 18.65°N, 226.2°E �
 2. **Done: BodyLayer refactor, no behavior change.** Common Moon/Mars behavior
    now lives in `js/layers/body.js`; `moon.js` and `mars.js` are thin
    per-body configs/subclasses that preserve their app-facing APIs.
-3. **Next: FocusManager cleanup:** migrate `earth-only`/`moon-only`/`mars-only` CSS to
-   `data-scope` / `body[data-focus]`; have `#sel-body` read from `BODIES`.
-4. **General planet config:** add Mercury/Venus/Jupiter/Saturn/Uranus/Neptune/
+3. **Done: FocusManager cleanup.** Sidebar/search controls use `data-scope`
+   with `body[data-focus]`; `#sel-body` is populated from the body list in
+   `app.js`; switching body-to-body no longer briefly restores Earth overlays.
+4. **Next: General planet config:** add Mercury/Venus/Jupiter/Saturn/Uranus/Neptune/
    Pluto entries with radius, texture, dot color, Wikidata globe QID,
    ephemeris body name, and IAU rotation parameters.
 5. **Reuse the Mars transition pattern:** sky dot + label while unfocused;

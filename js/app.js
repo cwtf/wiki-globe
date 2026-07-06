@@ -19,7 +19,11 @@ const FADE_END = 5.5e5;
 const AUTOROTATE_RATE = 0.006;        // rad/s
 const AUTOROTATE_IDLE_MS = 8000;
 const AUTOROTATE_MIN_HEIGHT = 1.2e6;  // stop spinning once zoomed into the map
-
+const BODY_CHOICES = [
+  { key: "earth", label: "ðŸŒ Earth" },
+  { key: "moon", label: "ðŸŒ• Moon" },
+  { key: "mars", label: "Mars" },
+];
 async function boot() {
   await loadHeatmapMetrics();
 
@@ -101,20 +105,51 @@ async function boot() {
 
   const bodyLayers = { moon, mars };
   let focusedBody = "earth";
+  let pendingFocusBody = null;
 
   function currentBodyLayer() {
     return bodyLayers[focusedBody] ?? null;
   }
 
+  function syncScopedUi(body) {
+    document.body.dataset.focus = body;
+    for (const el of document.querySelectorAll("[data-scope]")) {
+      const scopes = el.dataset.scope.split(/\s+/).filter(Boolean);
+      el.hidden = !scopes.includes(body);
+    }
+  }
+
+  function syncBodyControls(body) {
+    moonBack.hidden = body === "earth";
+    selBody.value = body;
+    syncScopedUi(body);
+    wiki.close();
+    for (const [key, layer] of Object.entries(bodyLayers)) {
+      layer.setArticlesVisible(key === body);
+    }
+  }
+
   function focusBody(body) {
     if (body === focusedBody) return;
-    const current = currentBodyLayer();
-    if (body === "earth") {
-      current?.blur();
+    if (body !== "earth" && !bodyLayers[body]) {
+      selBody.value = focusedBody;
       return;
     }
+    const current = currentBodyLayer();
+    if (body === "earth") {
+      pendingFocusBody = "earth";
+      current?.blur();
+      if (!current) {
+        focusedBody = "earth";
+        syncBodyControls("earth");
+      }
+      pendingFocusBody = null;
+      return;
+    }
+    pendingFocusBody = body;
     if (current) current.blur({ flyHome: false });
     bodyLayers[body]?.focus();
+    pendingFocusBody = null;
   }
 
   function returnEarth() {
@@ -126,7 +161,15 @@ async function boot() {
   // body switcher next to the search bar; stays in sync with click-driven
   // focus changes so it always names the world under the camera
   const selBody = document.getElementById("sel-body");
+  selBody.replaceChildren(...BODY_CHOICES.map(({ key, label }) => {
+    const option = document.createElement("option");
+    option.value = key;
+    option.textContent = label;
+    option.selected = key === "earth";
+    return option;
+  }));
   selBody.addEventListener("change", () => focusBody(selBody.value));
+  syncScopedUi("earth");
 
   // Focus scoping: only the body under the camera keeps its overlays. Earth
   // layers are parked (checkboxes untouched) while another body has focus, and
@@ -135,42 +178,34 @@ async function boot() {
   let heatModeSuspended = null;
   function onBodyFocusChanged(body, focused) {
     if (focused) {
+      const wasEarth = focusedBody === "earth";
       focusedBody = body;
-      moonBack.hidden = false;
-      selBody.value = body;
-      document.body.dataset.focus = body;
-      document.body.classList.add("body-focus");
-      document.body.classList.toggle("moon-focus", body === "moon");
-      wiki.close();
-      moon.setArticlesVisible(body === "moon");
-      mars.setArticlesVisible(body === "mars");
-      sats.setVisible(false);
-      flights.setVisible(false);
-      ships.setVisible(false);
-      if (heatModeSuspended == null) heatModeSuspended = heat.mode;
-      if (heatModeSuspended) heat.setMode(null);
+      syncBodyControls(body);
+      if (wasEarth) {
+        sats.setVisible(false);
+        flights.setVisible(false);
+        ships.setVisible(false);
+        if (heatModeSuspended == null) heatModeSuspended = heat.mode;
+        if (heatModeSuspended) heat.setMode(null);
+      }
       return;
     }
 
+    if (pendingFocusBody && pendingFocusBody !== "earth") return;
     if (focusedBody === body) focusedBody = "earth";
     const active = currentBodyLayer();
     if (active) return;
 
-    moonBack.hidden = true;
-    selBody.value = "earth";
-    document.body.dataset.focus = "earth";
-    document.body.classList.remove("body-focus", "moon-focus");
-    wiki.close();
-    moon.setArticlesVisible(false);
-    mars.setArticlesVisible(false);
+    syncBodyControls("earth");
     sats.setVisible(layerToggles.sats.checked);
     flights.setVisible(layerToggles.flights.checked);
     ships.setVisible(layerToggles.ships.checked);
     if (heatModeSuspended) heat.setMode(heatModeSuspended);
     heatModeSuspended = null;
   }
-  moon.onFocusChanged = (focused) => onBodyFocusChanged("moon", focused);
-  mars.onFocusChanged = (focused) => onBodyFocusChanged("mars", focused);
+  for (const [key, layer] of Object.entries(bodyLayers)) {
+    layer.onFocusChanged = (focused) => onBodyFocusChanged(key, focused);
+  }
   // --- per-frame loop ---------------------------------------------------------
   let lastFrame = 0;
   let lastInteraction = Date.now();
@@ -890,7 +925,7 @@ function tooltipHtml(id) {
     const distKm = id.layer.distanceKm();
     return `<div class="tt-title">Mars</div>
       <div class="tt-line">${Math.round(distKm).toLocaleString()} km from Earth right now</div>
-      <div class="tt-note">astronomy-engine ephemeris · Solar System Scope imagery · click to visit</div>`;
+      <div class="tt-note">astronomy-engine ephemeris ï¿½ Solar System Scope imagery ï¿½ click to visit</div>`;
   }
   if (id.kind === "moonwiki") {
     const a = id.article;
@@ -904,12 +939,12 @@ function tooltipHtml(id) {
   }
   if (id.kind === "marswiki") {
     const a = id.article;
-    const lat = `${Math.abs(a.lat).toFixed(1)}° ${a.lat >= 0 ? "N" : "S"}`;
-    const lon = `${Math.abs(a.lon).toFixed(1)}° ${a.lon >= 0 ? "E" : "W"}`;
-    const origin = a.country ? ` · mission of ${esc(a.country)}` : "";
+    const lat = `${Math.abs(a.lat).toFixed(1)}ï¿½ ${a.lat >= 0 ? "N" : "S"}`;
+    const lon = `${Math.abs(a.lon).toFixed(1)}ï¿½ ${a.lon >= 0 ? "E" : "W"}`;
+    const origin = a.country ? ` ï¿½ mission of ${esc(a.country)}` : "";
     return `<div class="tt-title">${esc(a.title)}</div>
-      <div class="tt-line">${lat}, ${lon} · Mars${origin}</div>
-      <div class="tt-note">Wikipedia · click to open in the panel</div>`;
+      <div class="tt-line">${lat}, ${lon} ï¿½ Mars${origin}</div>
+      <div class="tt-note">Wikipedia ï¿½ click to open in the panel</div>`;
   }
   if (id.kind === "wiki") {
     const a = id.article;
