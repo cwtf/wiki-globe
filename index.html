@@ -83,7 +83,7 @@
         "Nearby Wikipedia article discovery",
         "Live-position Moon with NASA LRO imagery and lunar Wikipedia articles",
         "Live-position Mars with Solar System Scope imagery and Martian Wikipedia articles",
-        "Live-position solar-system planets with labeled sky dots and scaled focus transitions"
+        "Live-position solar-system planets with labeled sky dots, scaled focus transitions, and body-specific Wikipedia markers"
       ]
     }
   </script>
@@ -112,7 +112,7 @@
   </div>
 
   <!-- Body switcher: which world has the camera (more may join Earth & Moon) -->
-  <select id="sel-body" aria-label="Switch between Earth, the Moon, and Mars"></select>
+  <select id="sel-body" aria-label="Switch between Earth, the Moon, Mars, and other solar-system bodies"></select>
 
   <!-- Layer control panel -->
   <div id="panel">
@@ -295,6 +295,29 @@
       <select id="sel-mars-category" class="heat-select moon-select" aria-label="Filter Mars wiki articles by category">
         <option value="all">All categories</option>
         <option value="missions" selected>Missions &amp; landing sites</option>
+        <option value="craters">Craters</option>
+        <option value="mountains">Mountains &amp; valleys</option>
+        <option value="regions">Regions &amp; plains</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <div class="layer" data-scope="mercury venus jupiter saturn uranus neptune pluto">
+      <label class="row main">
+        <span class="dot" id="dot-planet"></span>
+        <span class="name" id="name-planet">Planet</span>
+        <span class="badge loading" id="badge-planet">…</span>
+        <span class="count" id="count-planet">0</span>
+      </label>
+      <label class="row sub">
+        <input type="checkbox" id="chk-planet-wiki" checked />
+        <span class="name">Wiki articles</span>
+      </label>
+      <label class="row sub moon-category-row" for="sel-planet-category">
+        <span class="name">Category</span>
+      </label>
+      <select id="sel-planet-category" class="heat-select moon-select" aria-label="Filter planet wiki articles by category">
+        <option value="all" selected>All categories</option>
+        <option value="missions">Missions &amp; landing sites</option>
         <option value="craters">Craters</option>
         <option value="mountains">Mountains &amp; valleys</option>
         <option value="regions">Regions &amp; plains</option>

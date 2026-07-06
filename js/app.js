@@ -105,11 +105,33 @@ async function boot() {
   moonBack.textContent = "< Back to Earth";
 
   const bodyLayers = { ...planets, moon, mars };
+  const planetUi = {
+    name: document.getElementById("name-planet"),
+    dot: document.getElementById("dot-planet"),
+    wiki: document.getElementById("chk-planet-wiki"),
+    category: document.getElementById("sel-planet-category"),
+    badge: document.getElementById("badge-planet"),
+    count: document.getElementById("count-planet"),
+  };
   let focusedBody = "earth";
   let pendingFocusBody = null;
 
   function currentBodyLayer() {
     return bodyLayers[focusedBody] ?? null;
+  }
+
+  function syncPlanetControls(body) {
+    const layer = planets[body];
+    if (!layer) return;
+    planetUi.name.textContent = layer.name;
+    const color = layer.config.skyDot?.color ?? layer.config.markerColor;
+    planetUi.dot.style.background = color;
+    planetUi.dot.style.boxShadow = `0 0 6px ${color}`;
+    planetUi.wiki.checked = layer.wikiEnabled;
+    planetUi.category.value = layer.category;
+    const counts = layer.counts();
+    setBadge(planetUi.badge, counts.source);
+    planetUi.count.textContent = counts.count;
   }
 
   function syncScopedUi(body) {
@@ -124,6 +146,7 @@ async function boot() {
     moonBack.hidden = body === "earth";
     selBody.value = body;
     syncScopedUi(body);
+    syncPlanetControls(body);
     wiki.close();
     for (const [key, layer] of Object.entries(bodyLayers)) {
       layer.setArticlesVisible(key === body);
@@ -353,6 +376,13 @@ async function boot() {
       mars.openArticle(id.article, wiki);
       return;
     }
+    if (id?.kind === "bodywiki") {
+      const layer = id.layer ?? bodyLayers[id.body];
+      if (!layer) return;
+      focusBody(id.body);
+      layer.openArticle(id.article, wiki);
+      return;
+    }
     if (id?.kind === "moon") {
       if (!moon.focused) {
         focusBody("moon");
@@ -534,6 +564,18 @@ async function boot() {
     moon.setCategory(e.target.value);
     if (wiki.moonMode) wiki.close();
   });
+  bind("chk-planet-wiki", (v) => {
+    const layer = planets[focusedBody];
+    if (!layer) return;
+    layer.setWikiEnabled(v);
+    if (!v && wiki.moonMode) wiki.close();
+  });
+  document.getElementById("sel-planet-category").addEventListener("change", (e) => {
+    const layer = planets[focusedBody];
+    if (!layer) return;
+    layer.setCategory(e.target.value);
+    if (wiki.moonMode) wiki.close();
+  });
 
   bind("chk-rotate", (v) => { rotateEnabled = v; });
   bind("chk-daynight", (v) => {
@@ -562,6 +604,7 @@ async function boot() {
     heat: document.getElementById("badge-heat"),
     moon: document.getElementById("badge-moon"),
     mars: document.getElementById("badge-mars"),
+    planet: document.getElementById("badge-planet"),
   };
   const countEls = {
     sats: document.getElementById("count-sats"),
@@ -570,6 +613,7 @@ async function boot() {
     heat: document.getElementById("count-heat"),
     moon: document.getElementById("count-moon"),
     mars: document.getElementById("count-mars"),
+    planet: document.getElementById("count-planet"),
   };
 
   function setBadge(el, source) {
@@ -620,6 +664,10 @@ async function boot() {
     const mac = mars.counts();
     setBadge(badgeEls.mars, mac.source);
     countEls.mars.textContent = mac.count;
+
+    const pc = planets[focusedBody]?.counts() ?? { source: "idle", count: 0 };
+    setBadge(badgeEls.planet, pc.source);
+    countEls.planet.textContent = pc.count;
   }, 1000);
 
   // fade the onboarding hint after a while
@@ -947,6 +995,17 @@ function tooltipHtml(id) {
     return `<div class="tt-title">${esc(a.title)}</div>
       <div class="tt-line">${lat}, ${lon} � Mars${origin}</div>
       <div class="tt-note">Wikipedia � click to open in the panel</div>`;
+  }
+  if (id.kind === "bodywiki") {
+    const a = id.article;
+    const bodyName = id.layer?.name ?? a.bodyName ?? "this body";
+    const lat = `${Math.abs(a.lat).toFixed(1)} deg ${a.lat >= 0 ? "N" : "S"}`;
+    const lon = `${Math.abs(a.lon).toFixed(1)} deg ${a.lon >= 0 ? "E" : "W"}`;
+    const origin = a.country ? ` - mission of ${esc(a.country)}` : "";
+    const category = a.categoryLabel ? ` - ${esc(a.categoryLabel)}` : "";
+    return `<div class="tt-title">${esc(a.title)}</div>
+      <div class="tt-line">${lat}, ${lon} - ${esc(bodyName)}${origin}</div>
+      <div class="tt-note">Wikipedia${category} - click to open in the panel</div>`;
   }
   if (id.kind === "wiki") {
     const a = id.article;

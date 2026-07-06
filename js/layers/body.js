@@ -583,7 +583,8 @@ export class BodyLayer {
       console.warn(`[${this.key}] Wikidata article query failed:`, e.message);
     }
 
-    if (items && items.length > (this.config.liveMinItems ?? 0)) {
+    const liveMinItems = this.config.liveMinItems ?? 0;
+    if (items && (items.length > liveMinItems || (items.length === 0 && this.config.allowEmptyLive))) {
       this.source = "live";
     } else {
       console.warn(`[${this.key}] using bundled fallback sites`);
@@ -779,6 +780,9 @@ LIMIT ${(this.config.maxArticles ?? 400) + 20}`;
       const position = this.config.cpuProjectMarkers
         ? Cesium.Matrix4.multiplyByPoint(this.modelMatrix, a._bodyPos, world)
         : a._bodyPos;
+      const id = this.config.articlePickId
+        ? this.config.articlePickId(this, a)
+        : { kind: this.config.articleKind, article: a };
       const point = this.points.add({
         position,
         pixelSize: 5,
@@ -789,7 +793,7 @@ LIMIT ${(this.config.maxArticles ?? 400) + 20}`;
         disableDepthTestDistance: this.config.cpuProjectMarkers
           ? Number.POSITIVE_INFINITY
           : undefined,
-        id: { kind: this.config.articleKind, article: a },
+        id,
       });
       let flag = null;
       if (a.flagUrl) {
@@ -805,12 +809,13 @@ LIMIT ${(this.config.maxArticles ?? 400) + 20}`;
           disableDepthTestDistance: this.config.cpuProjectMarkers
             ? Number.POSITIVE_INFINITY
             : undefined,
-          id: { kind: this.config.articleKind, article: a },
+          id,
         });
       }
       this._markerRefs.push({ article: a, point, flag, flagSide: "right" });
     }
-    const show = this.visible && this.articlesVisible && this.wikiEnabled;
+    const inProxyFocus = this.config.transition?.proxy && this.focused && !this._trueFocused;
+    const show = this.visible && this.articlesVisible && this.wikiEnabled && !inProxyFocus;
     this.points.show = show;
     this.flags.show = show;
     if (!this.config.cpuProjectMarkers) {

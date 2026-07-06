@@ -1,5 +1,5 @@
-// Generic planet layers: true live position, sky-dot affordance, and the same
-// scaled proxy focus transition Mars uses. Surface wiki/sidebar work comes next.
+// Generic planet layers: true live position, sky-dot affordance, Mars-style
+// scaled proxy focus, and live Wikidata/Wikipedia surface markers.
 
 import { BODIES } from "../bodies.js";
 import { BodyLayer, normalizeLon } from "./body.js";
@@ -12,6 +12,14 @@ export const PLANET_BODY_KEYS = [
   "uranus",
   "neptune",
   "pluto",
+];
+
+const CATEGORY_DEFS = [
+  { value: "missions", label: "Missions & landing sites" },
+  { value: "craters", label: "Craters" },
+  { value: "mountains", label: "Mountains & valleys" },
+  { value: "regions", label: "Regions & plains" },
+  { value: "other", label: "Other" },
 ];
 
 export class PlanetLayer extends BodyLayer {
@@ -32,11 +40,18 @@ function planetConfig(body) {
     markerColor: body.dotColor,
     maxArticles: 420,
     liveMinItems: 0,
+    allowEmptyLive: true,
     wikidataGlobe: body.wikidataGlobe,
     fallbackSites: [],
     defaultCategory: "all",
-    categoryDefs: [],
-    articleKind: `${body.key}wiki`,
+    categoryDefs: CATEGORY_DEFS,
+    articleKind: "bodywiki",
+    articlePickId: (layer, article) => ({
+      kind: "bodywiki",
+      body: body.key,
+      layer,
+      article,
+    }),
     articleProps: { bodyName: body.name },
     bodyPickId: (layer) => ({ kind: "body", body: body.key, layer }),
     ephemeris: body.ephemeris,
@@ -48,13 +63,30 @@ function planetConfig(body) {
       proxyRadius: body.radius,
       duration: 2.4,
     },
-    wikiEnabled: false,
     showBodyWhenUnfocused: false,
     blurDuration: 2.4,
     minZoomMargin: Math.max(50000, body.radius * 0.015),
     focusOffset: (radius) => new Cesium.Cartesian3(0, -radius * 4.4, radius * 0.55),
     cpuProjectMarkers: true,
     normalizeLon,
-    categoryFor: () => "all",
+    categoryFor: planetArticleCategory,
   };
+}
+
+function planetArticleCategory(article) {
+  const title = article.title.toLowerCase();
+  if (
+    article.country ||
+    /\b(probe|orbiter|lander|rover|spacecraft|mission|landing|impact|flyby|venera|vega|mariner|messenger|bepi|galileo|cassini|huygens|voyager|pioneer|new horizons)\b/.test(title)
+  ) {
+    return "missions";
+  }
+  if (/\bcrater\b/.test(title)) return "craters";
+  if (/^(mons|montes|vallis|valles|chasma|chasmata|rupes|scopulus|scopuli|dorsum|dorsa)\b/.test(title) || /\b(mountain|valley|canyon|scarp)\b/.test(title)) {
+    return "mountains";
+  }
+  if (/^(planitia|planum|terra|regio|region|macula|facula|linea|chaos|palus)\b/.test(title) || /\b(region|plain|plains|basin|quadrangle|polar cap|terrain)\b/.test(title)) {
+    return "regions";
+  }
+  return "other";
 }
