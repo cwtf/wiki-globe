@@ -110,7 +110,7 @@ function planetConfig(body) {
     fallbackSites: [],
     missionSupplementUrl: MISSION_SUPPLEMENTS[body.key],
     overwriteSupplementCoords: true,
-    defaultCategory: "all",
+    defaultCategory: "missions",
     categoryDefs: CATEGORY_DEFS,
     articleKind: "bodywiki",
     articlePickId: (layer, article) => ({
