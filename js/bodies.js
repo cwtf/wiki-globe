@@ -94,6 +94,11 @@ export const BODIES = {
     radius: 58232000,
     textureUrl: "assets/saturn.jpg",
     ringTextureUrl: "assets/saturn-rings.png",
+    rings: {
+      innerRadius: 74500000,
+      outerRadius: 140220000,
+      textureUrl: "assets/saturn-rings.png",
+    },
     dotColor: "#e0c188",
     wikidataGlobe: "Q193",
     ephemeris: { type: "astronomy-engine", body: "Saturn" },
