@@ -28,12 +28,13 @@ export class BodyLayer {
     this.articles = [];
     this.source = "idle";
     this.articlesVisible = false;
-    this.wikiEnabled = true;
+    this.wikiEnabled = config.wikiEnabled !== false;
     this.category = config.defaultCategory ?? CATEGORY_ALL;
     this._categoryLabels = new Map((config.categoryDefs ?? []).map((c) => [c.value, c.label]));
     this._articlesRequested = false;
     this.onFocusChanged = null;
     this.savedMinZoom = null;
+    this.savedMaxZoom = null;
     this._transitioning = false;
     this._trueFocused = false;
     this.proxyModelMatrix = Cesium.Matrix4.clone(Cesium.Matrix4.IDENTITY);
@@ -417,7 +418,10 @@ export class BodyLayer {
     this.setArticlesVisible(true);
     const camera = this.viewer.camera;
     camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
-    this.savedMinZoom = this.scene.screenSpaceCameraController.minimumZoomDistance;
+    const sscc = this.scene.screenSpaceCameraController;
+    this.savedMinZoom = sscc.minimumZoomDistance;
+    this.savedMaxZoom = sscc.maximumZoomDistance;
+    sscc.maximumZoomDistance = Math.max(sscc.maximumZoomDistance, this.radius * 40);
     camera.flyToBoundingSphere(
       new Cesium.BoundingSphere(this.position().clone(), this.radius * 2.0),
       {
@@ -450,7 +454,9 @@ export class BodyLayer {
 
     const sscc = this.scene.screenSpaceCameraController;
     this.savedMinZoom = sscc.minimumZoomDistance;
+    this.savedMaxZoom = sscc.maximumZoomDistance;
     sscc.minimumZoomDistance = this.radius + (this.config.minZoomMargin ?? 50000);
+    sscc.maximumZoomDistance = Math.max(sscc.maximumZoomDistance, this.radius * 40);
 
     this._updateTransform(this.viewer.clock.currentTime);
     this._updateProxyTransform();
@@ -512,6 +518,9 @@ export class BodyLayer {
     this.onFocusChanged?.(false);
     const sscc = this.scene.screenSpaceCameraController;
     if (this.savedMinZoom != null) sscc.minimumZoomDistance = this.savedMinZoom;
+    if (this.savedMaxZoom != null) sscc.maximumZoomDistance = this.savedMaxZoom;
+    this.savedMinZoom = null;
+    this.savedMaxZoom = null;
     this.viewer.camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
     if (flyHome) {
       const home = this.config.homeView ?? HOME_VIEW;

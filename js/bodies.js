@@ -171,7 +171,7 @@ export const BODY_ORDER = [
   "pluto",
 ];
 
-export const ACTIVE_BODY_KEYS = ["earth", "moon", "mars"];
+export const ACTIVE_BODY_KEYS = BODY_ORDER;
 
 export function bodyChoices(keys = ACTIVE_BODY_KEYS) {
   return keys.map((key) => {

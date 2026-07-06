@@ -10,6 +10,7 @@ import { TrueSizeLayer } from "./layers/truesize.js";
 import { BODY_CHOICES } from "./bodies.js";
 import { MoonLayer } from "./layers/moon.js";
 import { MarsLayer } from "./layers/mars.js";
+import { PlanetLayer, PLANET_BODY_KEYS } from "./layers/planets.js";
 import { CountrySearch } from "./search.js";
 import { WikiPanel } from "./wiki-panel.js";
 import { getAisKey, setAisKey } from "./ais.js";
@@ -87,6 +88,9 @@ async function boot() {
   const truesize = new TrueSizeLayer(viewer);
   const moon = new MoonLayer(viewer);
   const mars = new MarsLayer(viewer);
+  const planets = Object.fromEntries(
+    PLANET_BODY_KEYS.map((key) => [key, new PlanetLayer(viewer, key)])
+  );
   const wiki = new WikiPanel(viewer);
 
   ships.init();
@@ -94,12 +98,13 @@ async function boot() {
   flights.init();
   moon.init();
   mars.init();
+  for (const layer of Object.values(planets)) layer.init();
 
   // "Back to Earth" appears while the camera is parked off Earth.
   const moonBack = document.getElementById("moon-back");
   moonBack.textContent = "< Back to Earth";
 
-  const bodyLayers = { moon, mars };
+  const bodyLayers = { ...planets, moon, mars };
   let focusedBody = "earth";
   let pendingFocusBody = null;
 
@@ -232,8 +237,7 @@ async function boot() {
     sats.tick(now);
     flights.tick(now);
     ships.tick(now);
-    moon.tick();
-    mars.tick();
+    for (const layer of Object.values(bodyLayers)) layer.tick();
 
     const height = viewer.camera.positionCartographic.height;
     osmLayer.alpha = Cesium.Math.clamp((FADE_START - height) / (FADE_START - FADE_END), 0, 1);
@@ -358,12 +362,14 @@ async function boot() {
       }
       return;
     }
-    if (id?.kind === "body" && id.body === "mars") {
-      if (!mars.focused) {
-        focusBody("mars");
-      } else if (mars.wikiEnabled) {
-        const c = mars.pickMars(click.position);
-        if (c) mars.openArticlesAt(c.lat, c.lon, wiki);
+    if (id?.kind === "body") {
+      const layer = bodyLayers[id.body];
+      if (!layer) return;
+      if (!layer.focused) {
+        focusBody(id.body);
+      } else if (layer.wikiEnabled) {
+        const c = layer.pickSurface(click.position);
+        if (c) layer.openArticlesAt(c.lat, c.lon, wiki);
       }
       return;
     }
@@ -620,7 +626,7 @@ async function boot() {
   setTimeout(() => document.getElementById("hint").classList.add("faded"), 15000);
 
   // handy for debugging from the console
-  window.__globe = { viewer, sats, flights, ships, heat, wiki, truesize, search, moon, mars };
+  window.__globe = { viewer, sats, flights, ships, heat, wiki, truesize, search, moon, mars, planets, bodyLayers };
 }
 
 function enhanceHeatmapSelect(select) {
@@ -917,11 +923,11 @@ function tooltipHtml(id) {
       <div class="tt-line">${Math.round(distKm).toLocaleString()} km from Earth right now</div>
       <div class="tt-note">Simon 1994 ephemeris · NASA LRO imagery · click to visit</div>`;
   }
-  if (id.kind === "body" && id.body === "mars") {
+  if (id.kind === "body") {
     const distKm = id.layer.distanceKm();
-    return `<div class="tt-title">Mars</div>
+    return `<div class="tt-title">${esc(id.layer.name)}</div>
       <div class="tt-line">${Math.round(distKm).toLocaleString()} km from Earth right now</div>
-      <div class="tt-note">astronomy-engine ephemeris � Solar System Scope imagery � click to visit</div>`;
+      <div class="tt-note">astronomy-engine ephemeris - Solar System Scope imagery - click to visit</div>`;
   }
   if (id.kind === "moonwiki") {
     const a = id.article;
