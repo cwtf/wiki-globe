@@ -1,13 +1,13 @@
 # Design spec: extending Wiki Globe to the rest of the solar system
 
-Status: **TODO — not yet implemented.** This document is a self-contained
-hand-off. It records the design philosophy already shipped for Earth + Moon,
-the exact patterns to reuse, the data that has already been downloaded, and
-the technical decisions (with pitfalls) for adding Mercury, Venus, Mars,
-Jupiter, Saturn, Uranus, Neptune, and Pluto.
+Status: **Mars shipped; remaining planets TODO.** This document is a
+self-contained hand-off. It records the design philosophy already shipped for
+Earth + Moon + Mars, the exact patterns to reuse, the data that has already
+been downloaded, and the technical decisions (with pitfalls) for adding
+Mercury, Venus, Jupiter, Saturn, Uranus, Neptune, and Pluto.
 
 Read this alongside the code — everything referenced here exists and works
-today for the Moon; the job is to generalize it.
+today for the Moon and/or Mars; the job is to generalize it.
 
 ---
 
@@ -15,14 +15,15 @@ today for the Moon; the job is to generalize it.
 
 | Piece | Where | What it does |
 |---|---|---|
-| Moon layer | `js/layers/moon.js` | The template for every future body. Live-ephemeris position, textured ellipsoid primitive, focus/tracking camera, lazy Wikipedia markers, mission flags. |
-| App wiring | `js/app.js` | Click routing by `picked.id.kind`, focus-change handler (layer suspension + sidebar scoping), tooltips, per-frame `tick()` calls. |
-| Wiki panel | `js/wiki-panel.js` | `openMoon(lat, lon, items)` renders a pre-built, distance-sorted article list with no Earth geosearch. Rename/generalize to `openBody(...)`. |
-| Sidebar scoping | `index.html` + `css/style.css` | `.layer.earth-only` rows hide when `body.moon-focus` is set; `.layer.moon-only` rows hide otherwise. |
-| Body switcher | `index.html` `#sel-body` | Dropdown next to the search bar: `earth` / `moon`. Two-way synced with focus in `app.js`. Designed to grow — add one `<option>` per new body. |
+| Moon layer | `js/layers/moon.js` | The template for future solid-body behavior. Live-ephemeris position, textured ellipsoid primitive, focus/tracking camera, lazy Wikipedia markers, mission flags. |
+| Mars layer | `js/layers/mars.js` | First shipped planet. Live astronomy-engine ephemeris, IAU Mars rotation, scaled interplanetary focus transition, Mars sky dot, Wikipedia categories, mission flags, and CPU-projected surface markers to avoid GPU precision loss at true Mars distance. |
+| App wiring | `js/app.js` | Click routing by `picked.id.kind`, focus-change handler (layer suspension + sidebar scoping), body switcher, tooltips, per-frame `tick()` calls. |
+| Wiki panel | `js/wiki-panel.js` | `openBody(bodyName, lat, lon, items)` renders a pre-built, distance-sorted article list with no Earth geosearch. |
+| Sidebar scoping | `index.html` + `css/style.css` | `.layer.earth-only`, `.layer.moon-only`, and `.layer.mars-only` rows scope controls to the focused body. Generic `data-scope` is still the desired refactor before adding many more bodies. |
+| Body switcher | `index.html` `#sel-body` | Dropdown next to the search bar: `earth` / `moon` / `mars`. Two-way synced with focus in `app.js`. Designed to grow — add one `<option>` per new body. |
 | Textures | `assets/` | **Already downloaded** for all planets + Pluto (see §7). |
 
-### Interaction model already proven for the Moon (replicate exactly)
+### Interaction model already proven for the Moon and Mars
 
 - The body is rendered at **true scale and true live position** in Earth-fixed
   coordinates, recomputed every frame from the real-time scene clock.
@@ -32,9 +33,9 @@ today for the Moon; the job is to generalize it.
 - While focused: idle **auto-rotate orbits the body** (`camera.rotateLeft` in
   the tracked frame), scroll zoom is clamped above the surface
   (`minimumZoomDistance = radius + margin`, restored on exit).
-- **Day/night** is a per-body sub-toggle: swap the primitive's
-  `MaterialAppearance` between lit (real solar terminator via scene lighting)
-  and `flat: true` (evenly lit).
+- **Day/night** exists for Earth. Moon/Mars intentionally shipped without a
+  sidebar day/night toggle after iteration; keep the per-body decision
+  explicit instead of assuming every future body needs the same control.
 - **Wikipedia markers** load lazily on first focus (never fetched while another
   body has the camera), display across the surface, and are click/hover
   targets. Clicking bare surface opens the panel with the nearest articles
@@ -42,6 +43,9 @@ today for the Moon; the job is to generalize it.
   its radius caps at 10 km).
 - **Mission flags**: items with Wikidata country-of-origin (P495) get a small
   flag billboard beside their marker (see §8 for the CORS-safe pipeline).
+- **Wiki category filters**: Moon and Mars both expose a `Category` dropdown.
+  Mars defaults to `Missions & landing sites`, then offers craters, mountains
+  and valleys, regions and plains, and other.
 - **Focus scoping**: only the focused body's overlays and sidebar rows exist.
   Earth layers (satellites/flights/shipping/heatmap/true-size/search) are
   suspended without touching their checkboxes, and restored from checkbox
@@ -59,7 +63,8 @@ today for the Moon; the job is to generalize it.
 2. **Open-source imagery only**, credited in the sidebar `.attrib` block and
    README (`Data & attribution`).
 3. **Interaction parity**: whatever works on Earth should feel identical on
-   every body (hover tooltips, click-to-articles, auto-rotate, day/night).
+   every body (hover tooltips, click-to-articles, auto-rotate, and
+   body-appropriate lighting controls).
 4. **The sidebar shows only what applies to the body in focus.**
 5. Badges tell the truth: `LIVE` (fetched), `DATA` (bundled fallback),
    `—`/idle (not loaded yet), `…` (loading).
@@ -103,12 +108,14 @@ Suggested dot colors (match visual appearance of the body):
 
 ### 2.2 Focused view
 
-Identical to the Moon experience: textured true-scale ellipsoid, real solar
-terminator (day/night toggleable), idle auto-orbit, Wikipedia markers where
-Wikidata has articles with coordinates on that globe (Mars is rich; gas giants
-will have few or none — the layer must handle an empty result gracefully:
-badge `LIVE 0`, no dots, surface clicks show "No articles found near this
-point"), mission flags where P495 exists (Mars landers!).
+For solid bodies, keep the Moon/Mars experience: textured true-scale ellipsoid,
+idle auto-orbit, Wikipedia markers where Wikidata has articles with coordinates
+on that globe, and mission flags where P495 exists. Lighting controls are
+per-body: Moon keeps a day/night toggle; Mars shipped without one because the
+Mars menu worked better when it matched Moon's wiki controls but stayed simpler.
+Gas giants may have few or no articles — the layer must handle an empty result
+gracefully: badge `LIVE 0`, no dots, surface clicks show "No articles found
+near this point".
 
 ### 2.3 Sidebar & switcher
 
@@ -121,7 +128,8 @@ point"), mission flags where P495 exists (Mars landers!).
   focus (`data-scope="earth"`, `data-scope="mars"`, …; rows without
   `data-scope` are universal, like Auto-rotate).
 - Each planet's sidebar block: visibility checkbox, `Wiki articles` sub-toggle,
-  `Day/night cycle` sub-toggle, badge + count — exactly the Moon block.
+  optional category filter, badge + count, and only body-specific controls that
+  genuinely apply. Moon/Mars deliberately has no `Day/night cycle` row.
 - The "Back to Earth" button generalizes: always offer one-click return to
   Earth from any focused body.
 
@@ -198,7 +206,7 @@ with Cesium's Simon1994 moon position to a small fraction of a degree.
 
 ## 5. Rendering at solar-system distances (the hard part)
 
-Two real problems the Moon never hit:
+Four practical problems the Moon never hit:
 
 1. **Far plane.** Default `camera.frustum.far = 5e8 m` barely contains the
    Moon (3.6–4.1e8 m). Neptune is ~4.5e12 m. Set
@@ -211,13 +219,15 @@ Two real problems the Moon never hit:
    flight across 1e12 m — `flyToBoundingSphere` easing through interplanetary
    space is numerically and visually pointless.
 
-   **Recommended focus transition:** compute the arrival offset in the target
-   body's frame (e.g. `radius * 4.5` back along the body→camera direction),
-   `camera.lookAtTransform(bodyMatrix, offset)` immediately (a teleport), and
-   sell the jump with a ~300 ms CSS fade overlay (`#cesiumContainer`
-   opacity dip). Keep the true `flyToBoundingSphere` only for Earth↔Moon,
-   which is short and looks good. If a real flight is ever wanted, animate the
-   offset within the target frame, not through world space.
+   **Recommended focus transition, learned from Mars:** use a scaled
+   interplanetary mode. A fake full-distance fly-through looked strange, and a
+   fade/teleport or hybrid cinematic still did not feel spatially honest. The
+   shipped Mars approach renders a temporary proxy Mars along the true
+   Earth→Mars direction at a manageable distance (`TRANSITION_PROXY_DISTANCE`),
+   flies to that proxy, then swaps into the true Mars `lookAtTransform` frame
+   on completion. Hide the true body/markers until `_enterTrueFocus()` so they
+   do not pop into view during the proxy flight. Keep true `flyToBoundingSphere`
+   only for short hops like Earth↔Moon.
 
    Fallback plan if true-scale placement jitters unacceptably at Neptune:
    keep dots at true positions (they're pixel-sized, jitter-immune) but render
@@ -225,10 +235,21 @@ Two real problems the Moon never hit:
    body is ever focused, and its sky only needs dots + the Sun). Prefer plan A;
    document measurements before switching.
 
-3. **Lighting.** `scene.light` is a `SunLight` positioned from the real sun —
+3. **Surface marker precision.** Mars exposed a GPU precision pitfall: a
+   `PointPrimitiveCollection`/`BillboardCollection` with Mars-local marker
+   positions plus a huge collection `modelMatrix` can flash markers briefly,
+   then scatter or disappear at true interplanetary distances. The fix that
+   stuck: store each article's body-fixed position, then every tick project it
+   to absolute world coordinates on the CPU with `Matrix4.multiplyByPoint` and
+   assign that world position directly to the point/billboard. Also give dots
+   and flag billboards `disableDepthTestDistance: Number.POSITIVE_INFINITY` and
+   enough surface clearance (`MARKER_ALT = 120000` for Mars).
+
+4. **Lighting.** `scene.light` is a `SunLight` positioned from the real sun —
    it is correct at every planet automatically. The lit/flat appearance swap
-   from the Moon transfers unchanged. `scene.sun.show` stays on (the Sun disc
-   is genuinely visible from everywhere).
+   from the Moon transfers when wanted, but Mars currently ships as a simpler
+   always-textured planet without a sidebar day/night toggle. `scene.sun.show`
+   stays on (the Sun disc is genuinely visible from everywhere).
 
 ---
 
@@ -345,23 +366,25 @@ spot-check a known feature per body (e.g. Olympus Mons ≈ 18.65°N, 226.2°E �
 
 ## 9. Implementation checklist (suggested order)
 
-1. **Refactor, no behavior change:** extract `BodyLayer` from `moon.js`;
-   Moon still works identically (verify with §10 checks).
-2. **FocusManager** in `app.js`; migrate `earth-only`/`moon-only` CSS to
-   `data-scope` / `body[data-focus]`; `#sel-body` reads from `BODIES`.
-3. **Ephemeris:** add astronomy-engine, implement planet position provider,
-   raise `frustum.far` to 1e13. Add Mars only. Verify Mars dot sits where
-   Mars actually is (compare azimuth/altitude against any planetarium site
-   for the current time, or sanity-check the Earth–Mars distance:
-   0.37–2.68 AU).
-4. **Dots + labels** for Mars; click → teleport-focus → tracked orbit;
-   day/night toggle; back to Earth; Earth dot in the Martian sky.
-5. **Rotation model** (§6) for Mars; verify sub-solar longitude and that
-   Syrtis Major/Olympus Mons sit at their known coordinates (drop a debug
-   marker at Olympus Mons and eyeball against the texture).
-6. **Wikipedia + flags** for Mars (globe Q111). Mars is the richest test.
-7. **Roll out remaining bodies** — pure config additions at this point.
-   Saturn gets the ring primitive.
+1. **Done: Mars standalone layer.** `js/layers/mars.js` ships astronomy-engine
+   ephemeris, IAU Mars rotation, scaled proxy transition, sky dot/label,
+   live Wikidata/Wikipedia markers for globe Q111, Commons-resolved flags,
+   category filtering defaulted to `Missions & landing sites`, and CPU-projected
+   marker positions.
+2. **Next refactor, no behavior change:** extract the common Moon/Mars behavior
+   into `BodyLayer`; keep Moon and Mars working identically after extraction.
+3. **FocusManager cleanup:** migrate `earth-only`/`moon-only`/`mars-only` CSS to
+   `data-scope` / `body[data-focus]`; have `#sel-body` read from `BODIES`.
+4. **General planet config:** add Mercury/Venus/Jupiter/Saturn/Uranus/Neptune/
+   Pluto entries with radius, texture, dot color, Wikidata globe QID,
+   ephemeris body name, and IAU rotation parameters.
+5. **Reuse the Mars transition pattern:** sky dot + label while unfocused;
+   scaled proxy flight; swap into true focused body frame; track with
+   per-frame `lookAtTransform`; back to Earth.
+6. **Reuse the Mars marker pattern:** live SPARQL, fallback list, Commons flag
+   thumbnail resolution, category filters where useful, CPU-projected marker
+   positions, and empty-result handling for sparse bodies.
+7. **Saturn rings:** add the ring primitive once Saturn's sphere works.
 8. Sidebar blocks per body, attribution updates (Solar System Scope,
    NASA New Horizons), README feature table row, JSON-LD featureList.
 9. Stretch: Galilean moons / Titan / Charon as children of their planet
@@ -392,6 +415,11 @@ spot-check a known feature per body (e.g. Olympus Mons ≈ 18.65°N, 226.2°E �
 - **Live-data checks:** article `source` badge must be `live` with a plausible
   count; flags must reach `_imageIndex >= 0` in the billboard atlas (a
   `-1` index with 0-byte network entries = the CORS trap of §8).
+- **Marker persistence check:** changing a category dropdown should rebuild and
+  leave body wiki dots visible. If dots appear for one frame and then vanish,
+  suspect large-distance marker precision first: avoid collection `modelMatrix`
+  for body-local marker coordinates and CPU-project them to world positions
+  each tick, as Mars does.
 - **Focus scoping:** after focus/blur round-trip, every Earth layer's `show`
   must equal its checkbox, `heat.mode` restored, dropdown synced, sidebar rows
   correct — see the checks used in the Moon iterations for exact assertions.
