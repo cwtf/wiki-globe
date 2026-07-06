@@ -320,6 +320,18 @@ centered on the prime meridian). Same convention as the shipped Moon.
 (For reference, existing: `earth-day.jpg`, `earth-night.jpg`, `moon.jpg` —
 NASA LRO CGI Moon Kit.)
 
+Stretch-body texture/topography assets now downloaded:
+
+| File | Body | Size | Source / license |
+|---|---|---|---|
+| `sun.jpg` | Sun | 4096x2048 | Solar System Scope texture (8k download), CC BY 4.0 |
+| `io.jpg` | Io | 11444x5722 | NASA/JPL/USGS Photojournal PIA09257 global mosaic via Wikimedia Commons, public domain — reprojected in-repo-tooling from equal-area cylindrical (centered lon 180) to simple cylindrical centered on lon 0 (see note) |
+| `europa.jpg` | Europa | 1024x512 | USGS/PDS/Tammy Becker Voyager/Galileo SSI global mosaic via Wikimedia Commons, public domain |
+| `ganymede.jpg` | Ganymede | 1800x900 | NASA/Voyager+Galileo imagery processed by Bjorn Jonsson, recentered to longitude 0 by J N Squire, via Wikimedia Commons, CC BY-SA 4.0 |
+| `callisto.jpg` | Callisto | 1800x900 | NASA/Voyager+Galileo imagery processed by Bjorn Jonsson (bjj.mmedia.is), recentered to longitude 0 in-repo-tooling (was left-edge-centered), attribution license |
+| `charon.jpg` | Charon | 9520x4760 | NASA/JHUAPL/SwRI Photojournal PIA19866 global basemap, public domain |
+| `titan.jpg` | Titan | 5760x2880 | NASA/JPL-Caltech Photojournal PIA22770 global surface mosaic (Cassini ISS, near-IR "methane window" bands) via Wikimedia Commons, public domain |
+
 Notes:
 - **CC BY 4.0 requires attribution**: when planets ship, add
   "Solar System Scope" to the sidebar `.attrib` line and README.
@@ -331,6 +343,30 @@ Notes:
   (u = (r − inner)/(outer − inner)), two-sided, in Saturn's equatorial plane
   (body-fixed XY plane — the rotation model provides it). Ship Saturn without
   rings first if needed, but it will look wrong to users; prioritize.
+- **`io.jpg` was replaced** (previously PIA00319, a Mercator mosaic limited to
+  ±60° latitude — on a full `EllipsoidGeometry` that stretched 60° data into
+  the poles instead of showing real polar coverage/gaps). The new source
+  (PIA09257, equal-area cylindrical, centered on longitude 180) was
+  reprojected with a one-off Node/`sharp` script (not a repo dependency —
+  installed in scratch, not `package.json`): rows remapped from
+  equal-area (∝ sin(lat)) to simple-cylindrical (∝ lat) via per-row
+  `arcsin`, then rolled 180° to center on longitude 0. Real gaps near both
+  poles (genuine coverage gaps in the source data) now render as black
+  rather than being papered over — a faithful-but-honest tradeoff. There's
+  also a visible vertical seam near the prime meridian where the
+  Voyager/Galileo coverage boundary sits; that's in the source data, not
+  introduced by the reprojection. File is ~4.5 MB (mozjpeg q85) — heavier
+  than other textures because the source mosaic is genuinely grainy/noisy.
+- **Higher-res Europa exists but with a worse license**: Bjorn Jonsson's
+  20000×10000 Galileo/Voyager color mosaic (hosted by The Planetary Society)
+  is far higher-res than the current 1024×512 USGS/Tammy Becker mosaic, but
+  it's CC BY-NC-ND (non-commercial, no-derivatives) vs the current asset's
+  public domain. Left on the public-domain source for now.
+- **`callisto.jpg` was replaced** (previously 1024×498 USGS grayscale mosaic
+  with visible black no-data gaps) with Bjorn Jonsson's 1800×900 color
+  mosaic from bjj.mmedia.is, which was left-edge-centered on longitude 0;
+  recentered to image-center convention with the same roll technique used
+  for Io (no reprojection needed here, already simple-cylindrical).
 
 ---
 
