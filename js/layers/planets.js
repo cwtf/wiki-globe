@@ -22,6 +22,13 @@ const CATEGORY_DEFS = [
   { value: "other", label: "Other" },
 ];
 
+const MISSION_SUPPLEMENTS = {
+  mercury: "data/mercury-missions.json",
+  venus: "data/venus-missions.json",
+  jupiter: "data/jupiter-missions.json",
+  saturn: "data/saturn-missions.json",
+};
+
 export class PlanetLayer extends BodyLayer {
   constructor(viewer, key) {
     const body = BODIES[key];
@@ -101,6 +108,8 @@ function planetConfig(body) {
     allowEmptyLive: true,
     wikidataGlobe: body.wikidataGlobe,
     fallbackSites: [],
+    missionSupplementUrl: MISSION_SUPPLEMENTS[body.key],
+    overwriteSupplementCoords: true,
     defaultCategory: "all",
     categoryDefs: CATEGORY_DEFS,
     articleKind: "bodywiki",
@@ -210,9 +219,10 @@ function writeRingVertex(positions, normals, st, vertex, radius, cos, sin, u) {
 
 function planetArticleCategory(article) {
   const title = article.title.toLowerCase();
+  if (article.missionSupplement) return "missions";
   if (
     article.country ||
-    /\b(probe|orbiter|lander|rover|spacecraft|mission|landing|impact|flyby|venera|vega|mariner|messenger|bepi|galileo|cassini|huygens|voyager|pioneer|new horizons)\b/.test(title)
+    /\b(probe|orbiter|lander|rover|spacecraft|mission|landing|impact|flyby)\b/.test(title)
   ) {
     return "missions";
   }
@@ -220,7 +230,7 @@ function planetArticleCategory(article) {
   if (/^(mons|montes|vallis|valles|chasma|chasmata|rupes|scopulus|scopuli|dorsum|dorsa)\b/.test(title) || /\b(mountain|valley|canyon|scarp)\b/.test(title)) {
     return "mountains";
   }
-  if (/^(planitia|planum|terra|regio|region|macula|facula|linea|chaos|palus)\b/.test(title) || /\b(region|plain|plains|basin|quadrangle|polar cap|terrain)\b/.test(title)) {
+  if (/^(planitia|planum|terra|regio|region|macula|facula|linea|chaos|palus)\b/.test(title) || /\b(region|plain|plains|basin|quadrangle|polar cap|terrain|terra)\b/.test(title)) {
     return "regions";
   }
   return "other";

@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "sourceLabel": "Curated Jupiter atmospheric mission supplement",
+    "sources": [
+      {
+        "name": "NASA Galileo mission profile",
+        "url": "https://science.nasa.gov/mission/galileo/"
+      },
+      {
+        "name": "Wikipedia Galileo project article",
+        "url": "https://en.wikipedia.org/wiki/Galileo_project"
+      }
+    ],
+    "notes": [
+      "These records attach mission articles to atmospheric-entry locations when Wikidata does not expose a stable Jupiter-globe coordinate.",
+      "Flybys and orbiters without a stable public atmospheric or surface endpoint are intentionally omitted.",
+      "Longitudes use the same east-positive -180 to 180 convention as the generic planet layer."
+    ]
+  },
+  "missions": [
+    {
+      "title": "Galileo Probe",
+      "lat": 6.5,
+      "lon": -4.4,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "atmospheric probe"
+    }
+  ]
+}

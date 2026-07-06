@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "sourceLabel": "Curated Mercury mission supplement",
+    "sources": [
+      {
+        "name": "NASA MESSENGER mission profile",
+        "url": "https://science.nasa.gov/mission/messenger/"
+      },
+      {
+        "name": "Wikipedia MESSENGER mission article",
+        "url": "https://en.wikipedia.org/wiki/MESSENGER"
+      }
+    ],
+    "notes": [
+      "These records attach mission articles to surface impact locations when Wikidata does not expose a suitable Mercury-globe coordinate.",
+      "Flybys and orbiters without a surface endpoint are intentionally omitted.",
+      "Longitudes use the same east-positive -180 to 180 convention as the generic planet layer."
+    ]
+  },
+  "missions": [
+    {
+      "title": "MESSENGER",
+      "lat": 54.4,
+      "lon": -149.9,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "planned impact"
+    }
+  ]
+}

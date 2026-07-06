@@ -1,0 +1,175 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "sourceLabel": "Curated Venus atmospheric and surface mission supplement",
+    "sources": [
+      {
+        "name": "NASA NSSDC Master Catalog",
+        "url": "https://nssdc.gsfc.nasa.gov/nmc/"
+      },
+      {
+        "name": "NASA Pioneer Venus project information",
+        "url": "https://nssdc.gsfc.nasa.gov/planetary/pioneer_venus.html"
+      },
+      {
+        "name": "Wikipedia list of missions to Venus",
+        "url": "https://en.wikipedia.org/wiki/List_of_missions_to_Venus"
+      },
+      {
+        "name": "Wikipedia Venera program article",
+        "url": "https://en.wikipedia.org/wiki/Venera_program"
+      },
+      {
+        "name": "Wikipedia Pioneer Venus Multiprobe article",
+        "url": "https://en.wikipedia.org/wiki/Pioneer_Venus_Multiprobe"
+      }
+    ],
+    "notes": [
+      "These records attach mission articles to Venus atmospheric-entry, impact, or surface touchdown locations.",
+      "Orbiters, flybys, and end-of-mission decays without a stable public coordinate are intentionally omitted.",
+      "Longitudes use the same east-positive -180 to 180 convention as the generic planet layer."
+    ]
+  },
+  "missions": [
+    {
+      "title": "Venera 4",
+      "lat": 19,
+      "lon": 38,
+      "country": "Soviet Union",
+      "flagFile": "Flag of the Soviet Union.svg",
+      "kind": "atmospheric probe"
+    },
+    {
+      "title": "Venera 5",
+      "lat": -3,
+      "lon": 18,
+      "country": "Soviet Union",
+      "flagFile": "Flag of the Soviet Union.svg",
+      "kind": "atmospheric probe"
+    },
+    {
+      "title": "Venera 6",
+      "lat": -5,
+      "lon": 23,
+      "country": "Soviet Union",
+      "flagFile": "Flag of the Soviet Union.svg",
+      "kind": "atmospheric probe"
+    },
+    {
+      "title": "Venera 7",
+      "lat": -5,
+      "lon": -9,
+      "country": "Soviet Union",
+      "flagFile": "Flag of the Soviet Union.svg",
+      "kind": "soft landing"
+    },
+    {
+      "title": "Venera 8",
+      "lat": -10.7,
+      "lon": -24.75,
+      "country": "Soviet Union",
+      "flagFile": "Flag of the Soviet Union.svg",
+      "kind": "soft landing"
+    },
+    {
+      "title": "Venera 9",
+      "lat": 31.01,
+      "lon": -68.36,
+      "country": "Soviet Union",
+      "flagFile": "Flag of the Soviet Union.svg",
+      "kind": "soft landing"
+    },
+    {
+      "title": "Venera 10",
+      "lat": 15.42,
+      "lon": -68.49,
+      "country": "Soviet Union",
+      "flagFile": "Flag of the Soviet Union.svg",
+      "kind": "soft landing"
+    },
+    {
+      "title": "Venera 11",
+      "lat": -14,
+      "lon": -61,
+      "country": "Soviet Union",
+      "flagFile": "Flag of the Soviet Union.svg",
+      "kind": "soft landing"
+    },
+    {
+      "title": "Venera 12",
+      "lat": -7,
+      "lon": -66,
+      "country": "Soviet Union",
+      "flagFile": "Flag of the Soviet Union.svg",
+      "kind": "soft landing"
+    },
+    {
+      "title": "Pioneer Venus Multiprobe - Large Probe",
+      "url": "https://en.wikipedia.org/wiki/Pioneer_Venus_Multiprobe",
+      "lat": 4.4,
+      "lon": -56,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "atmospheric probe"
+    },
+    {
+      "title": "Pioneer Venus Multiprobe - North Probe",
+      "url": "https://en.wikipedia.org/wiki/Pioneer_Venus_Multiprobe",
+      "lat": 59.3,
+      "lon": 4.8,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "atmospheric probe"
+    },
+    {
+      "title": "Pioneer Venus Multiprobe - Day Probe",
+      "url": "https://en.wikipedia.org/wiki/Pioneer_Venus_Multiprobe",
+      "lat": -31.3,
+      "lon": -43,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "soft landing"
+    },
+    {
+      "title": "Pioneer Venus Multiprobe - Night Probe",
+      "url": "https://en.wikipedia.org/wiki/Pioneer_Venus_Multiprobe",
+      "lat": -28.7,
+      "lon": 56.7,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "atmospheric probe"
+    },
+    {
+      "title": "Venera 13",
+      "lat": -7.5,
+      "lon": -57,
+      "country": "Soviet Union",
+      "flagFile": "Flag of the Soviet Union.svg",
+      "kind": "soft landing"
+    },
+    {
+      "title": "Venera 14",
+      "lat": -13.25,
+      "lon": -50,
+      "country": "Soviet Union",
+      "flagFile": "Flag of the Soviet Union.svg",
+      "kind": "soft landing"
+    },
+    {
+      "title": "Vega 1",
+      "lat": 7.5,
+      "lon": 177.7,
+      "country": "Soviet Union",
+      "flagFile": "Flag of the Soviet Union.svg",
+      "kind": "soft landing"
+    },
+    {
+      "title": "Vega 2",
+      "lat": -8.5,
+      "lon": 164.5,
+      "country": "Soviet Union",
+      "flagFile": "Flag of the Soviet Union.svg",
+      "kind": "soft landing"
+    }
+  ]
+}

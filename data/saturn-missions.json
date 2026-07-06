@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "sourceLabel": "Curated Saturn atmospheric mission supplement",
+    "sources": [
+      {
+        "name": "NASA Cassini Grand Finale mission pages",
+        "url": "https://science.nasa.gov/mission/cassini/"
+      },
+      {
+        "name": "Wikipedia Cassini-Huygens article",
+        "url": "https://en.wikipedia.org/wiki/Cassini-Huygens"
+      }
+    ],
+    "notes": [
+      "These records attach mission articles to atmospheric-entry locations.",
+      "Saturn has no solid-surface landing sites; the Cassini marker is an atmospheric disposal point.",
+      "Longitudes use the same east-positive -180 to 180 convention as the generic planet layer."
+    ]
+  },
+  "missions": [
+    {
+      "title": "Cassini-Huygens",
+      "url": "https://en.wikipedia.org/wiki/Cassini-Huygens",
+      "lat": 9.4,
+      "lon": -53,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "planned atmospheric entry"
+    }
+  ]
+}
