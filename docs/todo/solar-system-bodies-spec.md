@@ -1,6 +1,6 @@
 # Design spec: extending Wiki Globe to the rest of the solar system
 
-Status: **Mars shipped; remaining planets TODO.** This document is a
+Status: **Mars shipped; BodyLayer refactor done; remaining planets TODO.** This document is a
 self-contained hand-off. It records the design philosophy already shipped for
 Earth + Moon + Mars, the exact patterns to reuse, the data that has already
 been downloaded, and the technical decisions (with pitfalls) for adding
@@ -17,6 +17,7 @@ today for the Moon and/or Mars; the job is to generalize it.
 |---|---|---|
 | Moon layer | `js/layers/moon.js` | The template for future solid-body behavior. Live-ephemeris position, textured ellipsoid primitive, focus/tracking camera, lazy Wikipedia markers, mission flags. |
 | Mars layer | `js/layers/mars.js` | First shipped planet. Live astronomy-engine ephemeris, IAU Mars rotation, scaled interplanetary focus transition, Mars sky dot, Wikipedia categories, mission flags, and CPU-projected surface markers to avoid GPU precision loss at true Mars distance. |
+| Generic body layer | `js/layers/body.js` | Shared off-Earth body behavior extracted from Moon/Mars: live transform composition, focus/tracking, optional proxy transition and sky dot, Wikidata/Wikipedia loading, mission supplements, flags, categories, nearest-article sorting, and marker projection modes. |
 | App wiring | `js/app.js` | Click routing by `picked.id.kind`, focus-change handler (layer suspension + sidebar scoping), body switcher, tooltips, per-frame `tick()` calls. |
 | Wiki panel | `js/wiki-panel.js` | `openBody(bodyName, lat, lon, items)` renders a pre-built, distance-sorted article list with no Earth geosearch. |
 | Sidebar scoping | `index.html` + `css/style.css` | `.layer.earth-only`, `.layer.moon-only`, and `.layer.mars-only` rows scope controls to the focused body. Generic `data-scope` is still the desired refactor before adding many more bodies. |
@@ -377,9 +378,10 @@ spot-check a known feature per body (e.g. Olympus Mons ≈ 18.65°N, 226.2°E �
    live Wikidata/Wikipedia markers for globe Q111, Commons-resolved flags,
    a curated Mars mission supplement, category filtering defaulted to
    `Missions & landing sites`, and CPU-projected marker positions.
-2. **Next refactor, no behavior change:** extract the common Moon/Mars behavior
-   into `BodyLayer`; keep Moon and Mars working identically after extraction.
-3. **FocusManager cleanup:** migrate `earth-only`/`moon-only`/`mars-only` CSS to
+2. **Done: BodyLayer refactor, no behavior change.** Common Moon/Mars behavior
+   now lives in `js/layers/body.js`; `moon.js` and `mars.js` are thin
+   per-body configs/subclasses that preserve their app-facing APIs.
+3. **Next: FocusManager cleanup:** migrate `earth-only`/`moon-only`/`mars-only` CSS to
    `data-scope` / `body[data-focus]`; have `#sel-body` read from `BODIES`.
 4. **General planet config:** add Mercury/Venus/Jupiter/Saturn/Uranus/Neptune/
    Pluto entries with radius, texture, dot color, Wikidata globe QID,
