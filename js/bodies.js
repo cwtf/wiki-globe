@@ -2,6 +2,21 @@
 // only bodies with implemented layers; the rest are ready for future layers.
 
 export const BODIES = {
+  sun: {
+    key: "sun",
+    name: "Sun",
+    label: "☀️ Sun",
+    radius: 695700000,
+    textureUrl: "assets/sun.jpg",
+    dotColor: "#ffd166",
+    ephemeris: { type: "astronomy-engine", body: "Sun" },
+    orientation: {
+      type: "iau",
+      ra: 286.13,
+      dec: 63.87,
+      w: [84.176, 14.1844000, "d"],
+    },
+  },
   mercury: {
     key: "mercury",
     name: "Mercury",
@@ -164,6 +179,7 @@ export const BODIES = {
 };
 
 export const BODY_ORDER = [
+  "sun",
   "mercury",
   "venus",
   "earth",

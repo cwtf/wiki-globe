@@ -1,6 +1,6 @@
 # Design spec: extending Wiki Globe to the rest of the solar system
 
-Status: **Mars shipped; BodyLayer + focus scoping + shared body config + generic planet focus/wiki + Saturn rings done; stretch items TODO.** This document is a
+Status: **Mars shipped; BodyLayer + focus scoping + shared body config + generic planet focus/wiki + Saturn rings + Sun stretch body done; other stretch items TODO.** This document is a
 self-contained hand-off. It records the design philosophy already shipped for
 Earth + Moon + Mars, the exact patterns to reuse, the data that has already
 been downloaded, and the technical decisions (with pitfalls) for adding
@@ -438,7 +438,10 @@ spot-check a known feature per body (e.g. Olympus Mons ≈ 18.65°N, 226.2°E �
 7. **Done: Saturn rings:** add the ring primitive once Saturn's sphere works.
 8. **Done:** Sidebar blocks per body, attribution updates (Solar System Scope,
    NASA New Horizons), README feature table row, JSON-LD featureList.
-9. **Next stretch:** Galilean moons / Titan / Charon as children of their planet
+9. **Done: Sun stretch body:** live astronomy-engine solar position, IAU solar
+   rotation, flat Solar System Scope texture, labeled sky dot, scaled proxy
+   focus transition, and no surface wiki layer.
+10. **Next stretch:** Galilean moons / Titan / Charon as children of their planet
    (same BodyLayer, parent-relative ephemeris from astronomy-engine's
    `JupiterMoons`), body search integration, "tour" mode.
 

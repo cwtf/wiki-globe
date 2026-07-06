@@ -128,11 +128,13 @@ export class BodyLayer {
       material,
       translucent: false,
       closed: true,
+      flat: this.config.flat === true,
     });
     this.proxyAppearance = new Cesium.MaterialAppearance({
       material: Cesium.Material.fromType("Image", { image: this.config.textureUrl }),
       translucent: false,
       closed: true,
+      flat: this.config.flat === true,
     });
     this.flatAppearance = new Cesium.MaterialAppearance({
       material,

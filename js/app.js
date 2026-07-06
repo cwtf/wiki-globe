@@ -10,6 +10,7 @@ import { TrueSizeLayer } from "./layers/truesize.js";
 import { BODY_CHOICES } from "./bodies.js";
 import { MoonLayer } from "./layers/moon.js";
 import { MarsLayer } from "./layers/mars.js";
+import { SunLayer } from "./layers/sun.js";
 import { PlanetLayer, PLANET_BODY_KEYS } from "./layers/planets.js";
 import { CountrySearch } from "./search.js";
 import { WikiPanel } from "./wiki-panel.js";
@@ -86,6 +87,7 @@ async function boot() {
   const ships = new ShippingLayer(viewer);
   const heat = new HeatmapLayer(viewer); // lazy: fetches when a mode is selected
   const truesize = new TrueSizeLayer(viewer);
+  const sun = new SunLayer(viewer);
   const moon = new MoonLayer(viewer);
   const mars = new MarsLayer(viewer);
   const planets = Object.fromEntries(
@@ -96,6 +98,7 @@ async function boot() {
   ships.init();
   sats.init();
   flights.init();
+  sun.init();
   moon.init();
   mars.init();
   for (const layer of Object.values(planets)) layer.init();
@@ -104,11 +107,13 @@ async function boot() {
   const moonBack = document.getElementById("moon-back");
   moonBack.textContent = "< Back to Earth";
 
-  const bodyLayers = { ...planets, moon, mars };
+  const bodyLayers = { sun, ...planets, moon, mars };
   const planetUi = {
     name: document.getElementById("name-planet"),
     dot: document.getElementById("dot-planet"),
     wiki: document.getElementById("chk-planet-wiki"),
+    wikiRow: document.getElementById("chk-planet-wiki").closest("label"),
+    categoryRow: document.querySelector("label[for='sel-planet-category']"),
     category: document.getElementById("sel-planet-category"),
     badge: document.getElementById("badge-planet"),
     count: document.getElementById("count-planet"),
@@ -121,12 +126,19 @@ async function boot() {
   }
 
   function syncPlanetControls(body) {
-    const layer = planets[body];
+    const layer = bodyLayers[body];
     if (!layer) return;
     planetUi.name.textContent = layer.name;
     const color = layer.config.skyDot?.color ?? layer.config.markerColor;
     planetUi.dot.style.background = color;
     planetUi.dot.style.boxShadow = `0 0 6px ${color}`;
+    const hasWiki = layer.config.wikiEnabled !== false;
+    planetUi.wikiRow.hidden = !hasWiki;
+    planetUi.categoryRow.hidden = !hasWiki;
+    planetUi.category.hidden = !hasWiki;
+    planetUi.badge.hidden = !hasWiki;
+    planetUi.count.hidden = !hasWiki;
+    if (!hasWiki) return;
     planetUi.wiki.checked = layer.wikiEnabled;
     planetUi.category.value = layer.category;
     const counts = layer.counts();
@@ -565,13 +577,13 @@ async function boot() {
     if (wiki.moonMode) wiki.close();
   });
   bind("chk-planet-wiki", (v) => {
-    const layer = planets[focusedBody];
+    const layer = bodyLayers[focusedBody];
     if (!layer) return;
     layer.setWikiEnabled(v);
     if (!v && wiki.moonMode) wiki.close();
   });
   document.getElementById("sel-planet-category").addEventListener("change", (e) => {
-    const layer = planets[focusedBody];
+    const layer = bodyLayers[focusedBody];
     if (!layer) return;
     layer.setCategory(e.target.value);
     if (wiki.moonMode) wiki.close();
@@ -665,7 +677,7 @@ async function boot() {
     setBadge(badgeEls.mars, mac.source);
     countEls.mars.textContent = mac.count;
 
-    const pc = planets[focusedBody]?.counts() ?? { source: "idle", count: 0 };
+    const pc = bodyLayers[focusedBody]?.counts() ?? { source: "idle", count: 0 };
     setBadge(badgeEls.planet, pc.source);
     countEls.planet.textContent = pc.count;
   }, 1000);
@@ -674,7 +686,7 @@ async function boot() {
   setTimeout(() => document.getElementById("hint").classList.add("faded"), 15000);
 
   // handy for debugging from the console
-  window.__globe = { viewer, sats, flights, ships, heat, wiki, truesize, search, moon, mars, planets, bodyLayers };
+  window.__globe = { viewer, sats, flights, ships, heat, wiki, truesize, search, sun, moon, mars, planets, bodyLayers };
 }
 
 function enhanceHeatmapSelect(select) {
@@ -973,9 +985,12 @@ function tooltipHtml(id) {
   }
   if (id.kind === "body") {
     const distKm = id.layer.distanceKm();
+    const note = id.layer.key === "sun"
+      ? "astronomy-engine solar ephemeris - Solar System Scope imagery - click to visit"
+      : "astronomy-engine ephemeris - Solar System Scope imagery - click to visit";
     return `<div class="tt-title">${esc(id.layer.name)}</div>
       <div class="tt-line">${Math.round(distKm).toLocaleString()} km from Earth right now</div>
-      <div class="tt-note">astronomy-engine ephemeris - Solar System Scope imagery - click to visit</div>`;
+      <div class="tt-note">${note}</div>`;
   }
   if (id.kind === "moonwiki") {
     const a = id.article;
