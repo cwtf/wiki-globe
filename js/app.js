@@ -22,6 +22,8 @@ const FADE_END = 5.5e5;
 const AUTOROTATE_RATE = 0.006;        // rad/s
 const AUTOROTATE_IDLE_MS = 8000;
 const AUTOROTATE_MIN_HEIGHT = 1.2e6;  // stop spinning once zoomed into the map
+const EARTH_DEPART_DURATION = 1.2;      // seconds; camera pull-back before an Earth-origin proxy transition
+const EARTH_DEPART_HEIGHT_FACTOR = 1.5; // multiple of the target's proxyDistance to clear it before the proxy appears
 async function boot() {
   await loadHeatmapMetrics();
 
@@ -120,6 +122,7 @@ async function boot() {
   };
   let focusedBody = "earth";
   let pendingFocusBody = null;
+  let departingTarget = null;
 
   function currentBodyLayer() {
     return bodyLayers[focusedBody] ?? null;
@@ -166,7 +169,7 @@ async function boot() {
   }
 
   function focusBody(body) {
-    if (body === focusedBody) return;
+    if (body === focusedBody && !departingTarget) return;
     if (body !== "earth" && !bodyLayers[body]) {
       selBody.value = focusedBody;
       return;
@@ -174,6 +177,13 @@ async function boot() {
     const current = currentBodyLayer();
     if (body === "earth") {
       pendingFocusBody = "earth";
+      if (departingTarget) {
+        departingTarget = null;
+        viewer.camera.flyTo({
+          destination: Cesium.Cartesian3.fromDegrees(10, 22, 2.3e7),
+          duration: 1.5,
+        });
+      }
       current?.blur();
       if (!current) {
         focusedBody = "earth";
@@ -182,10 +192,36 @@ async function boot() {
       pendingFocusBody = null;
       return;
     }
+    const target = bodyLayers[body];
     pendingFocusBody = body;
-    if (current) current.blur({ flyHome: false });
-    bodyLayers[body]?.focus();
+    if (current) {
+      current.blur({ flyHome: false });
+      target.focus();
+    } else {
+      departEarth(target);
+    }
     pendingFocusBody = null;
+  }
+
+  // Leaving Earth for a proxy-based transition: pull the camera back from the
+  // globe first so the incoming body's proxy (anchored near Earth's center)
+  // spawns well clear of the camera, instead of popping in right next to it —
+  // matching what already happens naturally when switching between two
+  // off-Earth bodies (the camera is already far from Earth in that case).
+  function departEarth(target) {
+    departingTarget = target;
+    const departHeight =
+      (target.config.transition?.proxyDistance ?? 4.5e7) * EARTH_DEPART_HEIGHT_FACTOR;
+    const carto = viewer.camera.positionCartographic;
+    viewer.camera.flyTo({
+      destination: Cesium.Cartesian3.fromRadians(carto.longitude, carto.latitude, departHeight),
+      duration: EARTH_DEPART_DURATION,
+      complete: () => {
+        if (departingTarget !== target) return;
+        departingTarget = null;
+        target.focus();
+      },
+    });
   }
 
   function returnEarth() {
