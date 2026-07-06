@@ -3,7 +3,7 @@
 
 const TEXTURE_URL = "assets/mars.jpg"; // Solar System Scope, CC BY 4.0
 const MARS_RADIUS = 3389500;           // mean radius, metres
-const MARKER_ALT = 120000;
+const MARKER_ALT = 15000;              // lift dots off the surface so they don't z-fight
 const MAX_ARTICLES = 420;
 const AU = 1.495978707e11;
 const HOME_VIEW = { lon: 10, lat: 22, height: 2.3e7 };
@@ -95,11 +95,12 @@ export class MarsLayer {
     this.skyLabels = this.scene.primitives.add(new Cesium.LabelCollection());
     // { article, point, flag } for every currently-built marker: article
     // markers are kept in Mars-fixed local coordinates and re-projected to
-    // absolute world position every tick (see _updateMarkerPositions), rather
-    // than relying on the collections' modelMatrix for the huge Earth→Mars
-    // translation — at real interplanetary distance (~1e11 m) that matrix
-    // multiply loses enough float32 precision on the GPU to scatter 120km-alt
-    // markers off-target, while the CPU-side double-precision math here does not.
+    // absolute world coordinates every tick (see _updateMarkerPositions),
+    // rather than relying on the collections' modelMatrix for the huge
+    // Earth→Mars translation — at real interplanetary distance (~1e11 m) that
+    // matrix multiply loses enough float32 precision on the GPU to scatter
+    // 15km-alt markers off-target, while the CPU-side double-precision math
+    // here does not.
     this._markerRefs = [];
 
     this._scratch = {
@@ -229,7 +230,7 @@ export class MarsLayer {
       this._loadArticles();
     }
     this.points.show = this.visible && want;
-    this.flags.show = this.visible && want;
+    this.flags.show = this.points.show;
   }
 
   tick() {
@@ -264,7 +265,6 @@ export class MarsLayer {
   // coordinates via this.modelMatrix, in JS double precision, instead of
   // handing the GPU the local position plus a huge modelMatrix to multiply.
   _updateMarkerPositions() {
-    if (this._markerRefs.length === 0) return;
     const world = this._scratch.markerWorld;
     for (const ref of this._markerRefs) {
       Cesium.Matrix4.multiplyByPoint(this.modelMatrix, ref.article._bodyPos, world);
@@ -538,7 +538,6 @@ export class MarsLayer {
         outlineColor: Cesium.Color.WHITE.withAlpha(0.6),
         outlineWidth: 1,
         scaleByDistance: scale,
-        disableDepthTestDistance: Number.POSITIVE_INFINITY,
         id: { kind: "marswiki", article: a },
       });
       let flag = null;
@@ -552,7 +551,6 @@ export class MarsLayer {
           verticalOrigin: Cesium.VerticalOrigin.CENTER,
           pixelOffset: new Cesium.Cartesian2(8, 0),
           scaleByDistance: scale,
-          disableDepthTestDistance: Number.POSITIVE_INFINITY,
           id: { kind: "marswiki", article: a },
         });
       }
