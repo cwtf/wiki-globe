@@ -1,7 +1,10 @@
 // Moon layer config: live Cesium lunar ephemeris, NASA LRO imagery, and
 // Wikidata/Wikipedia lunar surface markers.
 
+import { BODIES } from "../bodies.js";
 import { BodyLayer, normalizeLon } from "./body.js";
+
+const MOON_BODY = BODIES.moon;
 
 const CATEGORY_DEFS = [
   { value: "missions", label: "Missions & landing sites" },
@@ -31,16 +34,16 @@ const FALLBACK_SITES = [
 ];
 
 const MOON_CONFIG = {
-  key: "moon",
-  name: "Moon",
-  textureUrl: "assets/moon.jpg",
-  radius: 1737400,
+  key: MOON_BODY.key,
+  name: MOON_BODY.name,
+  textureUrl: MOON_BODY.textureUrl,
+  radius: MOON_BODY.radius,
   markerAlt: 15000,
-  markerColor: "#ff5470",
+  markerColor: MOON_BODY.markerColor,
   markerScale: new Cesium.NearFarScalar(3.0e6, 1.3, 4.4e8, 0.45),
   maxArticles: 400,
   liveMinItems: 10,
-  wikidataGlobe: "Q405",
+  wikidataGlobe: MOON_BODY.wikidataGlobe,
   fallbackSites: FALLBACK_SITES,
   missionSupplementUrl: "data/lunar-missions.json",
   defaultCategory: "missions",
@@ -48,8 +51,8 @@ const MOON_CONFIG = {
   articleKind: "moonwiki",
   articleProps: { moon: true },
   bodyPickId: (layer) => ({ kind: "moon", moon: layer }),
-  ephemeris: { type: "moon" },
-  orientation: { type: "moon" },
+  ephemeris: MOON_BODY.ephemeris,
+  orientation: MOON_BODY.orientation,
   hideCesiumMoon: true,
   showBodyWhenUnfocused: true,
   focusDuration: 3.0,

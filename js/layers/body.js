@@ -285,6 +285,9 @@ export class BodyLayer {
     if (orientation.type === "iau") {
       return this._iauRotation(time, orientation, result);
     }
+    if (orientation.type === "iau-neptune") {
+      return this._neptuneRotation(time, orientation, result);
+    }
     throw new Error(`Unknown orientation type: ${orientation.type}`);
   }
 
@@ -301,14 +304,24 @@ export class BodyLayer {
   }
 
   _iauRotation(time, orientation, result) {
-    const s = this._scratch;
-    const date = Cesium.JulianDate.toDate(time);
-    const d = (date.getTime() - Date.UTC(2000, 0, 1, 12)) / 86400000;
-    const T = d / 36525;
+    const { d, T } = j2000DaysAndCenturies(time);
     const ra = linearTerm(orientation.ra, d, T);
     const dec = linearTerm(orientation.dec, d, T);
     const w = linearTerm(orientation.w, d, T);
+    return this._rotationFromAngles(ra, dec, w, result);
+  }
 
+  _neptuneRotation(time, orientation, result) {
+    const { d, T } = j2000DaysAndCenturies(time);
+    const n = Cesium.Math.toRadians(linearTerm(orientation.n, d, T));
+    const ra = linearTerm(orientation.ra, d, T) + (orientation.raSin ?? 0) * Math.sin(n);
+    const dec = linearTerm(orientation.dec, d, T) + (orientation.decCos ?? 0) * Math.cos(n);
+    const w = linearTerm(orientation.w, d, T) + (orientation.wSin ?? 0) * Math.sin(n);
+    return this._rotationFromAngles(ra, dec, w, result);
+  }
+
+  _rotationFromAngles(ra, dec, w, result) {
+    const s = this._scratch;
     const rz1 = Cesium.Matrix3.fromRotationZ(Cesium.Math.toRadians(ra + 90), result);
     const rx = Cesium.Matrix3.fromRotationX(Cesium.Math.toRadians(90 - dec), s.rx);
     const rz2 = Cesium.Matrix3.fromRotationZ(Cesium.Math.toRadians(w), s.rz);
@@ -877,6 +890,12 @@ function linearTerm(term, d, T) {
   if (typeof term === "number") return term;
   const [base, rate = 0, variable = "T"] = term;
   return base + rate * (variable === "d" ? d : T);
+}
+
+function j2000DaysAndCenturies(time) {
+  const date = Cesium.JulianDate.toDate(time);
+  const d = (date.getTime() - Date.UTC(2000, 0, 1, 12)) / 86400000;
+  return { d, T: d / 36525 };
 }
 
 function flagFileName(url) {

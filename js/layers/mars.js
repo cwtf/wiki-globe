@@ -1,9 +1,11 @@
 // Mars layer config: live astronomy-engine ephemeris, IAU rotation,
 // Solar System Scope imagery, and Wikidata/Wikipedia Martian markers.
 
+import { BODIES } from "../bodies.js";
 import { BodyLayer, normalizeLon, titleKey } from "./body.js";
 
-const MARS_RADIUS = 3389500;
+const MARS_BODY = BODIES.mars;
+const MARS_RADIUS = MARS_BODY.radius;
 const CATEGORY_DEFS = [
   { value: "missions", label: "Missions & landing sites" },
   { value: "craters", label: "Craters" },
@@ -23,16 +25,16 @@ const FALLBACK_SITES = [
 ];
 
 const MARS_CONFIG = {
-  key: "mars",
-  name: "Mars",
-  textureUrl: "assets/mars.jpg",
+  key: MARS_BODY.key,
+  name: MARS_BODY.name,
+  textureUrl: MARS_BODY.textureUrl,
   radius: MARS_RADIUS,
   markerAlt: 15000,
-  markerColor: "#c1583c",
+  markerColor: MARS_BODY.dotColor,
   markerScale: new Cesium.NearFarScalar(5.0e6, 1.3, 7.5e8, 0.45),
   maxArticles: 420,
   liveMinItems: 0,
-  wikidataGlobe: "Q111",
+  wikidataGlobe: MARS_BODY.wikidataGlobe,
   fallbackSites: FALLBACK_SITES,
   missionSupplementUrl: "data/mars-missions.json",
   overwriteSupplementCoords: true,
@@ -41,14 +43,9 @@ const MARS_CONFIG = {
   articleKind: "marswiki",
   articleProps: { bodyName: "Mars" },
   bodyPickId: (layer) => ({ kind: "body", body: "mars", layer }),
-  ephemeris: { type: "astronomy-engine", body: "Mars" },
-  orientation: {
-    type: "iau",
-    ra: [317.68143, -0.1061, "T"],
-    dec: [52.88650, -0.0609, "T"],
-    w: [176.630, 350.89198226, "d"],
-  },
-  skyDot: { color: "#c1583c", pixelSize: 7 },
+  ephemeris: MARS_BODY.ephemeris,
+  orientation: MARS_BODY.orientation,
+  skyDot: { color: MARS_BODY.dotColor, pixelSize: 7 },
   transition: {
     proxy: true,
     proxyDistance: 45e7,

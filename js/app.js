@@ -7,6 +7,7 @@ import { FlightLayer } from "./layers/flights.js";
 import { ShippingLayer } from "./layers/shipping.js";
 import { HeatmapLayer, METRICS, heatStressLabel, RES_STEPS, loadHeatmapMetrics } from "./layers/heatmap.js";
 import { TrueSizeLayer } from "./layers/truesize.js";
+import { BODY_CHOICES } from "./bodies.js";
 import { MoonLayer } from "./layers/moon.js";
 import { MarsLayer } from "./layers/mars.js";
 import { CountrySearch } from "./search.js";
@@ -19,11 +20,6 @@ const FADE_END = 5.5e5;
 const AUTOROTATE_RATE = 0.006;        // rad/s
 const AUTOROTATE_IDLE_MS = 8000;
 const AUTOROTATE_MIN_HEIGHT = 1.2e6;  // stop spinning once zoomed into the map
-const BODY_CHOICES = [
-  { key: "earth", label: "🌍 Earth" },
-  { key: "moon", label: "🌕 Moon" },
-  { key: "mars", label: "Mars" },
-];
 async function boot() {
   await loadHeatmapMetrics();
 

@@ -1,6 +1,6 @@
 # Design spec: extending Wiki Globe to the rest of the solar system
 
-Status: **Mars shipped; BodyLayer + focus scoping refactors done; remaining planets TODO.** This document is a
+Status: **Mars shipped; BodyLayer + focus scoping + shared body config done; remaining planets TODO.** This document is a
 self-contained hand-off. It records the design philosophy already shipped for
 Earth + Moon + Mars, the exact patterns to reuse, the data that has already
 been downloaded, and the technical decisions (with pitfalls) for adding
@@ -18,10 +18,11 @@ today for the Moon and/or Mars; the job is to generalize it.
 | Moon layer | `js/layers/moon.js` | The template for future solid-body behavior. Live-ephemeris position, textured ellipsoid primitive, focus/tracking camera, lazy Wikipedia markers, mission flags. |
 | Mars layer | `js/layers/mars.js` | First shipped planet. Live astronomy-engine ephemeris, IAU Mars rotation, scaled interplanetary focus transition, Mars sky dot, Wikipedia categories, mission flags, and CPU-projected surface markers to avoid GPU precision loss at true Mars distance. |
 | Generic body layer | `js/layers/body.js` | Shared off-Earth body behavior extracted from Moon/Mars: live transform composition, focus/tracking, optional proxy transition and sky dot, Wikidata/Wikipedia loading, mission supplements, flags, categories, nearest-article sorting, and marker projection modes. |
+| Shared body config | `js/bodies.js` | Single source of truth for body metadata: solar-system order, active UI choices, radii, textures, dot colors, Wikidata globe QIDs, ephemeris body names, and IAU rotation parameters. |
 | App wiring | `js/app.js` | Click routing by `picked.id.kind`, focus-change handler (layer suspension + sidebar scoping), body switcher, tooltips, per-frame `tick()` calls. |
 | Wiki panel | `js/wiki-panel.js` | `openBody(bodyName, lat, lon, items)` renders a pre-built, distance-sorted article list with no Earth geosearch. |
 | Sidebar scoping | `index.html` + `css/style.css` + `js/app.js` | Generic `data-scope` rows are shown/hidden from `body[data-focus]`; rows without a scope remain universal. |
-| Body switcher | `index.html` `#sel-body` + `js/app.js` | Dropdown next to the search bar is populated from `BODY_CHOICES` and two-way synced with focus. Designed to grow by adding one body entry. |
+| Body switcher | `index.html` `#sel-body` + `js/app.js` | Dropdown next to the search bar is populated from `js/bodies.js` active body choices and two-way synced with focus. Designed to grow by enabling one body entry. |
 | Textures | `assets/` | **Already downloaded** for all planets + Pluto (see §7). |
 | Mars mission supplement | `data/mars-missions.json` | Curated surface mission and named landing-site records merged into Mars' live Wikidata results so the `Missions & landing sites` category is complete and stable. |
 
@@ -143,17 +144,22 @@ per-body config; `MoonLayer` becomes `new BodyLayer(viewer, BODIES.moon)` (the
 Moon's only specialization is its Cesium-provided ephemeris + IAU axes).
 
 ```js
-// js/bodies.js (new) — single source of truth
+// js/bodies.js — single source of truth
 export const BODIES = {
   mercury: {
+    key: "mercury",
     name: "Mercury",
     radius: 2439700,                    // metres (mean)
-    texture: "assets/mercury.jpg",
+    textureUrl: "assets/mercury.jpg",
     dotColor: "#9c9389",
     wikidataGlobe: "Q308",              // geoGlobe QID for SPARQL
-    rotation: { ra0: [281.0103, -0.0328], dec0: [61.4155, -0.0049],
-                w: [329.5988, 6.1385108] },   // see §6
-    ephemeris: "Mercury",               // astronomy-engine body name
+    ephemeris: { type: "astronomy-engine", body: "Mercury" },
+    orientation: {
+      type: "iau",
+      ra: [281.0103, -0.0328, "T"],
+      dec: [61.4155, -0.0049, "T"],
+      w: [329.5988, 6.1385108, "d"],
+    },
   },
   // … venus, mars, jupiter, saturn, uranus, neptune, pluto
 };
@@ -383,10 +389,10 @@ spot-check a known feature per body (e.g. Olympus Mons ≈ 18.65°N, 226.2°E �
 3. **Done: FocusManager cleanup.** Sidebar/search controls use `data-scope`
    with `body[data-focus]`; `#sel-body` is populated from the body list in
    `app.js`; switching body-to-body no longer briefly restores Earth overlays.
-4. **Next: General planet config:** add Mercury/Venus/Jupiter/Saturn/Uranus/Neptune/
+4. **Done: General planet config:** add Mercury/Venus/Jupiter/Saturn/Uranus/Neptune/
    Pluto entries with radius, texture, dot color, Wikidata globe QID,
    ephemeris body name, and IAU rotation parameters.
-5. **Reuse the Mars transition pattern:** sky dot + label while unfocused;
+5. **Next: Reuse the Mars transition pattern:** sky dot + label while unfocused;
    scaled proxy flight; swap into true focused body frame; track with
    per-frame `lookAtTransform`; back to Earth.
 6. **Reuse the Mars marker pattern:** live SPARQL, fallback list, Commons flag
