@@ -191,14 +191,18 @@ export class BodyLayer {
 
   _syncArticles() {
     const want = this.articlesVisible && this.wikiEnabled;
-    if (want && !this._articlesRequested) {
-      this._articlesRequested = true;
-      this.source = "loading";
-      this._loadArticles();
-    }
-    const show = this.visible && want;
+    if (want) this._requestArticles();
+    const inProxyFocus = this.config.transition?.proxy && this.focused && !this._trueFocused;
+    const show = this.visible && want && !inProxyFocus;
     this.points.show = show;
     this.flags.show = show;
+  }
+
+  _requestArticles() {
+    if (this._articlesRequested) return;
+    this._articlesRequested = true;
+    this.source = "loading";
+    this._loadArticles();
   }
 
   tick() {
@@ -397,6 +401,7 @@ export class BodyLayer {
   _focusDirect() {
     this.focused = true;
     this.onFocusChanged?.(true);
+    this.setArticlesVisible(true);
     const camera = this.viewer.camera;
     camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
     this.savedMinZoom = this.scene.screenSpaceCameraController.minimumZoomDistance;
@@ -472,7 +477,7 @@ export class BodyLayer {
     this.viewer.camera.lookAtTransform(this.modelMatrix, offset);
     this._trueFocused = true;
     this.tracking = true;
-    this._syncArticles();
+    this.setArticlesVisible(true);
   }
 
   blur(opts = {}) {
