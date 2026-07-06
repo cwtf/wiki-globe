@@ -22,6 +22,7 @@ today for the Moon and/or Mars; the job is to generalize it.
 | Sidebar scoping | `index.html` + `css/style.css` | `.layer.earth-only`, `.layer.moon-only`, and `.layer.mars-only` rows scope controls to the focused body. Generic `data-scope` is still the desired refactor before adding many more bodies. |
 | Body switcher | `index.html` `#sel-body` | Dropdown next to the search bar: `earth` / `moon` / `mars`. Two-way synced with focus in `app.js`. Designed to grow — add one `<option>` per new body. |
 | Textures | `assets/` | **Already downloaded** for all planets + Pluto (see §7). |
+| Mars mission supplement | `data/mars-missions.json` | Curated surface mission and named landing-site records merged into Mars' live Wikidata results so the `Missions & landing sites` category is complete and stable. |
 
 ### Interaction model already proven for the Moon and Mars
 
@@ -350,6 +351,11 @@ for US/USSR/China/ESA/India/Japan missions), Mercury/Venus/Pluto return
 dozens (craters/regions), gas giants may return near zero — handle empty
 gracefully.
 
+Mars also uses `data/mars-missions.json` as a curated supplement after live
+Wikidata dedupe. It fills missing mission/site pages, corrects rover pages that
+carry multiple coordinate statements, and prevents crater-name false positives
+from standing in for actual landers.
+
 **Flag CORS pitfall (solved, keep the solution):** never feed Wikidata's
 `Special:FilePath` URLs to Cesium billboards — they fail CORS for WebGL.
 Batch-resolve file names via the Commons API
@@ -369,8 +375,8 @@ spot-check a known feature per body (e.g. Olympus Mons ≈ 18.65°N, 226.2°E �
 1. **Done: Mars standalone layer.** `js/layers/mars.js` ships astronomy-engine
    ephemeris, IAU Mars rotation, scaled proxy transition, sky dot/label,
    live Wikidata/Wikipedia markers for globe Q111, Commons-resolved flags,
-   category filtering defaulted to `Missions & landing sites`, and CPU-projected
-   marker positions.
+   a curated Mars mission supplement, category filtering defaulted to
+   `Missions & landing sites`, and CPU-projected marker positions.
 2. **Next refactor, no behavior change:** extract the common Moon/Mars behavior
    into `BodyLayer`; keep Moon and Mars working identically after extraction.
 3. **FocusManager cleanup:** migrate `earth-only`/`moon-only`/`mars-only` CSS to

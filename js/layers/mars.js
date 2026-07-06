@@ -2,6 +2,7 @@
 // Mars globe while focused, and Wikidata/Wikipedia surface markers.
 
 const TEXTURE_URL = "assets/mars.jpg"; // Solar System Scope, CC BY 4.0
+const MISSION_SUPPLEMENT_URL = "data/mars-missions.json";
 const MARS_RADIUS = 3389500;           // mean radius, metres
 const MARKER_ALT = 15000;              // lift dots off the surface so they don't z-fight
 const MAX_ARTICLES = 420;
@@ -494,12 +495,74 @@ export class MarsLayer {
     const seen = new Set();
     this.articles = items.filter((a) =>
       seen.has(a.title) ? false : (seen.add(a.title), true));
+    await this._applyMissionSupplements(this.articles);
     for (const item of this.articles) {
       item.category = marsArticleCategory(item);
       item.categoryLabel = CATEGORY_LABELS.get(item.category) ?? "Other";
     }
     await this._resolveFlags(this.articles);
     this._buildMarkers();
+  }
+
+  async _applyMissionSupplements(items) {
+    let data = null;
+    try {
+      const res = await fetch(MISSION_SUPPLEMENT_URL);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      data = await res.json();
+    } catch (e) {
+      console.warn("[mars] mission supplement failed:", e.message);
+      return;
+    }
+
+    if (data?.schemaVersion !== 1 || !Array.isArray(data.missions)) return;
+    const byTitle = new Map(items.map((a) => [titleKey(a.title), a]));
+
+    for (const m of data.missions) {
+      const title = cleanString(m.title);
+      if (!title) continue;
+
+      const existing = byTitle.get(titleKey(title));
+      const site = m.siteTitle ? byTitle.get(titleKey(m.siteTitle)) : null;
+      const lat = Number.isFinite(Number(m.lat)) ? Number(m.lat) : site?.lat;
+      const lonRaw = Number.isFinite(Number(m.lon)) ? Number(m.lon) : site?.lon;
+      const lon = normalizeMarsLon(lonRaw);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+
+      const country = cleanString(m.country) ?? existing?.country ?? site?.country ?? null;
+      const flagFile = cleanString(m.flagFile) ?? existing?._flagFile ?? site?._flagFile ?? null;
+      const missionKind = cleanString(m.kind);
+
+      if (existing) {
+        existing.lat = lat;
+        existing.lon = lon;
+        existing.country = country;
+        existing.badge = country ?? existing.badge;
+        existing._flagFile = flagFile;
+        existing.missionSupplement = true;
+        existing.missionKind = missionKind;
+        existing.siteTitle = cleanString(m.siteTitle) ?? existing.siteTitle;
+        continue;
+      }
+
+      const item = {
+        title,
+        lat,
+        lon,
+        url: cleanString(m.url) ?? wikiArticleUrl(title),
+        bodyName: "Mars",
+        extract: undefined,
+        country,
+        badge: country ?? undefined,
+        flagUrl: null,
+        _flagFile: flagFile,
+        missionSupplement: true,
+        missionKind,
+        siteTitle: cleanString(m.siteTitle),
+      };
+      items.push(item);
+      byTitle.set(titleKey(title), item);
+    }
   }
 
   async _resolveFlags(items) {
@@ -650,13 +713,15 @@ export class MarsLayer {
 
 function marsArticleCategory(article) {
   const title = article.title.toLowerCase();
+  if (article.missionSupplement) return "missions";
+  if (titleKey(title) === "mars exploration rover") return "other";
+  if (/\bcrater\b/.test(title)) return "craters";
   if (
     article.country ||
     /\b(viking|pathfinder|sojourner|spirit|opportunity|curiosity|perseverance|insight|phoenix|beagle|schiaparelli|zhurong|tianwen|mars \d|lander|landing|rover|probe|spacecraft|mission)\b/.test(title)
   ) {
     return "missions";
   }
-  if (/\bcrater\b/.test(title)) return "craters";
   if (/^(mons|montes|vallis|valles|chasma|chasmata|rupes|scopulus|scopuli|dorsum|dorsa|labes)\b/.test(title) || /\b(mountain|valley|canyon|scarp)\b/.test(title)) {
     return "mountains";
   }
@@ -664,4 +729,26 @@ function marsArticleCategory(article) {
     return "regions";
   }
   return "other";
+}
+
+function titleKey(title) {
+  return String(title ?? "")
+    .normalize("NFKC")
+    .replace(/[_\s]+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function cleanString(value) {
+  const s = String(value ?? "").trim();
+  return s || null;
+}
+
+function normalizeMarsLon(lon) {
+  if (!Number.isFinite(lon)) return NaN;
+  return lon > 180 ? lon - 360 : lon;
+}
+
+function wikiArticleUrl(title) {
+  return `https://en.wikipedia.org/wiki/${encodeURIComponent(title.replace(/ /g, "_"))}`;
 }

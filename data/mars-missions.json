@@ -1,0 +1,195 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "sourceLabel": "Curated Mars surface mission supplement",
+    "sources": [
+      {
+        "name": "NASA Mars Exploration Program mission pages",
+        "url": "https://science.nasa.gov/planetary-science/programs/mars-exploration/"
+      },
+      {
+        "name": "NASA GISS Mars24 lander mission notes",
+        "url": "https://www.giss.nasa.gov/tools/mars24/help/notes.html"
+      },
+      {
+        "name": "NASA NSSDC Master Catalog",
+        "url": "https://nssdc.gsfc.nasa.gov/nmc/"
+      },
+      {
+        "name": "Wikipedia list of Mars landers",
+        "url": "https://en.wikipedia.org/wiki/List_of_Mars_landers"
+      }
+    ],
+    "notes": [
+      "These records attach mission articles to surface touchdown, impact, crash, or named landing-site locations when Wikidata does not expose a suitable Mars-globe coordinate.",
+      "Longitudes use the same east-positive -180 to 180 convention as the Mars layer; west longitudes are negative.",
+      "Orbiters, flybys, and losses with only projected or unconfirmed surface locations are intentionally omitted."
+    ]
+  },
+  "missions": [
+    {
+      "title": "Mars 2",
+      "lat": -45,
+      "lon": 47,
+      "country": "Soviet Union",
+      "flagFile": "Flag of the Soviet Union.svg",
+      "kind": "crash"
+    },
+    {
+      "title": "Mars 3",
+      "lat": -45,
+      "lon": -158,
+      "country": "Soviet Union",
+      "flagFile": "Flag of the Soviet Union.svg",
+      "kind": "soft landing"
+    },
+    {
+      "title": "Mars 6",
+      "lat": -23.9,
+      "lon": -19.4,
+      "country": "Soviet Union",
+      "flagFile": "Flag of the Soviet Union.svg",
+      "kind": "crash"
+    },
+    {
+      "title": "Viking 1",
+      "siteTitle": "Thomas Mutch Memorial Station",
+      "lat": 22.27,
+      "lon": -47.95,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "soft landing"
+    },
+    {
+      "title": "Viking 2",
+      "siteTitle": "Gerald Soffen Memorial Station",
+      "lat": 47.64,
+      "lon": 134.29,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "soft landing"
+    },
+    {
+      "title": "Mars Pathfinder",
+      "siteTitle": "Carl Sagan Memorial Station",
+      "lat": 19.13,
+      "lon": -33.22,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "soft landing"
+    },
+    {
+      "title": "Sojourner (rover)",
+      "siteTitle": "Carl Sagan Memorial Station",
+      "lat": 19.13,
+      "lon": -33.22,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "rover"
+    },
+    {
+      "title": "Beagle 2",
+      "lat": 11.53,
+      "lon": 90.43,
+      "country": "United Kingdom",
+      "flagFile": "Flag of the United Kingdom.svg",
+      "kind": "incomplete landing"
+    },
+    {
+      "title": "Spirit (rover)",
+      "siteTitle": "Columbia Memorial Station",
+      "lat": -14.57,
+      "lon": 175.47,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "rover"
+    },
+    {
+      "title": "Opportunity (rover)",
+      "siteTitle": "Challenger Memorial Station",
+      "lat": -1.95,
+      "lon": -5.53,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "rover"
+    },
+    {
+      "title": "Phoenix (spacecraft)",
+      "siteTitle": "Green Valley",
+      "lat": 68.22,
+      "lon": -125.75,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "soft landing"
+    },
+    {
+      "title": "Curiosity (rover)",
+      "siteTitle": "Bradbury Landing",
+      "lat": -4.5895,
+      "lon": 137.4417,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "rover"
+    },
+    {
+      "title": "Bradbury Landing",
+      "lat": -4.5895,
+      "lon": 137.4417,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "named landing site"
+    },
+    {
+      "title": "Schiaparelli EDM",
+      "lat": -2,
+      "lon": -6,
+      "country": "European Space Agency",
+      "flagFile": "Flag of Europe.svg",
+      "kind": "crash"
+    },
+    {
+      "title": "InSight",
+      "siteTitle": "InSight landing site",
+      "lat": 4.5,
+      "lon": 135.9,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "soft landing"
+    },
+    {
+      "title": "Perseverance (rover)",
+      "siteTitle": "Octavia E. Butler Landing",
+      "lat": 18.4446,
+      "lon": 77.4509,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "rover"
+    },
+    {
+      "title": "Octavia E. Butler Landing",
+      "lat": 18.4446,
+      "lon": 77.4509,
+      "country": "United States",
+      "flagFile": "Flag of the United States.svg",
+      "kind": "named landing site"
+    },
+    {
+      "title": "Tianwen-1",
+      "siteTitle": "Zhurong landing site",
+      "lat": 25.1,
+      "lon": 109.9,
+      "country": "China",
+      "flagFile": "Flag of the People's Republic of China.svg",
+      "kind": "soft landing"
+    },
+    {
+      "title": "Zhurong (rover)",
+      "siteTitle": "Zhurong landing site",
+      "lat": 25.1,
+      "lon": 109.9,
+      "country": "China",
+      "flagFile": "Flag of the People's Republic of China.svg",
+      "kind": "rover"
+    }
+  ]
+}
