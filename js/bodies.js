@@ -316,3 +316,43 @@ export function bodyChoices(keys = ACTIVE_BODY_KEYS) {
 }
 
 export const BODY_CHOICES = bodyChoices();
+
+export function bodyChoiceGroups(keys = ACTIVE_BODY_KEYS) {
+  const activeKeys = new Set(keys);
+  const groupedKeys = new Set();
+  const groups = [];
+  const parentKeyFor = (key) => key === "moon" ? "earth" : BODIES[key]?.parentBody;
+
+  for (const key of BODY_ORDER) {
+    if (!activeKeys.has(key) || groupedKeys.has(key)) continue;
+    const body = BODIES[key];
+    if (!body || parentKeyFor(key)) continue;
+
+    const childKeys = BODY_ORDER.filter((childKey) =>
+      activeKeys.has(childKey) && parentKeyFor(childKey) === key
+    );
+    const groupKeys = [key, ...childKeys];
+    for (const groupKey of groupKeys) groupedKeys.add(groupKey);
+
+    groups.push({
+      key,
+      label: body.name === "Sun" ? "Sun" : `${body.name} system`,
+      choices: bodyChoices(groupKeys),
+    });
+  }
+
+  for (const key of keys) {
+    if (groupedKeys.has(key)) continue;
+    const body = BODIES[key];
+    if (!body) continue;
+    groups.push({
+      key,
+      label: body.name,
+      choices: bodyChoices([key]),
+    });
+  }
+
+  return groups;
+}
+
+export const BODY_CHOICE_GROUPS = bodyChoiceGroups();

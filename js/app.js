@@ -7,7 +7,7 @@ import { FlightLayer } from "./layers/flights.js";
 import { ShippingLayer } from "./layers/shipping.js";
 import { HeatmapLayer, METRICS, heatStressLabel, RES_STEPS, loadHeatmapMetrics } from "./layers/heatmap.js";
 import { TrueSizeLayer } from "./layers/truesize.js";
-import { BODY_CHOICES } from "./bodies.js";
+import { BODY_CHOICE_GROUPS } from "./bodies.js";
 import { MoonLayer } from "./layers/moon.js";
 import { MarsLayer } from "./layers/mars.js";
 import { SunLayer } from "./layers/sun.js";
@@ -281,12 +281,17 @@ async function boot() {
   // body switcher next to the search bar; stays in sync with click-driven
   // focus changes so it always names the world under the camera
   const selBody = document.getElementById("sel-body");
-  selBody.replaceChildren(...BODY_CHOICES.map(({ key, label }) => {
-    const option = document.createElement("option");
-    option.value = key;
-    option.textContent = label;
-    option.selected = key === "earth";
-    return option;
+  selBody.replaceChildren(...BODY_CHOICE_GROUPS.map(({ label, choices }) => {
+    const group = document.createElement("optgroup");
+    group.label = label;
+    group.append(...choices.map(({ key, label: choiceLabel }) => {
+      const option = document.createElement("option");
+      option.value = key;
+      option.textContent = choiceLabel;
+      option.selected = key === "earth";
+      return option;
+    }));
+    return group;
   }));
   selBody.addEventListener("change", () => focusBody(selBody.value));
   syncScopedUi("earth");
