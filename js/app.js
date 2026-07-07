@@ -166,16 +166,21 @@ async function boot() {
     const focusedLayer = bodyLayers[body];
     for (const layer of Object.values(bodyLayers)) {
       const isParentOfFocused = focusedLayer?.config.parentBody === layer.key;
-      layer.setContextVisible?.(isParentOfFocused);
+      const isSiblingOfFocused =
+        focusedLayer?.config.parentBody &&
+        layer.config.parentBody === focusedLayer.config.parentBody &&
+        layer.key !== body;
+      const isContextBody = isParentOfFocused || isSiblingOfFocused;
+      layer.setContextVisible?.(isContextBody);
       if (!layer.config.parentBody) {
-        layer.setSkyVisible?.(!isParentOfFocused);
+        layer.setSkyVisible?.(!isContextBody);
         continue;
       }
       const sameSystem =
         body === layer.config.parentBody ||
         body === layer.key ||
         focusedLayer?.config.parentBody === layer.config.parentBody;
-      layer.setSkyVisible(sameSystem);
+      layer.setSkyVisible(sameSystem && !isContextBody);
     }
   }
 

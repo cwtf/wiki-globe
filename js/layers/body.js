@@ -7,6 +7,7 @@ const HOME_VIEW = { lon: 10, lat: 22, height: 2.3e7 };
 const FLAG_RIGHT_OFFSET = new Cesium.Cartesian2(8, 0);
 const FLAG_LEFT_OFFSET = new Cesium.Cartesian2(-8, 0);
 const CATEGORY_ALL = "all";
+const LOCAL_LABEL_POS = Cesium.Cartesian3.ZERO;
 
 // EllipsoidGeometry starts its texture seam on the body-fixed +X axis. Spin
 // only the textured sphere half a turn so map longitude 0 sits on +X; markers
@@ -219,6 +220,14 @@ export class BodyLayer {
     );
   }
 
+  _shouldShowSkyPoint() {
+    return this.visible && this.skyVisible && !this.contextVisible && !this.focused;
+  }
+
+  _shouldShowSkyLabel() {
+    return this.visible && (this.skyVisible || this.contextVisible) && !this.focused;
+  }
+
   tick() {
     if (!this.primitive) return;
     const time = this.viewer.clock.currentTime;
@@ -247,9 +256,15 @@ export class BodyLayer {
     if (this.skyPoint) {
       const p = this.position();
       this.skyPoint.position = Cesium.Cartesian3.clone(p, this.skyPoint.position);
-      this.skyLabel.position = Cesium.Cartesian3.clone(p, this.skyLabel.position);
-      this.skyPoints.show = this.visible && this.skyVisible && !this.focused;
-      this.skyLabels.show = this.visible && this.skyVisible && !this.focused;
+      if (this.contextVisible) {
+        this.skyLabels.modelMatrix = this.modelMatrix;
+        this.skyLabel.position = Cesium.Cartesian3.clone(LOCAL_LABEL_POS, this.skyLabel.position);
+      } else {
+        this.skyLabels.modelMatrix = Cesium.Matrix4.IDENTITY;
+        this.skyLabel.position = Cesium.Cartesian3.clone(p, this.skyLabel.position);
+      }
+      this.skyPoints.show = this._shouldShowSkyPoint();
+      this.skyLabels.show = this._shouldShowSkyLabel();
     }
 
     if (this.tracking) {
@@ -547,8 +562,8 @@ export class BodyLayer {
     }
     this.points.show = false;
     this.flags.show = false;
-    if (this.skyPoints) this.skyPoints.show = this.visible && this.skyVisible;
-    if (this.skyLabels) this.skyLabels.show = this.visible && this.skyVisible;
+    if (this.skyPoints) this.skyPoints.show = this._shouldShowSkyPoint();
+    if (this.skyLabels) this.skyLabels.show = this._shouldShowSkyLabel();
     this.onFocusChanged?.(false);
     const sscc = this.scene.screenSpaceCameraController;
     if (this.savedMinZoom != null) sscc.minimumZoomDistance = this.savedMinZoom;
@@ -571,21 +586,23 @@ export class BodyLayer {
       this.primitive.show = this._shouldShowBodyPrimitive();
     }
     if (this.proxyPrimitive) this.proxyPrimitive.show = v && this._transitioning;
-    if (this.skyPoints) this.skyPoints.show = v && this.skyVisible && !this.focused;
-    if (this.skyLabels) this.skyLabels.show = v && this.skyVisible && !this.focused;
+    if (this.skyPoints) this.skyPoints.show = this._shouldShowSkyPoint();
+    if (this.skyLabels) this.skyLabels.show = this._shouldShowSkyLabel();
     this._syncArticles();
     if (!v) this.blur();
   }
 
   setSkyVisible(v) {
     this.skyVisible = v;
-    if (this.skyPoints) this.skyPoints.show = this.visible && v && !this.focused;
-    if (this.skyLabels) this.skyLabels.show = this.visible && v && !this.focused;
+    if (this.skyPoints) this.skyPoints.show = this._shouldShowSkyPoint();
+    if (this.skyLabels) this.skyLabels.show = this._shouldShowSkyLabel();
   }
 
   setContextVisible(v) {
     this.contextVisible = v;
     if (this.primitive) this.primitive.show = this._shouldShowBodyPrimitive();
+    if (this.skyPoints) this.skyPoints.show = this._shouldShowSkyPoint();
+    if (this.skyLabels) this.skyLabels.show = this._shouldShowSkyLabel();
   }
 
   pickSurface(windowPosition) {
