@@ -40,6 +40,21 @@ html, body {
   inset: 0;
 }
 
+.context-body-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 2;
+  pointer-events: none;
+  color: rgba(223, 231, 243, 0.86);
+  font: 11px "Segoe UI", sans-serif;
+  line-height: 1;
+  text-shadow:
+    0 0 2px #000,
+    0 0 5px rgba(0, 0, 0, 0.9);
+  white-space: nowrap;
+}
+
 /* ---------- control panel ---------- */
 
 #panel {

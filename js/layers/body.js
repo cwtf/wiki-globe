@@ -7,7 +7,6 @@ const HOME_VIEW = { lon: 10, lat: 22, height: 2.3e7 };
 const FLAG_RIGHT_OFFSET = new Cesium.Cartesian2(8, 0);
 const FLAG_LEFT_OFFSET = new Cesium.Cartesian2(-8, 0);
 const CATEGORY_ALL = "all";
-const LOCAL_LABEL_POS = Cesium.Cartesian3.ZERO;
 
 // EllipsoidGeometry starts its texture seam on the body-fixed +X axis. Spin
 // only the textured sphere half a turn so map longitude 0 sits on +X; markers
@@ -54,6 +53,11 @@ export class BodyLayer {
     if (config.skyDot) {
       this.skyPoints = this.scene.primitives.add(new Cesium.PointPrimitiveCollection());
       this.skyLabels = this.scene.primitives.add(new Cesium.LabelCollection());
+      this.contextLabel = document.createElement("div");
+      this.contextLabel.className = "context-body-label";
+      this.contextLabel.textContent = this.name;
+      this.contextLabel.hidden = true;
+      this.viewer.container.appendChild(this.contextLabel);
     }
 
     this.axes = config.orientation?.type === "moon" &&
@@ -225,7 +229,11 @@ export class BodyLayer {
   }
 
   _shouldShowSkyLabel() {
-    return this.visible && (this.skyVisible || this.contextVisible) && !this.focused;
+    return this.visible && this.skyVisible && !this.contextVisible && !this.focused;
+  }
+
+  _shouldShowContextLabel() {
+    return this.visible && this.contextVisible && !!this.config.parentBody && !this.focused;
   }
 
   tick() {
@@ -256,15 +264,11 @@ export class BodyLayer {
     if (this.skyPoint) {
       const p = this.position();
       this.skyPoint.position = Cesium.Cartesian3.clone(p, this.skyPoint.position);
-      if (this.contextVisible) {
-        this.skyLabels.modelMatrix = this.modelMatrix;
-        this.skyLabel.position = Cesium.Cartesian3.clone(LOCAL_LABEL_POS, this.skyLabel.position);
-      } else {
-        this.skyLabels.modelMatrix = Cesium.Matrix4.IDENTITY;
-        this.skyLabel.position = Cesium.Cartesian3.clone(p, this.skyLabel.position);
-      }
+      this.skyLabels.modelMatrix = Cesium.Matrix4.IDENTITY;
+      this.skyLabel.position = Cesium.Cartesian3.clone(p, this.skyLabel.position);
       this.skyPoints.show = this._shouldShowSkyPoint();
       this.skyLabels.show = this._shouldShowSkyLabel();
+      this._syncContextLabel(p);
     }
 
     if (this.tracking) {
@@ -588,6 +592,7 @@ export class BodyLayer {
     if (this.proxyPrimitive) this.proxyPrimitive.show = v && this._transitioning;
     if (this.skyPoints) this.skyPoints.show = this._shouldShowSkyPoint();
     if (this.skyLabels) this.skyLabels.show = this._shouldShowSkyLabel();
+    this._syncContextLabel();
     this._syncArticles();
     if (!v) this.blur();
   }
@@ -596,6 +601,7 @@ export class BodyLayer {
     this.skyVisible = v;
     if (this.skyPoints) this.skyPoints.show = this._shouldShowSkyPoint();
     if (this.skyLabels) this.skyLabels.show = this._shouldShowSkyLabel();
+    this._syncContextLabel();
   }
 
   setContextVisible(v) {
@@ -603,6 +609,31 @@ export class BodyLayer {
     if (this.primitive) this.primitive.show = this._shouldShowBodyPrimitive();
     if (this.skyPoints) this.skyPoints.show = this._shouldShowSkyPoint();
     if (this.skyLabels) this.skyLabels.show = this._shouldShowSkyLabel();
+    this._syncContextLabel();
+  }
+
+  _syncContextLabel(position = null) {
+    if (!this.contextLabel) return;
+    if (!this._shouldShowContextLabel()) {
+      this.contextLabel.hidden = true;
+      return;
+    }
+    const p = position ?? this.position();
+    const win = Cesium.SceneTransforms.wgs84ToWindowCoordinates(
+      this.scene, p, this._scratch.bodyWindow);
+    if (
+      !win ||
+      win.x < -90 ||
+      win.y < -40 ||
+      win.x > window.innerWidth + 90 ||
+      win.y > window.innerHeight + 40
+    ) {
+      this.contextLabel.hidden = true;
+      return;
+    }
+    this.contextLabel.hidden = false;
+    this.contextLabel.style.transform =
+      `translate(${Math.round(win.x + 10)}px, ${Math.round(win.y - 8)}px)`;
   }
 
   pickSurface(windowPosition) {
