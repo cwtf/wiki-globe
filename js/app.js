@@ -236,6 +236,13 @@ async function boot() {
     const from = bodyLayers[fromBody];
     const to = bodyLayers[toBody];
     if (!from || !to) return false;
+    // Bodies that need a proxy transition are themselves at true
+    // interplanetary distance from Earth (e.g. Jupiter and its moons), so a
+    // parent/sibling hop between them is not actually "local" — a real
+    // camera flyTo across that absolute distance breaks Cesium's flight-arc
+    // math even though the hop distance itself is small. Route those through
+    // the normal proxy transition instead of a direct flight.
+    if (from.config.transition?.proxy || to.config.transition?.proxy) return false;
     return (
       to.config.parentBody === fromBody ||
       from.config.parentBody === toBody ||
