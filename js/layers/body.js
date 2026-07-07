@@ -78,6 +78,11 @@ export class BodyLayer {
       prim: new Cesium.Matrix4(),
       proxyPos: new Cesium.Cartesian3(),
       proxyRot: new Cesium.Matrix3(),
+      parentPos: new Cesium.Cartesian3(),
+      parentRot: new Cesium.Matrix3(),
+      orbitX: new Cesium.Cartesian3(),
+      orbitY: new Cesium.Cartesian3(),
+      orbitRel: new Cesium.Cartesian3(),
       markerWorld: new Cesium.Cartesian3(),
       cameraLocal: new Cesium.Cartesian3(),
       bodyWindow: new Cesium.Cartesian2(),
@@ -318,11 +323,46 @@ export class BodyLayer {
         result
       );
     }
+    if (ephem.type === "parent-orbit") {
+      this._parentPositionIcrf(time, ephem, result);
+      this._circularOrbitOffsetIcrf(time, ephem, this._scratch.orbitRel);
+      return Cesium.Cartesian3.add(result, this._scratch.orbitRel, result);
+    }
     throw new Error(`Unknown ephemeris type: ${ephem.type}`);
   }
 
+  _parentPositionIcrf(time, ephem, result) {
+    const v = Astronomy.GeoVector(
+      Astronomy.Body[ephem.parentEphemerisBody],
+      Cesium.JulianDate.toDate(time),
+      true
+    );
+    return Cesium.Cartesian3.fromElements(v.x * AU, v.y * AU, v.z * AU, result);
+  }
+
+  _circularOrbitOffsetIcrf(time, ephem, result) {
+    const s = this._scratch;
+    const parentPos = this._parentPositionIcrf(time, ephem, s.parentPos);
+    const parentRot = this._rotationForOrientation(
+      time, ephem.parentOrientation, parentPos, s.parentRot);
+    Cesium.Matrix3.getColumn(parentRot, 0, s.orbitX);
+    Cesium.Matrix3.getColumn(parentRot, 1, s.orbitY);
+    const { d } = j2000DaysAndCenturies(time);
+    const angle = Cesium.Math.toRadians(
+      (ephem.phaseDeg ?? 0) + (ephem.direction ?? 1) * 360 * d / ephem.periodDays
+    );
+    Cesium.Cartesian3.multiplyByScalar(
+      s.orbitX, Math.cos(angle) * ephem.semiMajorAxis, result);
+    Cesium.Cartesian3.multiplyByScalar(
+      s.orbitY, Math.sin(angle) * ephem.semiMajorAxis, s.orbitRel);
+    return Cesium.Cartesian3.add(result, s.orbitRel, result);
+  }
+
   _rotationIcrf(time, posIcrf, result) {
-    const orientation = this.config.orientation;
+    return this._rotationForOrientation(time, this.config.orientation, posIcrf, result);
+  }
+
+  _rotationForOrientation(time, orientation, posIcrf, result) {
     if (orientation.type === "moon") {
       if (this.axes) {
         const rot = this.axes.evaluate(time, result);
@@ -336,7 +376,32 @@ export class BodyLayer {
     if (orientation.type === "iau-neptune") {
       return this._neptuneRotation(time, orientation, result);
     }
+    if (orientation.type === "tidal-parent") {
+      return this._tidalParentRotation(time, orientation, posIcrf, result);
+    }
     throw new Error(`Unknown orientation type: ${orientation.type}`);
+  }
+
+  _tidalParentRotation(time, orientation, childPosIcrf, result) {
+    const s = this._scratch;
+    const parentPos = this._parentPositionIcrf(time, orientation.parentEphemeris, s.parentPos);
+    const parentRot = this._rotationForOrientation(
+      time, orientation.parentOrientation, parentPos, s.parentRot);
+    Cesium.Matrix3.getColumn(parentRot, 2, s.orbitY);
+    const x = Cesium.Cartesian3.subtract(parentPos, childPosIcrf, s.orbitX);
+    Cesium.Cartesian3.normalize(x, x);
+    const y = Cesium.Cartesian3.cross(s.orbitY, x, s.orbitRel);
+    if (Cesium.Cartesian3.magnitudeSquared(y) < 1e-12) {
+      Cesium.Cartesian3.cross(Cesium.Cartesian3.UNIT_Z, x, y);
+      if (Cesium.Cartesian3.magnitudeSquared(y) < 1e-12) {
+        Cesium.Cartesian3.cross(Cesium.Cartesian3.UNIT_X, x, y);
+      }
+    }
+    Cesium.Cartesian3.normalize(y, y);
+    const z = Cesium.Cartesian3.cross(x, y, s.orbitY);
+    return Cesium.Matrix3.setColumn(
+      Cesium.Matrix3.setColumn(
+        Cesium.Matrix3.setColumn(result, 0, x, result), 1, y, result), 2, z, result);
   }
 
   _tidalLockRotation(moonPosIcrf, result) {

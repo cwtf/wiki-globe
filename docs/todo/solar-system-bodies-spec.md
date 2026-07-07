@@ -1,6 +1,6 @@
 # Design spec: extending Wiki Globe to the rest of the solar system
 
-Status: **Mars shipped; BodyLayer + focus scoping + shared body config + generic planet focus/wiki + Saturn rings + Sun stretch body + Galilean moons done; Titan/Charon/body search/tour TODO.** This document is a
+Status: **Mars shipped; BodyLayer + focus scoping + shared body config + generic planet focus/wiki + Saturn rings + Sun stretch body + major moons done; body search/tour TODO.** This document is a
 self-contained hand-off. It records the design philosophy already shipped for
 Earth + Moon + Mars, the exact patterns to reuse, the data that has already
 been downloaded, and the technical decisions (with pitfalls) for adding
@@ -18,7 +18,7 @@ today for the Moon and/or Mars; the job is to generalize it.
 | Moon layer | `js/layers/moon.js` | The template for future solid-body behavior. Live-ephemeris position, textured ellipsoid primitive, focus/tracking camera, lazy Wikipedia markers, mission flags. |
 | Mars layer | `js/layers/mars.js` | First shipped planet. Live astronomy-engine ephemeris, IAU Mars rotation, scaled interplanetary focus transition, Mars sky dot, Wikipedia categories, mission flags, and CPU-projected surface markers to avoid GPU precision loss at true Mars distance. |
 | Generic planet layer | `js/layers/planets.js` | Mercury, Venus, Jupiter, Saturn, Uranus, Neptune, and Pluto use the shared body config, labeled sky dots, textured true-scale ellipsoids, Mars-style scaled proxy focus transition, live Wikidata/Wikipedia markers, Commons-resolved flags, generic category filters, CPU-projected marker positions, and textured Saturn rings. |
-| Galilean moon layer | `js/layers/moons.js` | Io, Europa, Ganymede, and Callisto use shared body config, Astronomy Engine `JupiterMoons` parent-relative ephemerides, Jupiter-neighborhood sky dots, textured true-scale ellipsoids, scaled proxy focus from Earth, direct local focus hops around Jupiter, and live Wikidata/Wikipedia markers. |
+| Major moon layer | `js/layers/moons.js` | Io, Europa, Ganymede, Callisto, Titan, and Charon use shared body config, parent-relative ephemerides, local-system sky/context bodies, textured true-scale ellipsoids, scaled proxy focus from Earth, and live Wikidata/Wikipedia markers. |
 | Generic body layer | `js/layers/body.js` | Shared off-Earth body behavior extracted from Moon/Mars: live transform composition, focus/tracking, optional proxy transition and sky dot, Wikidata/Wikipedia loading, mission supplements, flags, categories, nearest-article sorting, and marker projection modes. |
 | Shared body config | `js/bodies.js` | Single source of truth for body metadata: solar-system order, active UI choices, radii, textures, dot colors, Wikidata globe QIDs, ephemeris body names, and IAU rotation parameters. |
 | App wiring | `js/app.js` | Click routing by `picked.id.kind`, focus-change handler (layer suspension + sidebar scoping), body switcher, tooltips, per-frame `tick()` calls. |
@@ -330,8 +330,8 @@ Stretch-body texture/topography assets now downloaded:
 | `europa.jpg` | Europa | 1024x512 | USGS/PDS/Tammy Becker Voyager/Galileo SSI global mosaic via Wikimedia Commons, public domain |
 | `ganymede.jpg` | Ganymede | 1800x900 | NASA/Voyager+Galileo imagery processed by Bjorn Jonsson, recentered to longitude 0 by J N Squire, via Wikimedia Commons, CC BY-SA 4.0 |
 | `callisto.jpg` | Callisto | 1800x900 | NASA/Voyager+Galileo imagery processed by Bjorn Jonsson (bjj.mmedia.is), recentered to longitude 0 in-repo-tooling (was left-edge-centered), attribution license |
-| `charon.jpg` | Charon | 9520x4760 | NASA/JHUAPL/SwRI Photojournal PIA19866 global basemap, public domain |
-| `titan.jpg` | Titan | 5760x2880 | NASA/JPL-Caltech Photojournal PIA22770 global surface mosaic (Cassini ISS, near-IR "methane window" bands) via Wikimedia Commons, public domain |
+| `charon.jpg` | Charon | 4096x2048 | NASA/JHUAPL/SwRI Photojournal PIA19866 global basemap, public domain; resized from source for WebGL texture limits |
+| `titan.jpg` | Titan | 4096x2048 | NASA/JPL-Caltech Photojournal PIA22770 global surface mosaic (Cassini ISS, near-IR "methane window" bands) via Wikimedia Commons, public domain; resized from source for WebGL texture limits |
 
 Notes:
 - **CC BY 4.0 requires attribution**: when planets ship, add
@@ -444,9 +444,11 @@ spot-check a known feature per body (e.g. Olympus Mons ≈ 18.65°N, 226.2°E �
    focus transition, and no surface wiki layer.
 10. **Done: Galilean moons:** Io, Europa, Ganymede, and Callisto now focus as
    child bodies with parent-relative `JupiterMoons` ephemerides and scoped sky
-   dots around Jupiter.
-11. **Next stretch:** Titan / Charon as children of their planet, body search
-   integration, "tour" mode.
+   dots/context bodies around Jupiter.
+11. **Done: Titan / Charon:** Titan and Charon now focus as child bodies with
+   generated circular parent-relative orbits, parent-tidal orientation,
+   local-system context bodies, and WebGL-safe texture sizes.
+12. **Next stretch:** body search integration, "tour" mode.
 
 ---
 

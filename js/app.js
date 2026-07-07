@@ -12,7 +12,7 @@ import { MoonLayer } from "./layers/moon.js";
 import { MarsLayer } from "./layers/mars.js";
 import { SunLayer } from "./layers/sun.js";
 import { PlanetLayer, PLANET_BODY_KEYS } from "./layers/planets.js";
-import { JovianMoonLayer, JOVIAN_MOON_BODY_KEYS } from "./layers/moons.js";
+import { ChildMoonLayer, CHILD_MOON_BODY_KEYS } from "./layers/moons.js";
 import { CountrySearch } from "./search.js";
 import { WikiPanel } from "./wiki-panel.js";
 import { getAisKey, setAisKey } from "./ais.js";
@@ -96,8 +96,8 @@ async function boot() {
   const planets = Object.fromEntries(
     PLANET_BODY_KEYS.map((key) => [key, new PlanetLayer(viewer, key)])
   );
-  const jovianMoons = Object.fromEntries(
-    JOVIAN_MOON_BODY_KEYS.map((key) => [key, new JovianMoonLayer(viewer, key)])
+  const childMoons = Object.fromEntries(
+    CHILD_MOON_BODY_KEYS.map((key) => [key, new ChildMoonLayer(viewer, key)])
   );
   const wiki = new WikiPanel(viewer);
 
@@ -108,13 +108,13 @@ async function boot() {
   moon.init();
   mars.init();
   for (const layer of Object.values(planets)) layer.init();
-  for (const layer of Object.values(jovianMoons)) layer.init();
+  for (const layer of Object.values(childMoons)) layer.init();
 
   // "Back to Earth" appears while the camera is parked off Earth.
   const moonBack = document.getElementById("moon-back");
   moonBack.textContent = "< Back to Earth";
 
-  const bodyLayers = { sun, ...planets, ...jovianMoons, moon, mars };
+  const bodyLayers = { sun, ...planets, ...childMoons, moon, mars };
   const planetUi = {
     name: document.getElementById("name-planet"),
     dot: document.getElementById("dot-planet"),
@@ -166,11 +166,12 @@ async function boot() {
     const focusedLayer = bodyLayers[body];
     for (const layer of Object.values(bodyLayers)) {
       const isParentOfFocused = focusedLayer?.config.parentBody === layer.key;
+      const isChildOfFocused = layer.config.parentBody === body;
       const isSiblingOfFocused =
         focusedLayer?.config.parentBody &&
         layer.config.parentBody === focusedLayer.config.parentBody &&
         layer.key !== body;
-      const isContextBody = isParentOfFocused || isSiblingOfFocused;
+      const isContextBody = isParentOfFocused || isChildOfFocused || isSiblingOfFocused;
       layer.setContextVisible?.(isContextBody);
       if (!layer.config.parentBody) {
         layer.setSkyVisible?.(!isContextBody);
@@ -770,7 +771,7 @@ async function boot() {
   setTimeout(() => document.getElementById("hint").classList.add("faded"), 15000);
 
   // handy for debugging from the console
-  window.__globe = { viewer, sats, flights, ships, heat, wiki, truesize, search, sun, moon, mars, planets, jovianMoons, bodyLayers };
+  window.__globe = { viewer, sats, flights, ships, heat, wiki, truesize, search, sun, moon, mars, planets, childMoons, bodyLayers };
 }
 
 function enhanceHeatmapSelect(select) {
@@ -1069,8 +1070,8 @@ function tooltipHtml(id) {
   }
   if (id.kind === "body") {
     const distKm = id.layer.distanceKm();
-    const note = id.layer.config.parentBody === "jupiter"
-      ? "astronomy-engine Jupiter moon ephemeris - spacecraft imagery - click to visit"
+    const note = id.layer.config.parentBody
+      ? "parent-relative moon ephemeris - spacecraft imagery - click to visit"
       : id.layer.key === "sun"
         ? "astronomy-engine solar ephemeris - Solar System Scope imagery - click to visit"
         : "astronomy-engine ephemeris - Solar System Scope imagery - click to visit";

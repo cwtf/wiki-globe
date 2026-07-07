@@ -1,14 +1,17 @@
-// Parent-relative moon layers. The Galilean moons use Astronomy Engine's
-// JupiterMoons ephemeris and otherwise share the generic off-Earth body UX.
+// Parent-relative moon layers. Galilean moons use Astronomy Engine's
+// JupiterMoons ephemeris; Titan/Charon use generated circular parent-relative
+// orbits. Everything else shares the generic off-Earth body UX.
 
 import { BODIES } from "../bodies.js";
 import { BodyLayer, normalizeLon } from "./body.js";
 
-export const JOVIAN_MOON_BODY_KEYS = [
+export const CHILD_MOON_BODY_KEYS = [
   "io",
   "europa",
   "ganymede",
   "callisto",
+  "titan",
+  "charon",
 ];
 
 const CATEGORY_DEFS = [
@@ -19,15 +22,30 @@ const CATEGORY_DEFS = [
   { value: "other", label: "Other" },
 ];
 
-export class JovianMoonLayer extends BodyLayer {
+export class ChildMoonLayer extends BodyLayer {
   constructor(viewer, key) {
     const body = BODIES[key];
-    if (!body) throw new Error(`Unknown Jovian moon body: ${key}`);
+    if (!body) throw new Error(`Unknown child moon body: ${key}`);
     super(viewer, moonConfig(body));
   }
 }
 
 function moonConfig(body) {
+  const parent = BODIES[body.parentBody];
+  const ephemeris = parent
+    ? {
+        ...body.ephemeris,
+        parentEphemerisBody: parent.ephemeris?.body,
+        parentOrientation: parent.orientation,
+      }
+    : body.ephemeris;
+  const orientation = body.orientation?.type === "tidal-parent" && parent
+    ? {
+        ...body.orientation,
+        parentEphemeris: ephemeris,
+        parentOrientation: parent.orientation,
+      }
+    : body.orientation;
   return {
     key: body.key,
     name: body.name,
@@ -52,8 +70,8 @@ function moonConfig(body) {
     }),
     articleProps: { bodyName: body.name },
     bodyPickId: (layer) => ({ kind: "body", body: body.key, layer }),
-    ephemeris: body.ephemeris,
-    orientation: body.orientation,
+    ephemeris,
+    orientation,
     skyDot: { color: body.dotColor, pixelSize: 6 },
     transition: {
       proxy: true,

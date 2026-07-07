@@ -34,7 +34,7 @@ won't work — the texture and module fetches need an HTTP origin.)
 | Moon | Position from the Simon 1994 analytic lunar ephemeris evaluated at the real-time scene clock (IAU 2000 orientation), so it sits where the Moon actually is right now; lunar Wikipedia article markers from a Wikidata SPARQL query (Moon-globe coordinates with an English Wikipedia sitelink, ranked by sitelink count) | Bundled list of famous lunar sites (Apollo sites, major craters, maria) |
 | Sun | Live astronomy-engine geocentric solar position, IAU rotation, labeled sky dot, flat Solar System Scope texture, and Mars-style scaled proxy focus transition | No surface article layer |
 | Planets | Mercury, Venus, Mars, Jupiter, Saturn, Uranus, Neptune, and Pluto use live astronomy-engine geocentric positions, IAU rotation parameters, labeled sky dots, Mars-style scaled proxy transitions, body-specific Wikidata/Wikipedia surface markers, and textured Saturn rings | Sparse bodies can legitimately show `LIVE 0` when Wikidata has no mapped articles |
-| Galilean moons | Io, Europa, Ganymede, and Callisto use Astronomy Engine's Jupiter-relative ephemerides, textured true-scale surfaces, Jupiter-neighborhood sky dots, and body-specific Wikidata/Wikipedia surface markers | Sparse or unavailable Wikidata results fall back to an empty `DATA 0` marker set |
+| Major moons | Io, Europa, Ganymede, Callisto, Titan, and Charon use parent-relative ephemerides, textured true-scale surfaces, local-system sky/context bodies, and body-specific Wikidata/Wikipedia surface markers | Sparse or unavailable Wikidata results fall back to an empty `DATA 0` marker set |
 | Shipping | Live AIS: [aisstream.io](https://aisstream.io) WebSocket (global; paste a free API key via the "key" link or `?aiskey=`) or [Digitraffic Finland](https://www.digitraffic.fi/en/marine-traffic/) open REST data (no key, Baltic coverage), dead-reckoned between reports. Hover shows name, type, flag state, speed, heading. "Destination routes" resolves each vessel's reported AIS destination against a built-in port gazetteer and draws the path. | Simulated vessels along 17 curated corridors (which stay visible as a dim reference layer in live mode) |
 
 OpenSky's public REST API does not currently expose `states/all` to arbitrary
@@ -94,10 +94,11 @@ readable on the night side.
 - Solar System Scope textures for the Sun, Mercury, Venus, Mars,
   Jupiter, Saturn, Uranus, and Neptune (CC BY 4.0, NASA-derived). Pluto texture:
   NASA/JHUAPL/SwRI New Horizons global mosaic, public domain.
-- Galilean moon textures: Io and Europa from NASA/JPL/USGS sources, Ganymede
+- Major moon textures: Io and Europa from NASA/JPL/USGS sources, Ganymede
   from NASA/Voyager+Galileo imagery processed by Bjorn Jonsson and recentered
   by J N Squire (CC BY-SA 4.0), and Callisto from Bjorn Jonsson's
-  Voyager/Galileo processing.
+  Voyager/Galileo processing. Titan texture from NASA/JPL-Caltech Cassini
+  imagery, and Charon texture from NASA/JHUAPL/SwRI New Horizons imagery.
 - Vessel positions are simulated along real corridors at an accelerated clock —
   there is no free global live AIS feed.
 
@@ -117,7 +118,7 @@ js/demo-data.js         demo flights/satellites generators, airports
 js/layers/moon.js       live-ephemeris Moon + Wikidata lunar article markers
 js/layers/sun.js        live-ephemeris Sun + scaled focus transition
 js/layers/planets.js    generic sky-dot/proxy-focus layers for planets
-js/layers/moons.js      Jupiter-relative Galilean moon body layers
+js/layers/moons.js      Parent-relative major moon body layers
 js/wiki-panel.js        geosearch + Nominatim context articles, radius slider
 data/shipping-lanes.latest.geojson  curated shipping corridor baseline
 assets/earth-night.jpg  night base texture

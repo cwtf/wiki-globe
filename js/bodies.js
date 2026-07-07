@@ -196,6 +196,24 @@ export const BODIES = {
       w: [38.90, 810.7939024, "d"],
     },
   },
+  titan: {
+    key: "titan",
+    name: "Titan",
+    label: "Titan",
+    parentBody: "saturn",
+    radius: 2574730,
+    textureUrl: "assets/titan.jpg",
+    dotColor: "#c79555",
+    markerColor: "#ffbf69",
+    wikidataGlobe: "Q2565",
+    ephemeris: {
+      type: "parent-orbit",
+      semiMajorAxis: 1221870000,
+      periodDays: 15.945421,
+      phaseDeg: 40,
+    },
+    orientation: { type: "tidal-parent" },
+  },
   uranus: {
     key: "uranus",
     name: "Uranus",
@@ -248,6 +266,24 @@ export const BODIES = {
       w: [302.695, 56.3625225, "d"],
     },
   },
+  charon: {
+    key: "charon",
+    name: "Charon",
+    label: "Charon",
+    parentBody: "pluto",
+    radius: 606000,
+    textureUrl: "assets/charon.jpg",
+    dotColor: "#b7b0a8",
+    markerColor: "#d8d0c5",
+    wikidataGlobe: "Q1063",
+    ephemeris: {
+      type: "parent-orbit",
+      semiMajorAxis: 19596000,
+      periodDays: 6.387230,
+      phaseDeg: 180,
+    },
+    orientation: { type: "tidal-parent" },
+  },
 };
 
 export const BODY_ORDER = [
@@ -263,9 +299,11 @@ export const BODY_ORDER = [
   "ganymede",
   "callisto",
   "saturn",
+  "titan",
   "uranus",
   "neptune",
   "pluto",
+  "charon",
 ];
 
 export const ACTIVE_BODY_KEYS = BODY_ORDER;
