@@ -1,6 +1,6 @@
 # Design spec: extending Wiki Globe to the rest of the solar system
 
-Status: **Mars shipped; BodyLayer + focus scoping + shared body config + generic planet focus/wiki + Saturn rings + Sun stretch body done; other stretch items TODO.** This document is a
+Status: **Mars shipped; BodyLayer + focus scoping + shared body config + generic planet focus/wiki + Saturn rings + Sun stretch body + Galilean moons done; Titan/Charon/body search/tour TODO.** This document is a
 self-contained hand-off. It records the design philosophy already shipped for
 Earth + Moon + Mars, the exact patterns to reuse, the data that has already
 been downloaded, and the technical decisions (with pitfalls) for adding
@@ -18,6 +18,7 @@ today for the Moon and/or Mars; the job is to generalize it.
 | Moon layer | `js/layers/moon.js` | The template for future solid-body behavior. Live-ephemeris position, textured ellipsoid primitive, focus/tracking camera, lazy Wikipedia markers, mission flags. |
 | Mars layer | `js/layers/mars.js` | First shipped planet. Live astronomy-engine ephemeris, IAU Mars rotation, scaled interplanetary focus transition, Mars sky dot, Wikipedia categories, mission flags, and CPU-projected surface markers to avoid GPU precision loss at true Mars distance. |
 | Generic planet layer | `js/layers/planets.js` | Mercury, Venus, Jupiter, Saturn, Uranus, Neptune, and Pluto use the shared body config, labeled sky dots, textured true-scale ellipsoids, Mars-style scaled proxy focus transition, live Wikidata/Wikipedia markers, Commons-resolved flags, generic category filters, CPU-projected marker positions, and textured Saturn rings. |
+| Galilean moon layer | `js/layers/moons.js` | Io, Europa, Ganymede, and Callisto use shared body config, Astronomy Engine `JupiterMoons` parent-relative ephemerides, Jupiter-neighborhood sky dots, textured true-scale ellipsoids, scaled proxy focus from Earth, direct local focus hops around Jupiter, and live Wikidata/Wikipedia markers. |
 | Generic body layer | `js/layers/body.js` | Shared off-Earth body behavior extracted from Moon/Mars: live transform composition, focus/tracking, optional proxy transition and sky dot, Wikidata/Wikipedia loading, mission supplements, flags, categories, nearest-article sorting, and marker projection modes. |
 | Shared body config | `js/bodies.js` | Single source of truth for body metadata: solar-system order, active UI choices, radii, textures, dot colors, Wikidata globe QIDs, ephemeris body names, and IAU rotation parameters. |
 | App wiring | `js/app.js` | Click routing by `picked.id.kind`, focus-change handler (layer suspension + sidebar scoping), body switcher, tooltips, per-frame `tick()` calls. |
@@ -441,9 +442,11 @@ spot-check a known feature per body (e.g. Olympus Mons ≈ 18.65°N, 226.2°E �
 9. **Done: Sun stretch body:** live astronomy-engine solar position, IAU solar
    rotation, flat Solar System Scope texture, labeled sky dot, scaled proxy
    focus transition, and no surface wiki layer.
-10. **Next stretch:** Galilean moons / Titan / Charon as children of their planet
-   (same BodyLayer, parent-relative ephemeris from astronomy-engine's
-   `JupiterMoons`), body search integration, "tour" mode.
+10. **Done: Galilean moons:** Io, Europa, Ganymede, and Callisto now focus as
+   child bodies with parent-relative `JupiterMoons` ephemerides and scoped sky
+   dots around Jupiter.
+11. **Next stretch:** Titan / Charon as children of their planet, body search
+   integration, "tour" mode.
 
 ---
 

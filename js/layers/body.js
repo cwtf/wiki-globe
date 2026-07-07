@@ -23,6 +23,8 @@ export class BodyLayer {
     this.name = config.name;
     this.radius = config.radius;
     this.visible = true;
+    this.skyVisible = true;
+    this.contextVisible = false;
     this.focused = false;
     this.tracking = false;
     this.articles = [];
@@ -97,7 +99,7 @@ export class BodyLayer {
         this.modelMatrix, TEXTURE_SEAM_ROT, new Cesium.Matrix4()),
       asynchronous: false,
       allowPicking: true,
-      show: this.config.showBodyWhenUnfocused !== false,
+      show: this._shouldShowBodyPrimitive(),
     }));
 
     if (this.config.transition?.proxy) {
@@ -208,6 +210,15 @@ export class BodyLayer {
     this._loadArticles();
   }
 
+  _shouldShowBodyPrimitive() {
+    return this.visible && (
+      this.config.showBodyWhenUnfocused !== false ||
+      this._trueFocused ||
+      this.contextVisible ||
+      !this.config.transition
+    );
+  }
+
   tick() {
     if (!this.primitive) return;
     const time = this.viewer.clock.currentTime;
@@ -237,8 +248,8 @@ export class BodyLayer {
       const p = this.position();
       this.skyPoint.position = Cesium.Cartesian3.clone(p, this.skyPoint.position);
       this.skyLabel.position = Cesium.Cartesian3.clone(p, this.skyLabel.position);
-      this.skyPoints.show = this.visible && !this.focused;
-      this.skyLabels.show = this.visible && !this.focused;
+      this.skyPoints.show = this.visible && this.skyVisible && !this.focused;
+      this.skyLabels.show = this.visible && this.skyVisible && !this.focused;
     }
 
     if (this.tracking) {
@@ -272,6 +283,21 @@ export class BodyLayer {
         true
       );
       return Cesium.Cartesian3.fromElements(v.x * AU, v.y * AU, v.z * AU, result);
+    }
+    if (ephem.type === "jupiter-moon") {
+      const date = Cesium.JulianDate.toDate(time);
+      const parent = Astronomy.GeoVector(Astronomy.Body.Jupiter, date, true);
+      const moons = typeof Astronomy.JupiterMoons === "function"
+        ? Astronomy.JupiterMoons(date)
+        : null;
+      const moon = moons?.[ephem.moon];
+      if (!moon) throw new Error(`Unknown Jupiter moon ephemeris: ${ephem.moon}`);
+      return Cesium.Cartesian3.fromElements(
+        (parent.x + moon.x) * AU,
+        (parent.y + moon.y) * AU,
+        (parent.z + moon.z) * AU,
+        result
+      );
     }
     throw new Error(`Unknown ephemeris type: ${ephem.type}`);
   }
@@ -405,9 +431,9 @@ export class BodyLayer {
     Cesium.Matrix4.fromRotationTranslation(s.proxyRot, s.proxyPos, this.proxyModelMatrix);
   }
 
-  focus() {
+  focus(opts = {}) {
     if (this.focused || !this.primitive) return;
-    if (this.config.transition?.proxy) {
+    if (this.config.transition?.proxy && !opts.direct) {
       this._focusViaProxy();
       return;
     }
@@ -416,6 +442,12 @@ export class BodyLayer {
 
   _focusDirect() {
     this.focused = true;
+    this._transitioning = false;
+    this._trueFocused = true;
+    if (this.primitive) this.primitive.show = this._shouldShowBodyPrimitive();
+    if (this.proxyPrimitive) this.proxyPrimitive.show = false;
+    if (this.skyPoints) this.skyPoints.show = false;
+    if (this.skyLabels) this.skyLabels.show = false;
     this.onFocusChanged?.(true);
     this.setArticlesVisible(true);
     const camera = this.viewer.camera;
@@ -487,7 +519,8 @@ export class BodyLayer {
     if (!this.focused) return;
     this._transitioning = false;
     if (this.proxyPrimitive) this.proxyPrimitive.show = false;
-    if (this.primitive) this.primitive.show = this.visible;
+    this._trueFocused = true;
+    if (this.primitive) this.primitive.show = this._shouldShowBodyPrimitive();
     this._updateTransform(this.viewer.clock.currentTime);
     this.primitive.modelMatrix = Cesium.Matrix4.multiply(
       this.modelMatrix, TEXTURE_SEAM_ROT, this._scratch.prim);
@@ -496,7 +529,6 @@ export class BodyLayer {
       ? this.config.focusOffset(this.radius)
       : new Cesium.Cartesian3(0, -this.radius * 4.4, this.radius * 0.55);
     this.viewer.camera.lookAtTransform(this.modelMatrix, offset);
-    this._trueFocused = true;
     this.tracking = true;
     this.setArticlesVisible(true);
   }
@@ -511,12 +543,12 @@ export class BodyLayer {
     this.viewer.camera.cancelFlight?.();
     if (this.proxyPrimitive) this.proxyPrimitive.show = false;
     if (this.primitive) {
-      this.primitive.show = this.visible && this.config.showBodyWhenUnfocused !== false;
+      this.primitive.show = this._shouldShowBodyPrimitive();
     }
     this.points.show = false;
     this.flags.show = false;
-    if (this.skyPoints) this.skyPoints.show = this.visible;
-    if (this.skyLabels) this.skyLabels.show = this.visible;
+    if (this.skyPoints) this.skyPoints.show = this.visible && this.skyVisible;
+    if (this.skyLabels) this.skyLabels.show = this.visible && this.skyVisible;
     this.onFocusChanged?.(false);
     const sscc = this.scene.screenSpaceCameraController;
     if (this.savedMinZoom != null) sscc.minimumZoomDistance = this.savedMinZoom;
@@ -536,15 +568,24 @@ export class BodyLayer {
   setVisible(v) {
     this.visible = v;
     if (this.primitive) {
-      this.primitive.show = v && (
-        this.config.showBodyWhenUnfocused !== false || this._trueFocused || !this.config.transition
-      );
+      this.primitive.show = this._shouldShowBodyPrimitive();
     }
     if (this.proxyPrimitive) this.proxyPrimitive.show = v && this._transitioning;
-    if (this.skyPoints) this.skyPoints.show = v && !this.focused;
-    if (this.skyLabels) this.skyLabels.show = v && !this.focused;
+    if (this.skyPoints) this.skyPoints.show = v && this.skyVisible && !this.focused;
+    if (this.skyLabels) this.skyLabels.show = v && this.skyVisible && !this.focused;
     this._syncArticles();
     if (!v) this.blur();
+  }
+
+  setSkyVisible(v) {
+    this.skyVisible = v;
+    if (this.skyPoints) this.skyPoints.show = this.visible && v && !this.focused;
+    if (this.skyLabels) this.skyLabels.show = this.visible && v && !this.focused;
+  }
+
+  setContextVisible(v) {
+    this.contextVisible = v;
+    if (this.primitive) this.primitive.show = this._shouldShowBodyPrimitive();
   }
 
   pickSurface(windowPosition) {

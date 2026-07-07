@@ -12,6 +12,7 @@ import { MoonLayer } from "./layers/moon.js";
 import { MarsLayer } from "./layers/mars.js";
 import { SunLayer } from "./layers/sun.js";
 import { PlanetLayer, PLANET_BODY_KEYS } from "./layers/planets.js";
+import { JovianMoonLayer, JOVIAN_MOON_BODY_KEYS } from "./layers/moons.js";
 import { CountrySearch } from "./search.js";
 import { WikiPanel } from "./wiki-panel.js";
 import { getAisKey, setAisKey } from "./ais.js";
@@ -95,6 +96,9 @@ async function boot() {
   const planets = Object.fromEntries(
     PLANET_BODY_KEYS.map((key) => [key, new PlanetLayer(viewer, key)])
   );
+  const jovianMoons = Object.fromEntries(
+    JOVIAN_MOON_BODY_KEYS.map((key) => [key, new JovianMoonLayer(viewer, key)])
+  );
   const wiki = new WikiPanel(viewer);
 
   ships.init();
@@ -104,12 +108,13 @@ async function boot() {
   moon.init();
   mars.init();
   for (const layer of Object.values(planets)) layer.init();
+  for (const layer of Object.values(jovianMoons)) layer.init();
 
   // "Back to Earth" appears while the camera is parked off Earth.
   const moonBack = document.getElementById("moon-back");
   moonBack.textContent = "< Back to Earth";
 
-  const bodyLayers = { sun, ...planets, moon, mars };
+  const bodyLayers = { sun, ...planets, ...jovianMoons, moon, mars };
   const planetUi = {
     name: document.getElementById("name-planet"),
     dot: document.getElementById("dot-planet"),
@@ -157,10 +162,28 @@ async function boot() {
     }
   }
 
+  function syncChildSky(body) {
+    const focusedLayer = bodyLayers[body];
+    for (const layer of Object.values(bodyLayers)) {
+      const isParentOfFocused = focusedLayer?.config.parentBody === layer.key;
+      layer.setContextVisible?.(isParentOfFocused);
+      if (!layer.config.parentBody) {
+        layer.setSkyVisible?.(!isParentOfFocused);
+        continue;
+      }
+      const sameSystem =
+        body === layer.config.parentBody ||
+        body === layer.key ||
+        focusedLayer?.config.parentBody === layer.config.parentBody;
+      layer.setSkyVisible(sameSystem);
+    }
+  }
+
   function syncBodyControls(body) {
     moonBack.hidden = body === "earth";
     selBody.value = body;
     syncScopedUi(body);
+    syncChildSky(body);
     syncPlanetControls(body);
     wiki.close();
     for (const [key, layer] of Object.entries(bodyLayers)) {
@@ -193,14 +216,26 @@ async function boot() {
       return;
     }
     const target = bodyLayers[body];
+    const directLocalHop = isLocalBodyHop(focusedBody, body);
     pendingFocusBody = body;
     if (current) {
       current.blur({ flyHome: false });
-      target.focus();
+      target.focus({ direct: directLocalHop });
     } else {
       departEarth(target);
     }
     pendingFocusBody = null;
+  }
+
+  function isLocalBodyHop(fromBody, toBody) {
+    const from = bodyLayers[fromBody];
+    const to = bodyLayers[toBody];
+    if (!from || !to) return false;
+    return (
+      to.config.parentBody === fromBody ||
+      from.config.parentBody === toBody ||
+      (to.config.parentBody && to.config.parentBody === from.config.parentBody)
+    );
   }
 
   // Leaving Earth for a proxy-based transition: pull the camera back from the
@@ -242,6 +277,7 @@ async function boot() {
   }));
   selBody.addEventListener("change", () => focusBody(selBody.value));
   syncScopedUi("earth");
+  syncChildSky("earth");
 
   // Focus scoping: only the body under the camera keeps its overlays. Earth
   // layers are parked (checkboxes untouched) while another body has focus, and
@@ -722,7 +758,7 @@ async function boot() {
   setTimeout(() => document.getElementById("hint").classList.add("faded"), 15000);
 
   // handy for debugging from the console
-  window.__globe = { viewer, sats, flights, ships, heat, wiki, truesize, search, sun, moon, mars, planets, bodyLayers };
+  window.__globe = { viewer, sats, flights, ships, heat, wiki, truesize, search, sun, moon, mars, planets, jovianMoons, bodyLayers };
 }
 
 function enhanceHeatmapSelect(select) {
@@ -1021,9 +1057,11 @@ function tooltipHtml(id) {
   }
   if (id.kind === "body") {
     const distKm = id.layer.distanceKm();
-    const note = id.layer.key === "sun"
-      ? "astronomy-engine solar ephemeris - Solar System Scope imagery - click to visit"
-      : "astronomy-engine ephemeris - Solar System Scope imagery - click to visit";
+    const note = id.layer.config.parentBody === "jupiter"
+      ? "astronomy-engine Jupiter moon ephemeris - spacecraft imagery - click to visit"
+      : id.layer.key === "sun"
+        ? "astronomy-engine solar ephemeris - Solar System Scope imagery - click to visit"
+        : "astronomy-engine ephemeris - Solar System Scope imagery - click to visit";
     return `<div class="tt-title">${esc(id.layer.name)}</div>
       <div class="tt-line">${Math.round(distKm).toLocaleString()} km from Earth right now</div>
       <div class="tt-note">${note}</div>`;

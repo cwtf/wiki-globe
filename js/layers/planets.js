@@ -45,7 +45,7 @@ export class PlanetLayer extends BodyLayer {
     super.tick();
     if (this.ringPrimitive) {
       this.ringPrimitive.modelMatrix = this.modelMatrix;
-      this.ringPrimitive.show = this.visible && this._trueFocused;
+      this.ringPrimitive.show = this._shouldShowRings();
     }
     if (this.proxyRingPrimitive) {
       this.proxyRingPrimitive.modelMatrix = this.proxyModelMatrix;
@@ -55,14 +55,19 @@ export class PlanetLayer extends BodyLayer {
 
   setVisible(v) {
     super.setVisible(v);
-    if (this.ringPrimitive) this.ringPrimitive.show = v && this._trueFocused;
+    if (this.ringPrimitive) this.ringPrimitive.show = this._shouldShowRings();
     if (this.proxyRingPrimitive) this.proxyRingPrimitive.show = v && this._transitioning;
   }
 
   blur(opts = {}) {
     super.blur(opts);
-    if (this.ringPrimitive) this.ringPrimitive.show = false;
+    if (this.ringPrimitive) this.ringPrimitive.show = this._shouldShowRings();
     if (this.proxyRingPrimitive) this.proxyRingPrimitive.show = false;
+  }
+
+  setContextVisible(v) {
+    super.setContextVisible(v);
+    if (this.ringPrimitive) this.ringPrimitive.show = this._shouldShowRings();
   }
 
   _initRings() {
@@ -91,6 +96,10 @@ export class PlanetLayer extends BodyLayer {
         show: false,
       }));
     }
+  }
+
+  _shouldShowRings() {
+    return this.visible && (this._trueFocused || this.contextVisible);
   }
 }
 
