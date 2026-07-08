@@ -171,6 +171,33 @@ labelling every country at once.
 | `country_area(iso3)` | `countryAreaKm2` (local, no network) | Exposes existing computed data as a callable tool; powers ratio questions like the China/Ukraine example with zero network calls. |
 | `fx_rates()` *(example)* | `frankfurter.app` (free, keyless, CORS-enabled) | Concrete instance of "dedicated live-data tool" — exchange rates are a live-numeric-data problem, not a search problem, and shouldn't be answered from Wikipedia/Wikidata. Follows the same live-fetch-with-fallback shape already used per indicator in `heatmap.js`. |
 
+### 5.4 Ephemeris / time-varying astronomy tools (new category)
+
+The §5.3 knowledge tools are all country/currency/prose-fact oriented and
+none of them can answer a "where on Earth is astronomical event X" query — the
+umbral track of a solar eclipse, a satellite ground track, a sub-solar point,
+etc. These are **computed from ephemeris, not fetched from Wikipedia/Wikidata**,
+and are exactly the class of query where an LLM will fabricate a
+plausible-looking polyline from training memory if no tool covers it (§9). This
+is a distinct tool category the country-centric §5.3 inventory did not
+anticipate.
+
+The enabling fact: `astronomy-engine` is **already loaded** in this codebase
+(`astronomy.browser.min.js` at [index.html:59](index.html:59), used throughout
+`js/layers/body.js` via `Astronomy.GeoVector` etc.), so — unlike the genuinely
+unsolvable exclusions in §2 (transit routing) and §9 (dynastic borders) — this
+gap is closable *locally* with no new data source and no key. It is a missing
+tool, not a missing dataset.
+
+| Tool | Backing | Notes |
+|---|---|---|
+| `eclipse_path(date?)` | `astronomy-engine` (local, no network) | Compute the central line (path of totality) of the next global solar eclipse from the given date as an ordered `[{lat, lon, time}]` list, then render via `draw_route` (§5.1). **Non-trivial:** `Astronomy.SearchGlobalSolarEclipse` returns only peak time + the point of greatest eclipse, *not* the full track — the central line must be reconstructed by sampling the Sun–Moon shadow axis over the eclipse window and intersecting it with the ellipsoid. Real computational geometry → route through the compute-heavy confirmation dialog (§8), same as `tile_shape_into_country`. Return the §9 `NO DATA` signal when no eclipse falls in range or the date is outside ephemeris coverage. |
+
+Both the §5.1 rendering half (`draw_route` takes arbitrary point lists as-is)
+and the §7 agent-session tagging apply unchanged — the only genuinely new work
+is the ephemeris computation itself and its `NO DATA`/compute-heavy wiring,
+both of which reuse patterns already defined elsewhere in this spec.
+
 ## 6. Example query → tool trace
 
 Sanity-check the tool inventory against the queries discussed:
@@ -180,6 +207,7 @@ Sanity-check the tool inventory against the queries discussed:
 - **"Colour grade by closeness to high-income status"** → existing World Bank GNI data (already live/bundled in `heatmap.js`/`country-data.js`) + a sourced high-income threshold constant → LLM/tool computes `(threshold − value) / threshold` per country → `color_countries({...})`.
 - **"How many Ukraines fit into China"** → `country_area("UKR")`, `country_area("CHN")` → arithmetic (no network) → state the ratio, optionally `tile_shape_into_country` if the stretch feature ships, otherwise fall back to a single `truesize.js` overlay for eyeballing.
 - **"Exchange rate of currencies on the globe"** → `fx_rates()` → `color_countries` or per-country `add_pin` labels.
+- **"Trace the path of the upcoming solar eclipse"** → `eclipse_path()` (astronomy-engine finds the next global eclipse, reconstructs the central line as sampled `{lat, lon, time}` points, behind the compute-heavy confirmation dialog) → `draw_route(points)`. If no eclipse falls in the searched range, returns `NO DATA` and the model says so rather than drawing a guessed track (§9).
 
 ## 7. Entity lifecycle & session model
 
@@ -297,7 +325,10 @@ Concrete requirements:
    high-income-proximity queries.
 4. **Geometry tool**: `country_area` exposed as a callable. Unlocks
    area-ratio questions with zero network calls.
-5. **Stretch**: `tile_shape_into_country` polygon packing/tiling visualization.
+5. **Stretch**: `tile_shape_into_country` polygon packing/tiling visualization,
+   and `eclipse_path` ephemeris tool (§5.4) — both gated behind the §8
+   compute-heavy confirmation dialog, both reusing `draw_route`/geometry
+   rendering. Independent of each other; either can ship without the other.
 
 Explicitly deferred indefinitely: general web search, transit/public-transport
 routing (see §2).
@@ -446,6 +477,16 @@ still runs (`preview_start` against the `wiki-globe` launch config, port 8080).
   sphere polygon packing extending `js/layers/truesize.js`'s single rigid
   overlay. Must route through the compute-heavy confirmation dialog (§8), not
   fire automatically. Real computational-geometry work — treat as optional.
+- [ ] **5.2 `eclipse_path(date?)`** (§5.4) — reconstruct the next global solar
+  eclipse's central line from `astronomy-engine` (already loaded, no key, no
+  network) by sampling the Sun–Moon shadow axis over the eclipse window;
+  render via `draw_route` (§5.1), tag as `agent-session` (§7). Route through
+  the compute-heavy confirmation dialog (§8) and return the §9 `NO DATA`
+  signal when no eclipse is in range. Independent of 5.1 — can ship without
+  the tiling tool. *Note:* `SearchGlobalSolarEclipse` gives only peak +
+  greatest-eclipse point, so the full track is your own geometry — verify a
+  sampled point against a published path (e.g. a known past eclipse) before
+  trusting it, per the CLAUDE.md orientation-verification discipline.
 
 ### Cross-cutting, do throughout
 
