@@ -5,7 +5,9 @@ const PIN_COLOR = Cesium.Color.fromCssColorString("#facc15");
 const ROUTE_COLOR = Cesium.Color.fromCssColorString("#facc15").withAlpha(0.72);
 const HIGHLIGHT_COLOR = Cesium.Color.fromCssColorString("#6ef3ff").withAlpha(0.92);
 const DEFAULT_HEIGHT_M = 2800;
+const LABEL_HEIGHT_M = 5200;
 const MAX_ROUTE_POINTS = 24;
+const MAX_COUNTRY_LABELS = 250;
 const WIKIPEDIA_API_URL = "https://en.wikipedia.org/w/api.php";
 const WIKIPEDIA_SUMMARY_URL = "https://en.wikipedia.org/api/rest_v1/page/summary/";
 const DEFAULT_WIKI_LIMIT = 5;
@@ -119,6 +121,25 @@ export class AgentToolRegistry {
       {
         type: "function",
         function: {
+          name: "label_countries",
+          description: "Add agent-owned text labels to present-day countries by ISO-3166 alpha-3 code. Use this after structured tools like wikidata_sparql return per-country scalar facts. Labels use distance-based culling so dense maps stay readable at globe zoom.",
+          parameters: {
+            type: "object",
+            properties: {
+              labels: {
+                type: "object",
+                description: "Map of ISO3 country code to short label text.",
+                additionalProperties: { type: "string" },
+              },
+              color: { type: "string", description: "Optional CSS label color." },
+            },
+            required: ["labels"],
+          },
+        },
+      },
+      {
+        type: "function",
+        function: {
           name: "highlight_country",
           description: "Outline one present-day country by ISO-3166 alpha-3 code. Use only for current country borders already in the local country dataset.",
           parameters: {
@@ -178,6 +199,7 @@ export class AgentToolRegistry {
     if (name === "wiki_extract") return this.wikiExtract(args);
     if (name === "wikidata_sparql") return this.wikidataSparql(args);
     if (name === "geocode") return this.geocode(args);
+    if (name === "label_countries") return this.labelCountries(args);
     if (name === "highlight_country") return this.highlightCountry(args);
     if (name === "draw_route") return this.drawRoute(args);
     if (name === "clear_agent_overlays") return this.clearAgentOverlays();
@@ -304,6 +326,53 @@ export class AgentToolRegistry {
     const results = places.map(normalizeNominatimPlace).filter(Boolean);
     if (results.length === 0) return noData(`No valid geocoding coordinates found for "${q}".`);
     return ok({ query: q, results });
+  }
+
+  async labelCountries({ labels, color = null }) {
+    if (!labels || typeof labels !== "object" || Array.isArray(labels)) {
+      return noData("label_countries needs an object mapping ISO3 country codes to text labels.");
+    }
+    const entries = Object.entries(labels)
+      .map(([iso3, text]) => ({ iso3: String(iso3 ?? "").trim().toUpperCase(), text: String(text ?? "").trim() }))
+      .filter((entry) => /^[A-Z]{3}$/.test(entry.iso3) && entry.text)
+      .slice(0, MAX_COUNTRY_LABELS);
+    if (entries.length === 0) return noData("No valid ISO3 country labels were supplied.");
+
+    const geo = await loadCountryGeo();
+    const countries = new Map(geo.map((feature) => [feature.id, feature]));
+    const material = safeColor(color, Cesium.Color.WHITE);
+    const missing = [];
+    const placed = [];
+    for (const entry of entries) {
+      const country = countries.get(entry.iso3);
+      if (!country) {
+        missing.push(entry.iso3);
+        continue;
+      }
+      const center = countryLabelPoint(country);
+      const density = labelDensityFor(country, entries.length);
+      const entity = this._track(this.viewer.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(center.lon, center.lat, LABEL_HEIGHT_M),
+        label: {
+          text: entry.text.slice(0, 48),
+          font: "bold 13px Segoe UI, sans-serif",
+          fillColor: material,
+          outlineColor: Cesium.Color.BLACK.withAlpha(0.78),
+          outlineWidth: 3,
+          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+          pixelOffset: new Cesium.Cartesian2(0, 0),
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+          scaleByDistance: new Cesium.NearFarScalar(4.0e5, density.nearScale, density.farDistance, density.farScale),
+          translucencyByDistance: new Cesium.NearFarScalar(4.0e5, 1.0, density.farDistance, 0.0),
+          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, density.farDistance),
+        },
+        properties: { kind: "agent", tool: "label_countries", iso3: entry.iso3, text: entry.text },
+      }));
+      placed.push({ iso3: entry.iso3, name: country.name, label: entry.text.slice(0, 48), lat: center.lat, lon: center.lon, entityId: entity.id });
+    }
+    return placed.length
+      ? ok({ placed: placed.length, missing, labels: placed })
+      : noData("No supplied ISO3 country codes matched the local country dataset.", { missing });
   }
 
   async highlightCountry({ iso3, color = null }) {
@@ -466,6 +535,23 @@ function normalizeBoundingBox(value) {
 function numberOrNull(value) {
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
+}
+
+function countryLabelPoint(country) {
+  const [w, s, e, n] = country.bbox;
+  return { lon: (w + e) / 2, lat: (s + n) / 2 };
+}
+
+function labelDensityFor(country, totalLabels) {
+  const [w, s, e, n] = country.bbox;
+  const span = Math.max(0.1, Math.abs(e - w)) * Math.max(0.1, Math.abs(n - s));
+  const crowd = totalLabels > 120 ? 0.72 : totalLabels > 60 ? 0.86 : 1;
+  const farDistance = span > 500 ? 5.2e7 : span > 120 ? 3.6e7 : span > 25 ? 2.2e7 : 1.2e7;
+  return {
+    farDistance: farDistance * crowd,
+    nearScale: span > 120 ? 1.0 : 0.86,
+    farScale: span > 120 ? 0.52 : 0.28,
+  };
 }
 
 function safeColor(value, fallback) {

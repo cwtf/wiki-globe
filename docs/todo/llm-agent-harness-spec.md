@@ -458,10 +458,10 @@ still runs (`preview_start` against the `wiki-globe` launch config, port 8080).
 
 ### Phase 3 — Bulk primitives (§10.3)
 
-- [ ] **3.1 `label_countries({iso3: text})`** (§5.2) — the genuine rendering
+- [x] **3.1 `label_countries({iso3: text})`** (§5.2) — the genuine rendering
   gap. Needs (a) per-country centroid from existing bbox data in
   `js/country-geo.js`, and (b) label-density/zoom-level culling so ~195 labels
-  don't collide at low zoom. Tag as `agent-session`.
+  don't collide at low zoom. Tag as `agent-session`. **Shipped 2026-07-09:** `AgentToolRegistry` now exposes `label_countries({labels:{iso3:text}, color?})`, resolves ISO3 codes against `loadCountryGeo`, places labels at bbox-center country points, tags every label entity with `agent-session`, reports missing ISO3 codes, and uses Cesium distance display/scale/translucency settings so dense label sets thin out by zoom. Verified with mocked country/Cesium smoke tests covering placement, missing codes, culling properties, and clearing.
 - [ ] **3.2 `color_countries({iso3: number}, stops?)`** (§5.2) — a generic
   value-map choropleth entry point that feeds `fillFeature`/`colorFor` in
   `js/layers/heatmap.js` directly, decoupled from its fixed named-indicator mode
