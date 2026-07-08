@@ -41,9 +41,9 @@ labelling every country at once.
   infrastructure project. Excluded per product decision — out of scope for
   this spec.
 - **A backend/server component.** The app is a static site with no build step;
-  the harness must stay pure ES modules, calling the Anthropic API directly
-  from the browser and public keyless endpoints directly, same as every other
-  layer in this codebase.
+  the harness must stay pure ES modules, calling the OpenRouter/DeepSeek/Ollama
+  APIs directly from the browser and public keyless endpoints directly, same
+  as every other layer in this codebase.
 
 ## 3. Architecture overview
 
@@ -105,15 +105,26 @@ labelling every country at once.
   (`side-collapse-toggle wiki-toggle`, `aria-controls`/`aria-expanded`) at
   [index.html:376](index.html:376) is the pattern to clone: same toggle-button
   shape, same collapse behavior, new `#agent-panel`/`#agent-toggle` pair.
-- **Model selection**: a curated dropdown per provider, seeded with the
-  specific models already named in this spec (OpenRouter: whatever's
-  explicitly listed as recommended, including `deepseek/deepseek-chat` and
-  `deepseek/deepseek-r1`; DeepSeek direct: `deepseek-chat`/`deepseek-reasoner`;
-  Ollama: `llama3.1`, `qwen2.5`, `mistral-nemo` and similar tool-calling-
-  capable models called out in §8), **plus a free-text field** to enter any
-  other model ID not in the curated list — covers OpenRouter's much larger
-  catalog and any future Ollama pull without needing the dropdown maintained
-  in lockstep.
+- **Model selection**: a curated dropdown per provider, plus a free-text field
+  to enter any other model ID not in the curated list — covers OpenRouter's
+  much larger catalog and any future Ollama pull without the dropdown needing
+  to be maintained in lockstep. Concrete seed lists per provider:
+  - **DeepSeek direct**: `deepseek-chat`, `deepseek-reasoner` — DeepSeek only
+    has a couple of models, so this list is small and stable.
+  - **Ollama**: `llama3.1`, `qwen2.5`, `mistral-nemo` — the tool-calling-capable
+    models already called out in §8 — but this is really just a seed; the
+    dropdown should be populated dynamically from `GET /api/tags` on the
+    user's own server (§3), since it depends on what they've pulled locally.
+  - **OpenRouter is the gap this spec doesn't close yet**: no concrete curated
+    list is decided here, and it shouldn't be hardcoded as fixed strings —
+    OpenRouter model slugs get renamed/added over time. OpenRouter exposes a
+    keyless `GET https://openrouter.ai/api/v1/models` listing endpoint (same
+    shape of trick as Ollama's `/api/tags`); the curated shortlist should be a
+    small set of preferred model IDs (flagship Claude/GPT/Gemini/DeepSeek
+    entries) filtered against that live list at load time, not typed in as
+    literal strings that can silently go stale. **Before starting task 1.2/1.5
+    below, pick the actual shortlist by querying that endpoint** — don't
+    invent slugs from memory.
 
 ## 4. Reuse map
 
@@ -129,7 +140,7 @@ labelling every country at once.
 | Wikipedia search/extracts | `js/wiki-panel.js` (`en.wikipedia.org/w/api.php`, REST summary) | Reusable as-is for prose/list-style facts. |
 | Wikidata SPARQL | `js/bodies.js` (`query.wikidata.org/sparql`) | Pattern reusable, but currently scoped to body/globe QIDs — needs generalizing to arbitrary property queries (e.g. `P474` calling codes). |
 | Reverse geocoding | `js/wiki-panel.js` (Nominatim `/reverse`) | Forward geocoding (`/search`) is the sibling endpoint, not yet used — small addition. |
-| BYOK key pattern | `js/ais.js` (`getAisKey`/`setAisKey`) | Directly reusable pattern for the Anthropic key. |
+| BYOK key pattern | `js/ais.js` (`getAisKey`/`setAisKey`) | Directly reusable pattern, namespaced per-provider for the OpenRouter/DeepSeek keys (§3). |
 
 ## 5. Tool inventory
 
@@ -233,9 +244,9 @@ of answering from parametric memory.
 This came up concretely while scoping "show me the evolution of the Chinese
 border from Qin Dynasty till present" as an example query: real dynastic
 boundary polygon data essentially doesn't exist as a live or complete bundled
-dataset (see the discussion this section replaces — no keyless source, and
-the one real academic dataset, CHGIS, would require a dedicated curation
-effort that hasn't happened). An LLM asked this will happily describe a
+dataset — no keyless source exists, and the one real academic dataset, CHGIS,
+would require a dedicated curation effort that hasn't happened. An LLM asked
+this will happily describe a
 plausible-sounding border from training knowledge if not explicitly told not
 to. On a globe UI a fabricated boundary rendered as a polygon looks exactly
 as authoritative as a real one — a more dangerous failure mode than a wrong
@@ -347,24 +358,33 @@ still runs (`preview_start` against the `wiki-globe` launch config, port 8080).
   fine. Wire `chat-panel.js` init into `js/app.js` boot and add its instance to
   `window.__globe` (CLAUDE.md convention). *Done when:* app boots with the four
   modules loaded and no console errors.
-- [ ] **1.2 Provider registry + OpenAI-compatible adapter** (`providers.js`,
-  §3). Register OpenRouter, DeepSeek-direct, and Ollama with `id`, `label`,
-  `baseUrl`, `requiresKey`, curated model list (from §3), and setup notes. One
-  shared adapter builds the `messages`+`tools` request and parses
-  `tool_calls`/`role:"tool"` responses for all three. *Done when:* a hardcoded
-  test call to one provider returns a parsed assistant message.
-- [ ] **1.3 Per-provider BYOK key storage** (§3, §8). Clone the
+- [ ] **1.2 Verify DeepSeek-direct CORS, and pick the OpenRouter model
+  shortlist** (§3, §11) — do this *before* 1.3, since 1.3 builds the registry
+  around these two facts. `fetch` DeepSeek's endpoint from the page and check
+  for a CORS error; record the result in §11 — if blocked, drop the
+  DeepSeek-direct provider entirely and offer `deepseek/*` models through
+  OpenRouter only (no adapter change needed). Separately, query OpenRouter's
+  `GET /api/v1/models` and pick the actual curated shortlist (§3) — don't
+  hardcode remembered slugs.
+- [ ] **1.3 Provider registry + OpenAI-compatible adapter** (`providers.js`,
+  §3). Register OpenRouter, (DeepSeek-direct if 1.2 confirmed it works), and
+  Ollama with `id`, `label`, `baseUrl`, `requiresKey`, the model shortlist from
+  1.2, and setup notes. One shared adapter builds the `messages`+`tools`
+  request and parses `tool_calls`/`role:"tool"` responses for all three. *Done
+  when:* a hardcoded test call to one provider returns a parsed assistant
+  message.
+- [ ] **1.4 Per-provider BYOK key storage** (§3, §8). Clone the
   `getAisKey`/`setAisKey` pattern from `js/ais.js` (`?key=` param or
   `localStorage`), keyed per-provider so OpenRouter and DeepSeek keys coexist;
   Ollama needs none. *Done when:* keys persist across reload and are namespaced
   per provider.
-- [ ] **1.4 Agent tool-use loop** (`harness.js`, §3). Send `messages`+`tools`;
+- [ ] **1.5 Agent tool-use loop** (`harness.js`, §3). Send `messages`+`tools`;
   while the response has `tool_calls`, execute against the registry and append
   `role:"tool"` results; stop on a plain assistant message. Enforce the
   per-turn tool-call budget (§8) and the malformed/missing-tool-call graceful
   failure (§8, tell the user the model doesn't support tool use well). *Done
   when:* a multi-step query completes a full loop with a capped call count.
-- [ ] **1.5 Chat panel UI** (`chat-panel.js`, §3). Clone the `#wiki-panel` /
+- [ ] **1.6 Chat panel UI** (`chat-panel.js`, §3). Clone the `#wiki-panel` /
   `#wp-toggle` collapse pattern at [index.html:376](index.html:376) into a new
   `#agent-panel` / `#agent-toggle` pair. Include: provider selector,
   per-provider key field (hidden for Ollama), model dropdown **plus free-text
@@ -373,22 +393,18 @@ still runs (`preview_start` against the `wiki-globe` launch config, port 8080).
   setup hint shown only when Ollama is selected (§3). For Ollama, populate the
   model dropdown from `GET /api/tags` (§3). *Done when:* the panel collapses
   like the Wikipedia panel and drives a real end-to-end query.
-- [ ] **1.6 Groundedness contract** (§9) — foundational, not polish. Write the
+- [ ] **1.7 Groundedness contract** (§9) — foundational, not polish. Write the
   system prompt's hard "only state what a tool returned; refuse if no tool
   covers it" rule. Define the tool-result "no data" signal shape (distinct from
   empty-but-valid) that every tool will use. Add the `NO DATA` badge state to
   the chat UI. *Done when:* an out-of-coverage query (e.g. the Qin-dynasty
   border example) yields an explicit refusal, not a fabricated answer.
-- [ ] **1.7 Single-target map tools** (`tools.js`, §5.1). Wrap `add_pin`
+- [ ] **1.8 Single-target map tools** (`tools.js`, §5.1). Wrap `add_pin`
   (via `_placePin`), `highlight_country` (via `_highlightCountry`), `draw_route`
   (via `_buildRoute`), and implement `clear_agent_overlays`. Every
   agent-adding tool tags its entities with the `agent-session` marker (§7) so
   the clear sweeps only agent-owned entities. *Done when:* the LLM can pin,
   highlight, route, and clear via natural language.
-- [ ] **1.8 Verify DeepSeek-direct CORS** (§3, §10.1, §11) — do this early.
-  `fetch` DeepSeek's endpoint from the page and check for a CORS error. Record
-  the result in §11: if blocked, drop the DeepSeek-direct provider and offer
-  `deepseek/*` models through OpenRouter only (no adapter change needed).
 
 ### Phase 2 — Knowledge tools (§10.2)
 
@@ -398,7 +414,10 @@ still runs (`preview_start` against the `wiki-globe` launch config, port 8080).
 - [ ] **2.2 Generalize `wikidata_sparql`** (§4, §5.3). Extend the
   `query.wikidata.org/sparql` usage in `js/bodies.js` beyond body/globe QIDs to
   arbitrary property queries (e.g. `P474` calling codes, `P2046` area). Return
-  `NO DATA` on zero rows.
+  `NO DATA` on zero rows. Encode the §5.3 tool-selection preference (prefer
+  this over `wiki_search` whenever the fact is a scalar per-entity property at
+  scale) in this tool's own JSON-schema `description` field, not just as prose
+  in this doc — the model only sees what's in the schema at call time.
 - [ ] **2.3 `geocode(placeName)`** (§5.3) — forward Nominatim `/search`, the
   sibling of the `/reverse` call already in `js/wiki-panel.js`. Route through
   the throttle/batch layer (§8) — Nominatim caps at ~1 req/sec and needs a real
