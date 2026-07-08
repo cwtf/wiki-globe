@@ -1125,7 +1125,7 @@ function stullWetBulb(t, rh) {
 }
 
 // Paint one { rings } feature onto the equirectangular choropleth canvas.
-function fillFeature(ctx, f, value, stops) {
+export function fillFeature(ctx, f, value, stops) {
   if (value == null) {
     ctx.fillStyle = NO_DATA_FILL;
   } else {
@@ -1143,7 +1143,7 @@ function fillFeature(ctx, f, value, stops) {
   ctx.fill("evenodd");
 }
 
-function colorFor(stops, v) {
+export function colorFor(stops, v) {
   if (v <= stops[0][0]) return stops[0][1];
   for (let i = 1; i < stops.length; i++) {
     if (v <= stops[i][0]) {

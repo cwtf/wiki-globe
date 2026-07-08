@@ -462,10 +462,10 @@ still runs (`preview_start` against the `wiki-globe` launch config, port 8080).
   gap. Needs (a) per-country centroid from existing bbox data in
   `js/country-geo.js`, and (b) label-density/zoom-level culling so ~195 labels
   don't collide at low zoom. Tag as `agent-session`. **Shipped 2026-07-09:** `AgentToolRegistry` now exposes `label_countries({labels:{iso3:text}, color?})`, resolves ISO3 codes against `loadCountryGeo`, places labels at bbox-center country points, tags every label entity with `agent-session`, reports missing ISO3 codes, and uses Cesium distance display/scale/translucency settings so dense label sets thin out by zoom. Verified with mocked country/Cesium smoke tests covering placement, missing codes, culling properties, and clearing.
-- [ ] **3.2 `color_countries({iso3: number}, stops?)`** (§5.2) — a generic
+- [x] **3.2 `color_countries({iso3: number}, stops?)`** (§5.2) — a generic
   value-map choropleth entry point that feeds `fillFeature`/`colorFor` in
   `js/layers/heatmap.js` directly, decoupled from its fixed named-indicator mode
-  switch. *Unlocks calling-codes and high-income-proximity queries (§6).*
+  switch. *Unlocks calling-codes and high-income-proximity queries (§6).* **Shipped 2026-07-09:** `AgentToolRegistry` now exposes `color_countries({values:{iso3:number}, stops?})`, reuses exported `fillFeature`/`colorFor` heatmap helpers through a transparent single-tile canvas overlay, auto-generates blue/yellow/red stops when omitted, tracks agent imagery layers for `clear_agent_overlays`, and reports missing ISO3 codes. Verified with mocked country/Cesium/canvas smoke tests covering painting, custom/default stops, invalid inputs, and layer clearing.
 
 ### Phase 4 — Geometry tool (§10.4)
 

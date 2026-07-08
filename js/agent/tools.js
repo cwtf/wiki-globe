@@ -1,4 +1,5 @@
 import { loadCountryGeo } from "../country-geo.js";
+import { fillFeature } from "../layers/heatmap.js";
 
 const AGENT_MARKER = "agent-session";
 const PIN_COLOR = Cesium.Color.fromCssColorString("#facc15");
@@ -8,6 +9,10 @@ const DEFAULT_HEIGHT_M = 2800;
 const LABEL_HEIGHT_M = 5200;
 const MAX_ROUTE_POINTS = 24;
 const MAX_COUNTRY_LABELS = 250;
+const MAX_COLOR_COUNTRIES = 250;
+const CHOROPLETH_W = 1440;
+const CHOROPLETH_H = 720;
+const DEFAULT_CHOROPLETH_COLORS = [[79, 195, 247], [250, 204, 21], [239, 68, 68]];
 const WIKIPEDIA_API_URL = "https://en.wikipedia.org/w/api.php";
 const WIKIPEDIA_SUMMARY_URL = "https://en.wikipedia.org/api/rest_v1/page/summary/";
 const DEFAULT_WIKI_LIMIT = 5;
@@ -37,6 +42,7 @@ export class AgentToolRegistry {
   constructor(viewer) {
     this.viewer = viewer;
     this.entities = new Set();
+    this.layers = new Set();
     this.sessionId = globalThis.crypto?.randomUUID?.() ?? String(Date.now());
     this.networkQueue = new ThrottleQueue();
   }
@@ -140,6 +146,35 @@ export class AgentToolRegistry {
       {
         type: "function",
         function: {
+          name: "color_countries",
+          description: "Create an agent-owned choropleth overlay for present-day countries from a map of ISO-3166 alpha-3 codes to numeric values. Uses the same country canvas fill and piecewise-linear color stops as the heatmap layer, but is driven by arbitrary tool-returned values instead of fixed app metrics.",
+          parameters: {
+            type: "object",
+            properties: {
+              values: {
+                type: "object",
+                description: "Map of ISO3 country code to numeric value.",
+                additionalProperties: { type: "number" },
+              },
+              stops: {
+                type: "array",
+                description: "Optional color ramp as [value, [r,g,b]] stops. If omitted, a blue-yellow-red ramp is generated from the supplied values.",
+                minItems: 2,
+                maxItems: 12,
+                items: {
+                  type: "array",
+                  minItems: 2,
+                  maxItems: 2,
+                },
+              },
+            },
+            required: ["values"],
+          },
+        },
+      },
+      {
+        type: "function",
+        function: {
           name: "highlight_country",
           description: "Outline one present-day country by ISO-3166 alpha-3 code. Use only for current country borders already in the local country dataset.",
           parameters: {
@@ -200,6 +235,7 @@ export class AgentToolRegistry {
     if (name === "wikidata_sparql") return this.wikidataSparql(args);
     if (name === "geocode") return this.geocode(args);
     if (name === "label_countries") return this.labelCountries(args);
+    if (name === "color_countries") return this.colorCountries(args);
     if (name === "highlight_country") return this.highlightCountry(args);
     if (name === "draw_route") return this.drawRoute(args);
     if (name === "clear_agent_overlays") return this.clearAgentOverlays();
@@ -375,6 +411,61 @@ export class AgentToolRegistry {
       : noData("No supplied ISO3 country codes matched the local country dataset.", { missing });
   }
 
+  async colorCountries({ values, stops = null }) {
+    if (!values || typeof values !== "object" || Array.isArray(values)) {
+      return noData("color_countries needs an object mapping ISO3 country codes to numeric values.");
+    }
+    if (!globalThis.document?.createElement) {
+      return noData("color_countries needs a browser canvas environment.");
+    }
+    if (!this.viewer.imageryLayers?.addImageryProvider) {
+      return noData("color_countries needs a Cesium viewer with imageryLayers.");
+    }
+    const entries = Object.entries(values)
+      .map(([iso3, value]) => ({ iso3: String(iso3 ?? "").trim().toUpperCase(), value: Number(value) }))
+      .filter((entry) => /^[A-Z]{3}$/.test(entry.iso3) && Number.isFinite(entry.value))
+      .slice(0, MAX_COLOR_COUNTRIES);
+    if (entries.length === 0) return noData("No valid ISO3 numeric country values were supplied.");
+
+    const colorStops = normalizeColorStops(stops, entries.map((entry) => entry.value));
+    if (!colorStops) return noData("Invalid color_countries stops. Use [value, [r,g,b]] entries with finite values and RGB components 0-255.");
+
+    const geo = await loadCountryGeo();
+    const countries = new Map(geo.map((feature) => [feature.id, feature]));
+    const canvas = document.createElement("canvas");
+    canvas.width = CHOROPLETH_W;
+    canvas.height = CHOROPLETH_H;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return noData("Unable to create choropleth canvas context.");
+
+    const missing = [];
+    const colored = [];
+    for (const entry of entries) {
+      const country = countries.get(entry.iso3);
+      if (!country) {
+        missing.push(entry.iso3);
+        continue;
+      }
+      fillFeature(ctx, country, entry.value, colorStops);
+      colored.push({ iso3: entry.iso3, name: country.name, value: entry.value });
+    }
+    if (colored.length === 0) return noData("No supplied ISO3 country codes matched the local country dataset.", { missing });
+
+    const provider = await Cesium.SingleTileImageryProvider.fromUrl(canvas.toDataURL("image/png"));
+    const layer = this._trackLayer(this.viewer.imageryLayers.addImageryProvider(provider));
+    layer.show = true;
+    layer.alpha = 1;
+    layer.agentMetadata = { kind: "agent", tool: "color_countries", count: colored.length };
+    return ok({
+      layerId: layer[AGENT_MARKER],
+      colored: colored.length,
+      missing,
+      range: valueRange(colored.map((entry) => entry.value)),
+      stops: colorStops,
+      countries: colored,
+    });
+  }
+
   async highlightCountry({ iso3, color = null }) {
     const id = String(iso3 ?? "").trim().toUpperCase();
     if (!id) return noData("Missing ISO3 country code.");
@@ -444,16 +535,25 @@ export class AgentToolRegistry {
   }
 
   clearAgentOverlays() {
-    const count = this.entities.size;
+    const entityCount = this.entities.size;
+    const layerCount = this.layers.size;
     for (const entity of this.entities) this.viewer.entities.remove(entity);
+    for (const layer of this.layers) this.viewer.imageryLayers?.remove?.(layer);
     this.entities.clear();
-    return ok({ cleared: count });
+    this.layers.clear();
+    return ok({ cleared: entityCount + layerCount, entities: entityCount, layers: layerCount });
   }
 
   _track(entity) {
     entity[AGENT_MARKER] = this.sessionId;
     this.entities.add(entity);
     return entity;
+  }
+
+  _trackLayer(layer) {
+    layer[AGENT_MARKER] = `${this.sessionId}:layer:${this.layers.size + 1}`;
+    this.layers.add(layer);
+    return layer;
   }
 }
 
@@ -535,6 +635,39 @@ function normalizeBoundingBox(value) {
 function numberOrNull(value) {
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
+}
+
+function normalizeColorStops(stops, values) {
+  if (!Array.isArray(stops) || stops.length === 0) return defaultColorStops(values);
+  const out = stops.map((stop) => {
+    if (!Array.isArray(stop) || stop.length < 2) return null;
+    const value = Number(stop[0]);
+    const color = stop[1];
+    if (!Number.isFinite(value) || !Array.isArray(color) || color.length < 3) return null;
+    const rgb = color.slice(0, 3).map((component) => Math.round(Number(component)));
+    if (!rgb.every((component) => Number.isFinite(component) && component >= 0 && component <= 255)) return null;
+    return [value, rgb];
+  });
+  if (out.some((stop) => !stop) || out.length < 2) return null;
+  return out.sort((a, b) => a[0] - b[0]);
+}
+
+function defaultColorStops(values) {
+  const range = valueRange(values);
+  if (!range) return null;
+  const min = range.min;
+  const max = range.max;
+  const mid = min === max ? min : min + (max - min) / 2;
+  if (min === max) {
+    return [[min - 1, DEFAULT_CHOROPLETH_COLORS[0]], [min, DEFAULT_CHOROPLETH_COLORS[1]], [min + 1, DEFAULT_CHOROPLETH_COLORS[2]]];
+  }
+  return [[min, DEFAULT_CHOROPLETH_COLORS[0]], [mid, DEFAULT_CHOROPLETH_COLORS[1]], [max, DEFAULT_CHOROPLETH_COLORS[2]]];
+}
+
+function valueRange(values) {
+  const clean = values.filter(Number.isFinite);
+  if (clean.length === 0) return null;
+  return { min: Math.min(...clean), max: Math.max(...clean) };
 }
 
 function countryLabelPoint(country) {
