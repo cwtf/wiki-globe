@@ -399,13 +399,13 @@ still runs (`preview_start` against the `wiki-globe` launch config, port 8080).
   OpenRouter only (no adapter change needed). Separately, query OpenRouter's
   `GET /api/v1/models` and pick the actual curated shortlist (§3) — don't
   hardcode remembered slugs. **Shipped 2026-07-09:** DeepSeek preflight succeeded; OpenRouter live shortlist selected as `openai/gpt-4.1`, `openai/gpt-4.1-mini`, `anthropic/claude-sonnet-4`, `google/gemini-2.5-pro`, `google/gemini-2.5-flash`, `deepseek/deepseek-chat`, and `deepseek/deepseek-r1`.
-- [ ] **1.3 Provider registry + OpenAI-compatible adapter** (`providers.js`,
+- [x] **1.3 Provider registry + OpenAI-compatible adapter** (`providers.js`,
   §3). Register OpenRouter, (DeepSeek-direct if 1.2 confirmed it works), and
   Ollama with `id`, `label`, `baseUrl`, `requiresKey`, the model shortlist from
   1.2, and setup notes. One shared adapter builds the `messages`+`tools`
   request and parses `tool_calls`/`role:"tool"` responses for all three. *Done
   when:* a hardcoded test call to one provider returns a parsed assistant
-  message.
+  message. **Shipped 2026-07-09:** `providers.js` registers OpenRouter, DeepSeek-direct, and Ollama; `buildChatCompletionRequest`/`parseChatCompletionResponse` back the shared adapter; a mocked Ollama-compatible `completeChat` smoke test returned a parsed assistant message, tool call, and token usage.
 - [ ] **1.4 Per-provider BYOK key storage** (§3, §8). Clone the
   `getAisKey`/`setAisKey` pattern from `js/ais.js` (`?key=` param or
   `localStorage`), keyed per-provider so OpenRouter and DeepSeek keys coexist;

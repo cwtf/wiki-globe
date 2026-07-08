@@ -112,7 +112,7 @@ export async function availableModels(providerId, baseUrl = null) {
   return provider.seedModels;
 }
 
-export async function completeChat({ providerId, model, key, baseUrl, messages, tools, signal }) {
+export function buildChatCompletionRequest({ providerId, model, key, baseUrl, messages, tools }) {
   const provider = providerById(providerId);
   if (provider.requiresKey && !key) {
     throw new Error(`${provider.label} needs an API key.`);
@@ -122,7 +122,7 @@ export async function completeChat({ providerId, model, key, baseUrl, messages, 
   const headers = { "Content-Type": "application/json" };
   if (provider.requiresKey) headers.Authorization = `Bearer ${key}`;
   if (provider.id === "openrouter") {
-    headers["HTTP-Referer"] = location.origin;
+    headers["HTTP-Referer"] = globalThis.location?.origin ?? "https://wiki-globe.local";
     headers["X-Title"] = "Wiki Globe";
   }
 
@@ -133,7 +133,20 @@ export async function completeChat({ providerId, model, key, baseUrl, messages, 
     tool_choice: tools?.length ? "auto" : undefined,
   };
 
-  const res = await fetch(url, {
+  return { provider, url, headers, body };
+}
+
+export async function completeChat({ providerId, model, key, baseUrl, messages, tools, signal, fetchImpl = fetch }) {
+  const { provider, url, headers, body } = buildChatCompletionRequest({
+    providerId,
+    model,
+    key,
+    baseUrl,
+    messages,
+    tools,
+  });
+
+  const res = await fetchImpl(url, {
     method: "POST",
     headers,
     body: JSON.stringify(body),
@@ -145,7 +158,10 @@ export async function completeChat({ providerId, model, key, baseUrl, messages, 
     throw new Error(`${provider.label} HTTP ${res.status}${detail ? `: ${detail}` : ""}`);
   }
 
-  const data = await res.json();
+  return parseChatCompletionResponse(await res.json());
+}
+
+export function parseChatCompletionResponse(data) {
   const choice = data?.choices?.[0] ?? {};
   const message = choice.message ?? {};
   return {
