@@ -417,7 +417,7 @@ still runs (`preview_start` against the `wiki-globe` launch config, port 8080).
   per-turn tool-call budget (§8) and the malformed/missing-tool-call graceful
   failure (§8, tell the user the model doesn't support tool use well). *Done
   when:* a multi-step query completes a full loop with a capped call count. **Shipped 2026-07-09:** `AgentHarness` now supports injected chat completion for deterministic testing, appends `role:"tool"` results, aggregates token usage, caps tool calls, converts malformed arguments/tool exceptions into `no_data` results, and returns a clear tool-use support error when a model finishes with missing tool calls. Mocked smoke tests covered happy path, budget cap, malformed arguments, and missing tool calls.
-- [ ] **1.6 Chat panel UI** (`chat-panel.js`, §3). Clone the `#wiki-panel` /
+- [x] **1.6 Chat panel UI** (`chat-panel.js`, §3). Clone the `#wiki-panel` /
   `#wp-toggle` collapse pattern at [index.html:376](index.html:376) into a new
   `#agent-panel` / `#agent-toggle` pair. Include: provider selector,
   per-provider key field (hidden for Ollama), model dropdown **plus free-text
@@ -425,7 +425,7 @@ still runs (`preview_start` against the `wiki-globe` launch config, port 8080).
   raw input/output token counts per turn (§8). Add the Ollama `OLLAMA_ORIGINS`
   setup hint shown only when Ollama is selected (§3). For Ollama, populate the
   model dropdown from `GET /api/tags` (§3). *Done when:* the panel collapses
-  like the Wikipedia panel and drives a real end-to-end query.
+  like the Wikipedia panel and drives a real end-to-end query. **Shipped 2026-07-09:** panel has provider/key/base URL/model controls, free-text model override, status/response/usage surfaces, visible tool log, cancel/run state, Ollama-only `OLLAMA_ORIGINS` hint, and Ollama `/api/tags` model loading via `availableModels`. Verified with a fake-DOM panel smoke test plus HTTP checks against the running static server; a real provider-key query is still pending manual credentials.
 - [ ] **1.7 Groundedness contract** (§9) — foundational, not polish. Write the
   system prompt's hard "only state what a tool returned; refuse if no tool
   covers it" rule. Define the tool-result "no data" signal shape (distinct from

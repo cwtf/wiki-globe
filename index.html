@@ -439,15 +439,20 @@
         <input id="agent-model-override" type="text" spellcheck="false" placeholder="Optional custom model ID" />
       </label>
       <div class="agent-provider-note" id="agent-provider-note"></div>
+      <div class="agent-ollama-hint" id="agent-ollama-hint" hidden></div>
       <label>
         <span>Ask</span>
         <textarea id="agent-input" rows="4" placeholder="Drop a pin on Singapore, or highlight Canada."></textarea>
       </label>
-      <button class="agent-submit" type="submit">Run agent</button>
+      <div class="agent-actions">
+        <button class="agent-submit" id="agent-submit" type="submit">Run agent</button>
+        <button class="agent-cancel" id="agent-cancel" type="button" hidden>Cancel</button>
+      </div>
     </form>
     <div class="agent-section">
       <div class="agent-section-title">Response</div>
-      <div id="agent-output" class="agent-output"></div>
+      <div id="agent-status" class="agent-status">Idle</div>
+      <div id="agent-output" class="agent-output" aria-live="polite"></div>
       <div id="agent-usage" class="agent-usage">Tokens: input 0, output 0</div>
     </div>
     <div class="agent-section">

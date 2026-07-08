@@ -1095,12 +1095,26 @@ html, body {
     margin: 0 -8px;
   }
 }
-.agent-provider-note {
+.agent-provider-note,
+.agent-ollama-hint {
   color: var(--text-dim);
   font-size: 11px;
   line-height: 1.4;
 }
-.agent-submit {
+.agent-ollama-hint {
+  background: rgba(255, 179, 71, 0.08);
+  border: 1px solid rgba(255, 179, 71, 0.22);
+  border-radius: 7px;
+  color: #e7c086;
+  padding: 7px 8px;
+}
+.agent-ollama-hint[hidden] { display: none; }
+.agent-actions {
+  display: flex;
+  gap: 8px;
+}
+.agent-submit,
+.agent-cancel {
   background: rgba(110, 243, 255, 0.14);
   border: 1px solid rgba(110, 243, 255, 0.42);
   border-radius: 8px;
@@ -1109,7 +1123,19 @@ html, body {
   font: 700 12px "Segoe UI", system-ui, sans-serif;
   padding: 8px 10px;
 }
-.agent-submit:hover { background: rgba(110, 243, 255, 0.22); }
+.agent-submit:hover:not(:disabled) { background: rgba(110, 243, 255, 0.22); }
+.agent-cancel {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: var(--text);
+}
+.agent-cancel:hover:not(:disabled) { background: rgba(255, 255, 255, 0.12); }
+.agent-submit:disabled,
+.agent-cancel:disabled {
+  cursor: default;
+  opacity: 0.58;
+}
+.agent-cancel[hidden] { display: none; }
 
 .agent-section {
   padding: 12px 18px 0;
@@ -1121,6 +1147,11 @@ html, body {
   letter-spacing: 1px;
   margin-bottom: 6px;
   text-transform: uppercase;
+}
+.agent-status {
+  color: var(--text-dim);
+  font-size: 11px;
+  margin: -2px 0 6px;
 }
 .agent-output,
 .agent-tool-log {
