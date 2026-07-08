@@ -432,12 +432,12 @@ still runs (`preview_start` against the `wiki-globe` launch config, port 8080).
   empty-but-valid) that every tool will use. Add the `NO DATA` badge state to
   the chat UI. *Done when:* an out-of-coverage query (e.g. the Qin-dynasty
   border example) yields an explicit refusal, not a fabricated answer. **Shipped 2026-07-09:** strengthened the harness system prompt, centralized the `no_data` result shape and `NO_DATA_STATUS`, propagated no-data status through final turn metadata for the UI badge, and smoke-tested an out-of-coverage historical boundary refusal.
-- [ ] **1.8 Single-target map tools** (`tools.js`, §5.1). Wrap `add_pin`
+- [x] **1.8 Single-target map tools** (`tools.js`, §5.1). Wrap `add_pin`
   (via `_placePin`), `highlight_country` (via `_highlightCountry`), `draw_route`
   (via `_buildRoute`), and implement `clear_agent_overlays`. Every
   agent-adding tool tags its entities with the `agent-session` marker (§7) so
   the clear sweeps only agent-owned entities. *Done when:* the LLM can pin,
-  highlight, route, and clear via natural language.
+  highlight, route, and clear via natural language. **Shipped 2026-07-09:** `AgentToolRegistry` exposes `add_pin`, `highlight_country`, `draw_route`, and `clear_agent_overlays`, tags every created entity with the `agent-session` marker plus agent metadata, validates out-of-range inputs as `no_data`, and clears only tracked agent entities. Verified with a mocked Cesium/country-geo smoke test covering pin, invalid pin, highlight, route, and clear.
 
 ### Phase 2 — Knowledge tools (§10.2)
 
