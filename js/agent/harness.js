@@ -1,13 +1,15 @@
 import { completeChat } from "./providers.js";
-import { noData } from "./tools.js";
+import { isNoDataResult, noData, NO_DATA_STATUS } from "./tools.js";
 
-export const NO_DATA_STATUS = "no_data";
+export { NO_DATA_STATUS };
 
 export const GROUNDED_SYSTEM_PROMPT = `You operate Wiki Globe by calling tools.
 
 Hard rule: for factual, geographic, quantitative, or visual claims, only state what a tool returned in this conversation. If no available tool covers the request, say that the data is not available instead of answering from memory. Never invent borders, rankings, routes, coordinates, or numeric values.
 
-When a tool returns status "no_data", treat that as a real result. Explain the limitation briefly and do not fill the gap from training knowledge. Prefer clearing previous agent overlays before starting a new independent map request unless the user asks to add to the existing view.`;
+Tool results have this contract: {"status":"ok","data":...} means grounded data is available; {"status":"no_data","reason":"...","detail":...,"data":null} means the requested data or operation is outside tool coverage or unavailable. Treat "no_data" as authoritative, not as permission to guess.
+
+If a user asks for something like historical/dynastic borders, unsourced rankings, unknown coordinates, or any claim no tool can actually retrieve or compute, explicitly refuse with a short explanation that Wiki Globe has no tool data for that request. Prefer clearing previous agent overlays before starting a new independent map request unless the user asks to add to the existing view.`;
 
 const DEFAULT_TOOL_BUDGET = 12;
 
@@ -33,6 +35,7 @@ export class AgentHarness {
     const maxToolCalls = opts.maxToolCalls ?? this.maxToolCalls;
     this.messages.push({ role: "user", content: user });
     let usedCalls = 0;
+    let hadNoData = false;
     let lastUsage = { input: 0, output: 0, total: null };
 
     while (true) {
@@ -59,8 +62,9 @@ export class AgentHarness {
           callbacks.onMessage?.(fallback, { usage: lastUsage, status: "error" });
           return { content: fallback, usage: lastUsage, status: "error" };
         }
-        callbacks.onMessage?.(content, { usage: lastUsage, status: "ok" });
-        return { content, usage: lastUsage, status: "ok" };
+        const status = hadNoData ? NO_DATA_STATUS : "ok";
+        callbacks.onMessage?.(content, { usage: lastUsage, status });
+        return { content, usage: lastUsage, status };
       }
 
       if (usedCalls + toolCalls.length > maxToolCalls) {
@@ -77,6 +81,7 @@ export class AgentHarness {
         const result = parsed.error
           ? noData(`Malformed arguments for ${call.name}: ${parsed.error}`)
           : await this._executeTool(call.name, parsed.args);
+        if (isNoDataResult(result)) hadNoData = true;
         callbacks.onTool?.({ name: call.name, args: parsed.args, result, status: result.status });
         this.messages.push({
           role: "tool",

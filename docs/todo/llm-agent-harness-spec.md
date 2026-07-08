@@ -426,12 +426,12 @@ still runs (`preview_start` against the `wiki-globe` launch config, port 8080).
   setup hint shown only when Ollama is selected (§3). For Ollama, populate the
   model dropdown from `GET /api/tags` (§3). *Done when:* the panel collapses
   like the Wikipedia panel and drives a real end-to-end query. **Shipped 2026-07-09:** panel has provider/key/base URL/model controls, free-text model override, status/response/usage surfaces, visible tool log, cancel/run state, Ollama-only `OLLAMA_ORIGINS` hint, and Ollama `/api/tags` model loading via `availableModels`. Verified with a fake-DOM panel smoke test plus HTTP checks against the running static server; a real provider-key query is still pending manual credentials.
-- [ ] **1.7 Groundedness contract** (§9) — foundational, not polish. Write the
+- [x] **1.7 Groundedness contract** (§9) — foundational, not polish. Write the
   system prompt's hard "only state what a tool returned; refuse if no tool
   covers it" rule. Define the tool-result "no data" signal shape (distinct from
   empty-but-valid) that every tool will use. Add the `NO DATA` badge state to
   the chat UI. *Done when:* an out-of-coverage query (e.g. the Qin-dynasty
-  border example) yields an explicit refusal, not a fabricated answer.
+  border example) yields an explicit refusal, not a fabricated answer. **Shipped 2026-07-09:** strengthened the harness system prompt, centralized the `no_data` result shape and `NO_DATA_STATUS`, propagated no-data status through final turn metadata for the UI badge, and smoke-tested an out-of-coverage historical boundary refusal.
 - [ ] **1.8 Single-target map tools** (`tools.js`, §5.1). Wrap `add_pin`
   (via `_placePin`), `highlight_country` (via `_highlightCountry`), `draw_route`
   (via `_buildRoute`), and implement `clear_agent_overlays`. Every

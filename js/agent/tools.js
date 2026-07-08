@@ -7,12 +7,19 @@ const HIGHLIGHT_COLOR = Cesium.Color.fromCssColorString("#6ef3ff").withAlpha(0.9
 const DEFAULT_HEIGHT_M = 2800;
 const MAX_ROUTE_POINTS = 24;
 
+export const OK_STATUS = "ok";
+export const NO_DATA_STATUS = "no_data";
+
 export function noData(reason, detail = null) {
-  return { status: "no_data", reason, detail, data: null };
+  return { status: NO_DATA_STATUS, reason, detail, data: null };
 }
 
 export function ok(data = {}) {
-  return { status: "ok", data };
+  return { status: OK_STATUS, data };
+}
+
+export function isNoDataResult(result) {
+  return result?.status === NO_DATA_STATUS;
 }
 
 export class AgentToolRegistry {
