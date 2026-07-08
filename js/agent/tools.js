@@ -6,6 +6,9 @@ const ROUTE_COLOR = Cesium.Color.fromCssColorString("#facc15").withAlpha(0.72);
 const HIGHLIGHT_COLOR = Cesium.Color.fromCssColorString("#6ef3ff").withAlpha(0.92);
 const DEFAULT_HEIGHT_M = 2800;
 const MAX_ROUTE_POINTS = 24;
+const WIKIPEDIA_API_URL = "https://en.wikipedia.org/w/api.php";
+const WIKIPEDIA_SUMMARY_URL = "https://en.wikipedia.org/api/rest_v1/page/summary/";
+const DEFAULT_WIKI_LIMIT = 5;
 
 export const OK_STATUS = "ok";
 export const NO_DATA_STATUS = "no_data";
@@ -45,6 +48,35 @@ export class AgentToolRegistry {
               label: { type: "string" },
             },
             required: ["lat", "lon"],
+          },
+        },
+      },
+      {
+        type: "function",
+        function: {
+          name: "wiki_search",
+          description: "Search English Wikipedia for relevant page titles. Use this for fuzzy concepts or contested prose-list facts when no structured Wikidata property tool fits.",
+          parameters: {
+            type: "object",
+            properties: {
+              query: { type: "string", minLength: 1 },
+              limit: { type: "integer", minimum: 1, maximum: 10, description: "Maximum number of candidate pages to return." },
+            },
+            required: ["query"],
+          },
+        },
+      },
+      {
+        type: "function",
+        function: {
+          name: "wiki_extract",
+          description: "Fetch a concise English Wikipedia REST summary for an exact page title returned by wiki_search or supplied by the user.",
+          parameters: {
+            type: "object",
+            properties: {
+              title: { type: "string", minLength: 1 },
+            },
+            required: ["title"],
           },
         },
       },
@@ -106,6 +138,8 @@ export class AgentToolRegistry {
 
   async execute(name, args) {
     if (name === "add_pin") return this.addPin(args);
+    if (name === "wiki_search") return this.wikiSearch(args);
+    if (name === "wiki_extract") return this.wikiExtract(args);
     if (name === "highlight_country") return this.highlightCountry(args);
     if (name === "draw_route") return this.drawRoute(args);
     if (name === "clear_agent_overlays") return this.clearAgentOverlays();
@@ -136,6 +170,58 @@ export class AgentToolRegistry {
       properties: { kind: "agent", tool: "add_pin", label },
     }));
     return ok({ entityId: entity.id, lat, lon, label });
+  }
+
+  async wikiSearch({ query, limit = DEFAULT_WIKI_LIMIT }) {
+    const q = String(query ?? "").trim();
+    if (!q) return noData("Missing Wikipedia search query.");
+    const n = clampInteger(limit, 1, 10, DEFAULT_WIKI_LIMIT);
+    const url = new URL(WIKIPEDIA_API_URL);
+    url.search = new URLSearchParams({
+      action: "query",
+      list: "search",
+      srsearch: q,
+      srlimit: String(n),
+      srprop: "snippet",
+      format: "json",
+      origin: "*",
+    });
+    const res = await this.networkQueue.enqueue(() => fetch(url));
+    if (!res.ok) return noData(`Wikipedia search HTTP ${res.status}.`);
+    const data = await res.json();
+    const hits = data?.query?.search ?? [];
+    if (hits.length === 0) return noData(`No relevant Wikipedia pages found for "${q}".`);
+    return ok({
+      query: q,
+      results: hits.map((hit) => ({
+        title: hit.title,
+        pageId: hit.pageid,
+        snippet: stripHtml(hit.snippet ?? ""),
+        url: wikiArticleUrl(hit.title),
+      })),
+    });
+  }
+
+  async wikiExtract({ title }) {
+    const t = String(title ?? "").trim();
+    if (!t) return noData("Missing Wikipedia page title.");
+    const res = await this.networkQueue.enqueue(() => fetch(`${WIKIPEDIA_SUMMARY_URL}${encodeURIComponent(t)}`));
+    if (res.status === 404) return noData(`No Wikipedia summary found for "${t}".`);
+    if (!res.ok) return noData(`Wikipedia summary HTTP ${res.status}.`);
+    const summary = await res.json();
+    if (summary.type === "disambiguation") {
+      return noData(`"${summary.title ?? t}" is a disambiguation page; use wiki_search to choose a specific page.`);
+    }
+    const extract = String(summary.extract ?? "").trim();
+    if (!extract) return noData(`Wikipedia summary for "${summary.title ?? t}" had no extract.`);
+    return ok({
+      title: summary.title ?? t,
+      extract,
+      description: summary.description ?? "",
+      url: summary.content_urls?.desktop?.page ?? wikiArticleUrl(summary.title ?? t),
+      lat: summary.coordinates?.lat ?? null,
+      lon: summary.coordinates?.lon ?? null,
+    });
   }
 
   async highlightCountry({ iso3, color = null }) {
@@ -242,9 +328,23 @@ function validLatLon(lat, lon) {
   return Number.isFinite(lat) && Number.isFinite(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180;
 }
 
+function clampInteger(value, min, max, fallback) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(min, Math.min(max, Math.trunc(n)));
+}
+
 function safeColor(value, fallback) {
   if (!value) return fallback;
   try { return Cesium.Color.fromCssColorString(value).withAlpha(0.92); } catch { return fallback; }
+}
+
+function stripHtml(value) {
+  return String(value).replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+}
+
+function wikiArticleUrl(title) {
+  return `https://en.wikipedia.org/wiki/${encodeURIComponent(String(title).replace(/ /g, "_"))}`;
 }
 
 function delay(ms) {

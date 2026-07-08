@@ -441,9 +441,9 @@ still runs (`preview_start` against the `wiki-globe` launch config, port 8080).
 
 ### Phase 2 — Knowledge tools (§10.2)
 
-- [ ] **2.1 `wiki_search` / `wiki_extract`** (§5.3) wrapping the
+- [x] **2.1 `wiki_search` / `wiki_extract`** (§5.3) wrapping the
   `en.wikipedia.org/w/api.php` + REST summary calls already in
-  `js/wiki-panel.js`. Return the `NO DATA` signal on no relevant hit.
+  `js/wiki-panel.js`. Return the `NO DATA` signal on no relevant hit. **Shipped 2026-07-09:** `AgentToolRegistry` now exposes `wiki_search(query, limit?)` via the English Wikipedia search API and `wiki_extract(title)` via REST summaries, returning structured titles/snippets/extracts/URLs/coordinates and explicit `no_data` for empty search, missing summary, empty extract, or disambiguation pages. Verified with mocked fetch smoke tests.
 - [ ] **2.2 Generalize `wikidata_sparql`** (§4, §5.3). Extend the
   `query.wikidata.org/sparql` usage in `js/bodies.js` beyond body/globe QIDs to
   arbitrary property queries (e.g. `P474` calling codes, `P2046` area). Return
