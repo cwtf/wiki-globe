@@ -238,10 +238,29 @@ implies "also show...".
   per-token price attached, so nothing needs hiding per-provider, and the
   harness avoids having to source/maintain a per-model pricing table (which
   changes often and isn't needed if the display never converts to $).
-- **Guardrails against runaway loops.** Cap max tool-calls per agent turn and
-  sanity-check bulk operations (e.g. `label_countries` is naturally bounded by
-  the ~195 real countries, but nothing stops a model from calling `add_pin` in
-  a tight loop) — a simple per-turn tool-call budget covers this.
+- **Guardrails against runaway loops — decided.** Track a per-turn tool-call
+  budget and sanity-check bulk operations (e.g. `label_countries` is naturally
+  bounded by the ~195 real countries, but nothing stops a model from calling
+  `add_pin` in a tight loop). **When the budget is reached, do not silently
+  hard-stop the agent mid-task** — leaving a half-drawn board with no
+  explanation is a worse experience than either finishing or aborting cleanly.
+  Instead, pause the loop and prompt the user with an explicit
+  **"continue (grant another N calls) / terminate"** choice:
+  - The pause is a checkpoint, not a kill. State is preserved
+    (`messages` so far, tools already fired) so **continue** simply resumes the
+    same loop with a freshly refilled budget — no re-planning, no lost context.
+  - **Terminate** stops the loop cleanly, keeps whatever overlays were already
+    drawn (the user can `clear_agent_overlays()` if they want a reset), and
+    returns control to the chat without a crash or a dangling `role:"tool"`
+    message.
+  - The prompt should surface *why* it paused (calls used, what the model was
+    about to do next if known) so the user can judge whether it's making real
+    progress or spinning. This reuses the same confirmation-dialog surface as
+    the compute-heavy gate below rather than inventing a second modal.
+  - The budget therefore acts as a *pacing checkpoint*, not a ceiling — an
+    unbounded runaway is still impossible (the loop cannot advance past the
+    checkpoint without an explicit human OK), but a legitimately long-but-valid
+    task is no longer amputated halfway.
 - **Compute-heavy tool confirmation — decided.** Any tool flagged as
   computationally heavy (starting with `tile_shape_into_country`'s polygon
   packing, §5.2) must pop a confirmation dialog before running rather than
@@ -416,7 +435,18 @@ still runs (`preview_start` against the `wiki-globe` launch config, port 8080).
   `role:"tool"` results; stop on a plain assistant message. Enforce the
   per-turn tool-call budget (§8) and the malformed/missing-tool-call graceful
   failure (§8, tell the user the model doesn't support tool use well). *Done
-  when:* a multi-step query completes a full loop with a capped call count. **Shipped 2026-07-09:** `AgentHarness` now supports injected chat completion for deterministic testing, appends `role:"tool"` results, aggregates token usage, caps tool calls, converts malformed arguments/tool exceptions into `no_data` results, and returns a clear tool-use support error when a model finishes with missing tool calls. Mocked smoke tests covered happy path, budget cap, malformed arguments, and missing tool calls.
+  when:* a multi-step query completes a full loop with a capped call count. **Shipped 2026-07-09:** `AgentHarness` now supports injected chat completion for deterministic testing, appends `role:"tool"` results, aggregates token usage, caps tool calls, converts malformed arguments/tool exceptions into `no_data` results, and returns a clear tool-use support error when a model finishes with missing tool calls. Mocked smoke tests covered happy path, budget cap, malformed arguments, and missing tool calls. **Superseded 2026-07-09:** §8's runaway-loop guardrail was changed from a silent hard cap to a **pause-and-prompt (continue/terminate) checkpoint** *after* this task shipped — the current hard-stop is now a known deviation from §8. Do not re-tick; the checkpoint behavior is tracked as task **1.9** below.
+- [ ] **1.9 Budget checkpoint (continue/terminate)** (§8) — revise the shipped
+  1.5 hard cap into a pausing checkpoint. When the per-turn tool-call budget is
+  reached, suspend the loop with `messages` + fired-tools state intact and
+  prompt the user via the compute-heavy confirmation-dialog surface
+  (cross-cutting item below): **continue** refills the budget and resumes the
+  *same* loop (no re-planning, no lost tool results); **terminate** stops
+  cleanly, keeps overlays drawn so far, and returns to the chat with no
+  dangling `role:"tool"` message. Surface *why* it paused (calls used, next
+  intended action if known). *Done when:* a query that exceeds the initial
+  budget pauses, offers continue/terminate, and on continue resumes without
+  re-planning; on terminate leaves a clean chat state and intact overlays.
 - [x] **1.6 Chat panel UI** (`chat-panel.js`, §3). Clone the `#wiki-panel` /
   `#wp-toggle` collapse pattern at [index.html:376](index.html:376) into a new
   `#agent-panel` / `#agent-toggle` pair. Include: provider selector,
@@ -495,8 +525,13 @@ still runs (`preview_start` against the `wiki-globe` launch config, port 8080).
 - [ ] **Throttle/batch executor** (§8) shared by all network tools — do not
   trust the model to self-limit Nominatim/SPARQL bursts. Land the skeleton in
   Phase 1's `tools.js` and route every network tool through it as it's added.
-- [ ] **Compute-heavy confirmation dialog** (§8) — general pattern, first
-  consumer is 5.1. Build the reusable UI, not a one-off warning.
+- [ ] **Confirmation-dialog surface** (§8) — general reusable pause/approve
+  modal, not a one-off warning. Two consumers: (a) the **budget checkpoint**
+  (task 1.9, continue/terminate on tool-call budget) — the earliest consumer,
+  in Phase 1; and (b) the **compute-heavy gate** (first heavy tool is 5.1
+  `tile_shape_into_country`, also 5.2 `eclipse_path`). Same surface, two
+  callers — build it once with a generic "here's what's about to happen /
+  proceed / stop" shape rather than a tiling-specific warning.
 - [ ] **Adversarial groundedness test set** (§9, §11) — a fixed list of
   obscure/ancient/contested/nonexistent-entity prompts that must reliably
   produce a refusal, re-run per provider and per model (local Ollama models are
