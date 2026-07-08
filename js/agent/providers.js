@@ -189,11 +189,15 @@ export function parseChatCompletionResponse(data) {
 }
 
 function normalizeAssistantMessage(message) {
-  return {
-    role: "assistant",
-    content: message.content ?? "",
-    tool_calls: Array.isArray(message.tool_calls) ? message.tool_calls : [],
-  };
+  const toolCalls = Array.isArray(message.tool_calls) ? message.tool_calls : [];
+  const out = { role: "assistant", content: message.content ?? "" };
+  // Providers like DeepSeek reject a *present but empty* tool_calls array on a
+  // later request ("Expected an array with minimum length 1"). Since this
+  // message gets replayed verbatim as conversation history on every follow-up
+  // turn, the field must be omitted entirely for a plain text reply rather
+  // than defaulting to [].
+  if (toolCalls.length) out.tool_calls = toolCalls;
+  return out;
 }
 
 function normalizeUsage(usage) {
