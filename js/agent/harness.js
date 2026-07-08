@@ -3,18 +3,31 @@ import { ERROR_STATUS, isErrorResult, isNoDataResult, noData, NO_DATA_STATUS, to
 
 export { NO_DATA_STATUS, ERROR_STATUS };
 
+// Set when the model answers from its own knowledge as a last resort (after
+// tools returned no_data/error). The model signals this by beginning its reply
+// with the [UNVERIFIED] tag; the harness detects it, strips the tag, and flags
+// the message so the UI can badge it distinctly from grounded answers.
+export const UNVERIFIED_STATUS = "unverified";
+const UNVERIFIED_TAG = /^\s*\[UNVERIFIED\]\s*/i;
+
 export const GROUNDED_SYSTEM_PROMPT = `You operate Wiki Globe by calling tools.
 
-Hard rule: for factual, geographic, quantitative, or visual claims, only state what a tool returned in this conversation. If no available tool covers the request, say that the data is not available instead of answering from memory. Never invent borders, rankings, routes, coordinates, or numeric values. Never output a list of countries, values, or rankings from your own memory as if it were data — if you did not get it from a tool result, you do not have it.
+Grounding rule: for factual, geographic, quantitative, or visual claims, tools come first. Always try the applicable tools before answering, and when a tool returns data, base your answer only on that data. Never present your own memory as if it were tool-sourced.
 
 Tool results use three statuses:
 - {"status":"ok","data":...} — grounded data you may use.
-- {"status":"no_data","reason":"...","data":null} — the request is genuinely outside tool coverage or returned nothing. Treat this as authoritative, not as permission to guess. Tell the user that specific thing is not available.
-- {"status":"error","reason":"...","data":null} — a transient failure (network, timeout, rate limit). This does NOT mean the data does not exist. Report the actual reason from the result and that it can be retried; offer to retry. Do NOT substitute an answer from memory, and do NOT invent a cause such as "connectivity issues" — quote the reason the tool gave.
+- {"status":"no_data","reason":"...","data":null} — the request is genuinely outside tool coverage or returned nothing. Treat this as authoritative for what the tools can retrieve.
+- {"status":"error","reason":"...","data":null} — a transient failure (network, timeout, rate limit). This does NOT mean the data does not exist. Report the actual reason from the result and offer to retry; do NOT invent a cause such as "connectivity issues", and do NOT jump straight to memory — a retry may succeed.
 
 For country economic and development statistics (GDP per capita, GNI, HDI, life expectancy, population indicators) and World Bank income-group classification, use the country_stats tool first — it reads bundled World Bank/UNDP data with no network dependency. Do not fall back to wiki_search/wikidata_sparql for these; Wikidata does not reliably carry GDP-per-capita or income group.
 
-If a user asks for something like historical/dynastic borders, unsourced rankings, unknown coordinates, or any claim no tool can actually retrieve or compute, explicitly refuse with a short explanation that Wiki Globe has no tool data for that request. Prefer clearing previous agent overlays before starting a new independent map request unless the user asks to add to the existing view.`;
+Last-resort memory fallback: if — and only if — you have actually tried the applicable tools and they all returned no_data (or an error you could not resolve by retrying), you MAY answer from your own knowledge instead of refusing outright. When you do this you MUST:
+1. Begin the reply with the exact tag [UNVERIFIED] as the very first characters.
+2. State plainly that the answer comes from model knowledge with no Wiki Globe tool data behind it, and may be outdated or wrong.
+3. Apply the same caveat to anything you draw on the globe from memory — pins, outlines, colours, routes, labels: say in the text that the overlay is unverified and approximate.
+Never use this fallback before trying tools, and never use it to paper over a transient error you should retry. Prefer a partial grounded answer (what the tools did return) plus a clearly-marked unverified remainder over a fully unverified one. Do not silently mix remembered facts into an otherwise grounded answer — if any part is unverified, tag the whole reply.
+
+Prefer clearing previous agent overlays before starting a new independent map request unless the user asks to add to the existing view.`;
 
 const DEFAULT_TOOL_BUDGET = 20;
 
@@ -69,9 +82,14 @@ export class AgentHarness {
           callbacks.onMessage?.(fallback, { usage: lastUsage, status: "error" });
           return { content: fallback, usage: lastUsage, status: "error" };
         }
-        const status = hadError ? ERROR_STATUS : hadNoData ? NO_DATA_STATUS : "ok";
-        callbacks.onMessage?.(content, { usage: lastUsage, status });
-        return { content, usage: lastUsage, status };
+        // A memory-fallback answer is self-declared with the [UNVERIFIED] tag;
+        // its provenance overrides the tool-derived statuses since the model
+        // chose to answer despite no grounded data.
+        const unverified = UNVERIFIED_TAG.test(content);
+        const finalContent = unverified ? content.replace(UNVERIFIED_TAG, "") : content;
+        const status = unverified ? UNVERIFIED_STATUS : hadError ? ERROR_STATUS : hadNoData ? NO_DATA_STATUS : "ok";
+        callbacks.onMessage?.(finalContent, { usage: lastUsage, status });
+        return { content: finalContent, usage: lastUsage, status };
       }
 
       // Budget checkpoint: instead of hard-stopping mid-task, pause and let the

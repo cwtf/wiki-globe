@@ -8,7 +8,7 @@ import {
   setProviderBaseUrl,
   setProviderKey,
 } from "./providers.js";
-import { AgentHarness, ERROR_STATUS, NO_DATA_STATUS } from "./harness.js";
+import { AgentHarness, ERROR_STATUS, NO_DATA_STATUS, UNVERIFIED_STATUS } from "./harness.js";
 import { AgentToolRegistry } from "./tools.js";
 
 const OLLAMA_HINT = "For Ollama, start the server with OLLAMA_ORIGINS allowing this page origin, for example OLLAMA_ORIGINS=http://localhost:8080. Models are read from /api/tags when reachable.";
@@ -144,7 +144,7 @@ export class AgentChatPanel {
           onUsage: (usage) => this._renderUsage(usage),
           onMessage: (content, meta) => {
             this.outputEl.textContent = content;
-            this._setBadge(meta.status === ERROR_STATUS ? "error" : meta.status === NO_DATA_STATUS ? "nodata" : "live");
+            this._setBadge(meta.status === UNVERIFIED_STATUS ? "unverified" : meta.status === ERROR_STATUS ? "error" : meta.status === NO_DATA_STATUS ? "nodata" : "live");
           },
         },
       });
@@ -235,6 +235,7 @@ export class AgentChatPanel {
       live: ["LIVE", "live"],
       nodata: ["NO DATA", "demo"],
       error: ["ERROR", "demo"],
+      unverified: ["UNVERIFIED", "demo"],
     };
     const [label, cls] = map[state] ?? map.idle;
     this.badgeEl.textContent = label;
@@ -255,6 +256,7 @@ function statusLabel(status) {
   if (status === "ok") return "Complete";
   if (status === ERROR_STATUS) return "Tool error — retryable";
   if (status === NO_DATA_STATUS) return "No data available";
+  if (status === UNVERIFIED_STATUS) return "Unverified — from model memory";
   if (status === "stopped") return "Stopped";
   return "Done";
 }

@@ -281,14 +281,17 @@ implies "also show...".
   less for OpenRouter/DeepSeek's flagship models, which reliably support tool
   calling.
 
-## 9. Groundedness: refusing when data isn't available
+## 9. Groundedness: tools first, labelled memory as last resort
 
 Every tool in §5 has a bounded, known scope — Wikidata SPARQL answers
 structured per-entity facts, `country_area` only works for present-day
 polygons already loaded, `fx_rates` covers whatever `frankfurter.app`
-publishes. The harness's most important behavioral requirement is that when a
-query falls outside every tool's actual coverage, the model says so instead
-of answering from parametric memory.
+publishes. The harness's most important behavioral requirement is that the
+model reaches for tools first and never dresses up parametric memory as
+tool-sourced data. When a query falls outside every tool's coverage the model
+must say so; it may then fall back to clearly-labelled `UNVERIFIED` knowledge
+rather than refuse outright (see the memory-fallback decision below), but only
+after the tools have genuinely been tried.
 
 This came up concretely while scoping "show me the evolution of the Chinese
 border from Qin Dynasty till present" as an example query: real dynastic
@@ -322,22 +325,41 @@ Concrete requirements:
   the whole loop), and the system prompt forbids inventing a failure cause —
   the model must quote the tool's actual `reason` and offer to retry. The chat
   badge gains an `ERROR` state alongside `NO DATA`.
-- **System prompt must instruct the model**: for any factual, geographic, or
-  quantitative claim, only state what a tool actually returned; if no tool
-  covers the request, say so explicitly rather than answering from training
-  knowledge. This is a hard behavioral rule, not a style preference, and
-  should be tested with adversarial-ish prompts (obscure/ancient/contested
+- **System prompt must instruct the model**: tools come first — for any
+  factual, geographic, or quantitative claim, try the applicable tools and base
+  the answer only on what they return; never present memory as tool-sourced.
+  Should be tested with adversarial-ish prompts (obscure/ancient/contested
   entities) before shipping.
-- **The chat UI should visually distinguish "answered from tool data" vs. "the
-  model declined"**, so a partial answer (e.g. "no historical boundary data
-  available, but here's the present-day border") reads as an explicit partial
-  result rather than a silent success — extending the existing `LIVE`/`DATA`/
-  idle/`…` badge convention (CLAUDE.md design principle #2) with a `NO DATA`
-  state for agent-added overlays.
-- **Time-series/historical boundary visualization stays unbuilt** unless and
-  until a properly sourced, hand-curated dataset is actually added — until
-  then this class of query is exactly the case the model should be refusing,
-  not attempting from memory.
+- **Last-resort memory fallback — decided (revises the original hard-refuse
+  rule).** The first cut made "never answer from memory" an absolute: outside
+  tool coverage, the model refused. Product decision (2026-07-09) relaxed this:
+  after the model has *actually tried the applicable tools* and they all
+  returned `no_data` (or an `error` it couldn't resolve by retrying), it MAY
+  answer from its own knowledge instead of refusing — but the whole reply must
+  be tagged. Mechanism: the model prefixes the reply with `[UNVERIFIED]`; the
+  harness detects the tag, strips it, and sets an `unverified` message status
+  driving a distinct `UNVERIFIED` badge. The fallback is explicitly *not*
+  allowed before trying tools, and *not* as a shortcut around a transient
+  `error` (retry first). **Scope decision: the user opted to let a memory
+  fallback also drive map overlays** (pins/outlines/colours/routes), not just
+  text — so a remembered border *can* now be drawn, labelled unverified. This
+  knowingly re-admits §9's original worst case (a fabricated polygon that looks
+  as authoritative as a real one); the `UNVERIFIED` badge + mandatory in-text
+  caveat are the only mitigations, and they are weaker for a glanced-at overlay
+  than for text. Residual risk accepted by product; revisit if unverified
+  overlays prove misleading in practice.
+- **The chat UI should visually distinguish grounded vs. ungrounded answers**,
+  so a partial answer (e.g. "no historical boundary data available, but here's
+  the present-day border") reads as an explicit partial result rather than a
+  silent success — extending the `LIVE`/`DATA`/idle/`…` badge convention
+  (CLAUDE.md design principle #2) with `NO DATA`, `ERROR`, and `UNVERIFIED`
+  states for agent answers/overlays.
+- **Time-series/historical boundary visualization stays unbuilt** as real data
+  unless and until a properly sourced, hand-curated dataset is actually added.
+  Under the fallback policy the model may now offer a **labelled `UNVERIFIED`**
+  answer/overlay for this class of query instead of a flat refusal — but it must
+  never present such a boundary as sourced, and building the real dataset
+  remains the only way to get a grounded one.
 
 ## 10. Phasing
 
