@@ -397,6 +397,65 @@
     <div id="wp-results"></div>
   </div>
 
+  <!-- LLM agent panel -->
+  <div id="agent-panel" class="collapsed">
+    <button
+      id="agent-toggle"
+      class="side-collapse-toggle agent-toggle"
+      type="button"
+      aria-controls="agent-panel"
+      aria-expanded="false"
+      title="Expand agent panel"
+    >
+      Agent
+    </button>
+    <div class="agent-head">
+      <div>
+        <div class="agent-title">Globe agent</div>
+        <div class="agent-subtitle">BYOK tool-calling harness</div>
+      </div>
+      <span class="badge static" id="agent-badge">-</span>
+      <button id="agent-close" title="Close agent panel">&times;</button>
+    </div>
+    <form id="agent-form" class="agent-form">
+      <label>
+        <span>Provider</span>
+        <select id="agent-provider"></select>
+      </label>
+      <label id="agent-key-row">
+        <span>API key</span>
+        <input id="agent-key" type="password" autocomplete="off" spellcheck="false" placeholder="Stored in this browser" />
+      </label>
+      <label id="agent-base-row" hidden>
+        <span>Base URL</span>
+        <input id="agent-base-url" type="url" spellcheck="false" />
+      </label>
+      <label>
+        <span>Model</span>
+        <select id="agent-model"></select>
+      </label>
+      <label>
+        <span>Model override</span>
+        <input id="agent-model-override" type="text" spellcheck="false" placeholder="Optional custom model ID" />
+      </label>
+      <div class="agent-provider-note" id="agent-provider-note"></div>
+      <label>
+        <span>Ask</span>
+        <textarea id="agent-input" rows="4" placeholder="Drop a pin on Singapore, or highlight Canada."></textarea>
+      </label>
+      <button class="agent-submit" type="submit">Run agent</button>
+    </form>
+    <div class="agent-section">
+      <div class="agent-section-title">Response</div>
+      <div id="agent-output" class="agent-output"></div>
+      <div id="agent-usage" class="agent-usage">Tokens: input 0, output 0</div>
+    </div>
+    <div class="agent-section">
+      <div class="agent-section-title">Tool log</div>
+      <div id="agent-tool-log" class="agent-tool-log"></div>
+    </div>
+  </div>
+
   <div id="hint">Drag to rotate &nbsp;·&nbsp; Scroll to zoom into the map &nbsp;·&nbsp; Click anywhere to explore Wikipedia</div>
 
   <button id="moon-back" hidden>&larr; Back to Earth</button>

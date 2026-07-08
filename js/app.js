@@ -15,6 +15,7 @@ import { PlanetLayer, PLANET_BODY_KEYS } from "./layers/planets.js";
 import { ChildMoonLayer, CHILD_MOON_BODY_KEYS } from "./layers/moons.js";
 import { CountrySearch } from "./search.js";
 import { WikiPanel } from "./wiki-panel.js";
+import { AgentChatPanel } from "./agent/chat-panel.js";
 import { getAisKey, setAisKey } from "./ais.js";
 
 // OSM tiles fade in below FADE_START camera height and are fully opaque by FADE_END.
@@ -355,6 +356,7 @@ async function boot() {
   // country search bar: flying to a country counts as interaction so the
   // auto-rotate doesn't immediately swing the camera away again
   const search = new CountrySearch(viewer, truesize, () => { lastInteraction = Date.now(); });
+  const agent = new AgentChatPanel(viewer);
 
   scene.preUpdate.addEventListener(() => {
     const now = Date.now();
@@ -778,7 +780,7 @@ async function boot() {
   setTimeout(() => document.getElementById("hint").classList.add("faded"), 15000);
 
   // handy for debugging from the console
-  window.__globe = { viewer, sats, flights, ships, heat, wiki, truesize, search, sun, moon, mars, planets, childMoons, bodyLayers };
+  window.__globe = { viewer, sats, flights, ships, heat, wiki, truesize, search, agent, sun, moon, mars, planets, childMoons, bodyLayers };
 }
 
 function setupResponsiveSideMenus() {
@@ -796,6 +798,13 @@ function setupResponsiveSideMenus() {
       collapseLabel: "Collapse Wikipedia panel",
       expandLabel: "Expand Wikipedia panel",
     },
+    {
+      el: document.getElementById("agent-panel"),
+      toggle: document.getElementById("agent-toggle"),
+      collapseLabel: "Collapse agent panel",
+      expandLabel: "Expand agent panel",
+      defaultCollapsed: true,
+    },
   ];
 
   for (const panel of panels) {
@@ -809,14 +818,14 @@ function setupResponsiveSideMenus() {
       panel.toggle.title = collapsed ? panel.expandLabel : panel.collapseLabel;
     }
 
-    setCollapsed(compact.matches);
+    setCollapsed(panel.defaultCollapsed || compact.matches);
     panel.toggle.addEventListener("click", () => {
       userChanged = true;
       setCollapsed(!panel.el.classList.contains("collapsed"));
     });
 
     const onCompactChanged = (event) => {
-      if (!userChanged) setCollapsed(event.matches);
+      if (!userChanged) setCollapsed(panel.defaultCollapsed || event.matches);
     };
     if (compact.addEventListener) {
       compact.addEventListener("change", onCompactChanged);

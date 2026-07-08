@@ -336,9 +336,11 @@ routing (see §2).
 ## 11. Open questions
 
 - Clear-vs-stack default for agent overlays across turns (§7).
-- Does DeepSeek-direct actually allow CORS browser calls, or is routing
-  DeepSeek's models through OpenRouter the permanent answer rather than a
-  fallback (§3)?
+- Resolved 2026-07-09: DeepSeek-direct responded to an `OPTIONS` preflight for
+  `https://api.deepseek.com/chat/completions` with
+  `access-control-allow-origin: http://localhost:8080`, `POST`, and
+  `content-type,authorization`, so keep the direct provider for Phase 1 unless
+  full browser POST testing with a real key proves otherwise.
 - Should Anthropic (or other providers) be added later as a fourth adapter
   behind `js/agent/providers.js`, given its tool-use format differs from the
   OpenAI-compatible shape the other three share — worth designing the
@@ -387,16 +389,16 @@ still runs (`preview_start` against the `wiki-globe` launch config, port 8080).
   `providers.js`, `harness.js`, `tools.js`, `chat-panel.js` per §3's "New
   modules" list. Export the class/functions each will own; stub bodies are
   fine. Wire `chat-panel.js` init into `js/app.js` boot and add its instance to
-  `window.__globe` (CLAUDE.md convention). *Done when:* app boots with the four
-  modules loaded and no console errors.
-- [ ] **1.2 Verify DeepSeek-direct CORS, and pick the OpenRouter model
+  window.__globe (CLAUDE.md convention). *Done when:* app boots with the four
+  modules loaded and no console errors. **Started 2026-07-09:** modules, app boot wiring, `#agent-panel`, and `window.__globe.agent` landed; browser console verification still pending.
+- [x] **1.2 Verify DeepSeek-direct CORS, and pick the OpenRouter model
   shortlist** (§3, §11) — do this *before* 1.3, since 1.3 builds the registry
   around these two facts. `fetch` DeepSeek's endpoint from the page and check
   for a CORS error; record the result in §11 — if blocked, drop the
   DeepSeek-direct provider entirely and offer `deepseek/*` models through
   OpenRouter only (no adapter change needed). Separately, query OpenRouter's
   `GET /api/v1/models` and pick the actual curated shortlist (§3) — don't
-  hardcode remembered slugs.
+  hardcode remembered slugs. **Shipped 2026-07-09:** DeepSeek preflight succeeded; OpenRouter live shortlist selected as `openai/gpt-4.1`, `openai/gpt-4.1-mini`, `anthropic/claude-sonnet-4`, `google/gemini-2.5-pro`, `google/gemini-2.5-flash`, `deepseek/deepseek-chat`, and `deepseek/deepseek-r1`.
 - [ ] **1.3 Provider registry + OpenAI-compatible adapter** (`providers.js`,
   §3). Register OpenRouter, (DeepSeek-direct if 1.2 confirmed it works), and
   Ollama with `id`, `label`, `baseUrl`, `requiresKey`, the model shortlist from
