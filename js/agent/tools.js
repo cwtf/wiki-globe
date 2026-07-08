@@ -9,6 +9,9 @@ const MAX_ROUTE_POINTS = 24;
 const WIKIPEDIA_API_URL = "https://en.wikipedia.org/w/api.php";
 const WIKIPEDIA_SUMMARY_URL = "https://en.wikipedia.org/api/rest_v1/page/summary/";
 const DEFAULT_WIKI_LIMIT = 5;
+const WIKIDATA_SPARQL_URL = "https://query.wikidata.org/sparql";
+const DEFAULT_SPARQL_LIMIT = 100;
+const MAX_SPARQL_LIMIT = 300;
 
 export const OK_STATUS = "ok";
 export const NO_DATA_STATUS = "no_data";
@@ -83,6 +86,21 @@ export class AgentToolRegistry {
       {
         type: "function",
         function: {
+          name: "wikidata_sparql",
+          description: "Run a read-only Wikidata SPARQL SELECT query for structured facts. Prefer this over wiki_search whenever the fact is a scalar per-entity property at scale, such as country calling codes (P474), area (P2046), population, coordinates, identifiers, or other Wikidata properties. Include labels and a LIMIT in the query when possible.",
+          parameters: {
+            type: "object",
+            properties: {
+              query: { type: "string", minLength: 1, description: "A read-only SPARQL SELECT query for Wikidata Query Service." },
+              limit: { type: "integer", minimum: 1, maximum: MAX_SPARQL_LIMIT, description: "Maximum rows returned to the model; appended as LIMIT when the query has no LIMIT." },
+            },
+            required: ["query"],
+          },
+        },
+      },
+      {
+        type: "function",
+        function: {
           name: "highlight_country",
           description: "Outline one present-day country by ISO-3166 alpha-3 code. Use only for current country borders already in the local country dataset.",
           parameters: {
@@ -140,6 +158,7 @@ export class AgentToolRegistry {
     if (name === "add_pin") return this.addPin(args);
     if (name === "wiki_search") return this.wikiSearch(args);
     if (name === "wiki_extract") return this.wikiExtract(args);
+    if (name === "wikidata_sparql") return this.wikidataSparql(args);
     if (name === "highlight_country") return this.highlightCountry(args);
     if (name === "draw_route") return this.drawRoute(args);
     if (name === "clear_agent_overlays") return this.clearAgentOverlays();
@@ -221,6 +240,28 @@ export class AgentToolRegistry {
       url: summary.content_urls?.desktop?.page ?? wikiArticleUrl(summary.title ?? t),
       lat: summary.coordinates?.lat ?? null,
       lon: summary.coordinates?.lon ?? null,
+    });
+  }
+
+  async wikidataSparql({ query, limit = DEFAULT_SPARQL_LIMIT }) {
+    const q = String(query ?? "").trim();
+    if (!q) return noData("Missing Wikidata SPARQL query.");
+    if (!isSelectSparql(q)) return noData("Wikidata SPARQL tool only accepts read-only SELECT queries.");
+    const rowLimit = clampInteger(limit, 1, MAX_SPARQL_LIMIT, DEFAULT_SPARQL_LIMIT);
+    const boundedQuery = withSparqlLimit(q, rowLimit);
+    const url = new URL(WIKIDATA_SPARQL_URL);
+    url.search = new URLSearchParams({ format: "json", query: boundedQuery });
+    const res = await this.networkQueue.enqueue(() => fetch(url, {
+      headers: { Accept: "application/sparql-results+json" },
+    }));
+    if (!res.ok) return noData(`Wikidata SPARQL HTTP ${res.status}.`);
+    const data = await res.json();
+    const rows = normalizeSparqlRows(data?.results?.bindings ?? []);
+    if (rows.length === 0) return noData("Wikidata SPARQL query returned zero rows.");
+    return ok({
+      variables: data?.head?.vars ?? Object.keys(rows[0] ?? {}),
+      rowCount: rows.length,
+      rows,
     });
   }
 
@@ -332,6 +373,27 @@ function clampInteger(value, min, max, fallback) {
   const n = Number(value);
   if (!Number.isFinite(n)) return fallback;
   return Math.max(min, Math.min(max, Math.trunc(n)));
+}
+
+function isSelectSparql(query) {
+  return /^(?:\s*(?:PREFIX|BASE)\s+[^\n\r]+[\n\r]+)*\s*SELECT\b/i.test(query);
+}
+
+function withSparqlLimit(query, limit) {
+  return /\bLIMIT\s+\d+\b/i.test(query) ? query : `${query.replace(/;?\s*$/, "")}\nLIMIT ${limit}`;
+}
+
+function normalizeSparqlRows(bindings) {
+  return bindings.map((row) => Object.fromEntries(
+    Object.entries(row).map(([key, value]) => [key, normalizeSparqlValue(value)])
+  ));
+}
+
+function normalizeSparqlValue(value) {
+  const out = { type: value?.type ?? "literal", value: value?.value ?? "" };
+  if (value?.datatype) out.datatype = value.datatype;
+  if (value?.["xml:lang"]) out.lang = value["xml:lang"];
+  return out;
 }
 
 function safeColor(value, fallback) {

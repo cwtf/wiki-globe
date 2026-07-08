@@ -444,13 +444,13 @@ still runs (`preview_start` against the `wiki-globe` launch config, port 8080).
 - [x] **2.1 `wiki_search` / `wiki_extract`** (§5.3) wrapping the
   `en.wikipedia.org/w/api.php` + REST summary calls already in
   `js/wiki-panel.js`. Return the `NO DATA` signal on no relevant hit. **Shipped 2026-07-09:** `AgentToolRegistry` now exposes `wiki_search(query, limit?)` via the English Wikipedia search API and `wiki_extract(title)` via REST summaries, returning structured titles/snippets/extracts/URLs/coordinates and explicit `no_data` for empty search, missing summary, empty extract, or disambiguation pages. Verified with mocked fetch smoke tests.
-- [ ] **2.2 Generalize `wikidata_sparql`** (§4, §5.3). Extend the
+- [x] **2.2 Generalize `wikidata_sparql`** (§4, §5.3). Extend the
   `query.wikidata.org/sparql` usage in `js/bodies.js` beyond body/globe QIDs to
   arbitrary property queries (e.g. `P474` calling codes, `P2046` area). Return
   `NO DATA` on zero rows. Encode the §5.3 tool-selection preference (prefer
   this over `wiki_search` whenever the fact is a scalar per-entity property at
   scale) in this tool's own JSON-schema `description` field, not just as prose
-  in this doc — the model only sees what's in the schema at call time.
+  in this doc — the model only sees what's in the schema at call time. **Shipped 2026-07-09:** `AgentToolRegistry` now exposes a read-only `wikidata_sparql(query, limit?)` SELECT wrapper using `query.wikidata.org/sparql`, reuses the shared network queue, appends a bounded LIMIT when absent, normalizes SPARQL JSON bindings into structured row values, returns `no_data` for zero rows/non-SELECT/HTTP failures, and includes the Wikidata-over-Wikipedia scalar-property preference in the tool schema. Verified with mocked SPARQL smoke tests.
 - [ ] **2.3 `geocode(placeName)`** (§5.3) — forward Nominatim `/search`, the
   sibling of the `/reverse` call already in `js/wiki-panel.js`. Route through
   the throttle/batch layer (§8) — Nominatim caps at ~1 req/sec and needs a real
