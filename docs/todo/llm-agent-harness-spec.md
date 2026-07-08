@@ -469,9 +469,9 @@ still runs (`preview_start` against the `wiki-globe` launch config, port 8080).
 
 ### Phase 4 — Geometry tool (§10.4)
 
-- [ ] **4.1 `country_area(iso3)`** (§5.3) — expose `countryAreaKm2` from
+- [x] **4.1 `country_area(iso3)`** (§5.3) — expose `countryAreaKm2` from
   `js/country-geo.js` as a callable tool (no network). *Unlocks area-ratio
-  questions like "how many Ukraines fit into China" (§6).*
+  questions like "how many Ukraines fit into China" (§6).* **Shipped 2026-07-09:** `AgentToolRegistry` now exposes `country_area(iso3)`, resolves present-day ISO3 features from `loadCountryGeo`, computes `countryAreaKm2` locally with no network call, returns numeric and formatted area plus source metadata, and reports `no_data` for malformed or unknown ISO3 codes. Verified with mocked country-geo smoke tests.
 
 ### Phase 5 — Stretch (§10.5, gated)
 

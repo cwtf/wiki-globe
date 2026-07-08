@@ -1,4 +1,4 @@
-import { loadCountryGeo } from "../country-geo.js";
+import { countryAreaKm2, formatArea, loadCountryGeo } from "../country-geo.js";
 import { fillFeature } from "../layers/heatmap.js";
 
 const AGENT_MARKER = "agent-session";
@@ -175,6 +175,20 @@ export class AgentToolRegistry {
       {
         type: "function",
         function: {
+          name: "country_area",
+          description: "Return the computed present-day area of one country from the local country polygon dataset. Use this for area-ratio questions without network calls; only ISO-3166 alpha-3 countries in the local boundary dataset are covered.",
+          parameters: {
+            type: "object",
+            properties: {
+              iso3: { type: "string", minLength: 3, maxLength: 3 },
+            },
+            required: ["iso3"],
+          },
+        },
+      },
+      {
+        type: "function",
+        function: {
           name: "highlight_country",
           description: "Outline one present-day country by ISO-3166 alpha-3 code. Use only for current country borders already in the local country dataset.",
           parameters: {
@@ -236,6 +250,7 @@ export class AgentToolRegistry {
     if (name === "geocode") return this.geocode(args);
     if (name === "label_countries") return this.labelCountries(args);
     if (name === "color_countries") return this.colorCountries(args);
+    if (name === "country_area") return this.countryArea(args);
     if (name === "highlight_country") return this.highlightCountry(args);
     if (name === "draw_route") return this.drawRoute(args);
     if (name === "clear_agent_overlays") return this.clearAgentOverlays();
@@ -463,6 +478,23 @@ export class AgentToolRegistry {
       range: valueRange(colored.map((entry) => entry.value)),
       stops: colorStops,
       countries: colored,
+    });
+  }
+
+  async countryArea({ iso3 }) {
+    const id = String(iso3 ?? "").trim().toUpperCase();
+    if (!/^[A-Z]{3}$/.test(id)) return noData("country_area needs an ISO-3166 alpha-3 country code.");
+    const geo = await loadCountryGeo();
+    const country = geo.find((feature) => feature.id === id);
+    if (!country) return noData(`No present-day country polygon found for ISO3 ${id}.`);
+    const areaKm2 = country.areaKm2 ?? countryAreaKm2(country);
+    if (!Number.isFinite(areaKm2)) return noData(`Unable to compute area for ISO3 ${id}.`);
+    return ok({
+      iso3: id,
+      name: country.name,
+      areaKm2,
+      areaLabel: formatArea(areaKm2),
+      source: "local simplified country polygons",
     });
   }
 
