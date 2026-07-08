@@ -406,11 +406,11 @@ still runs (`preview_start` against the `wiki-globe` launch config, port 8080).
   request and parses `tool_calls`/`role:"tool"` responses for all three. *Done
   when:* a hardcoded test call to one provider returns a parsed assistant
   message. **Shipped 2026-07-09:** `providers.js` registers OpenRouter, DeepSeek-direct, and Ollama; `buildChatCompletionRequest`/`parseChatCompletionResponse` back the shared adapter; a mocked Ollama-compatible `completeChat` smoke test returned a parsed assistant message, tool call, and token usage.
-- [ ] **1.4 Per-provider BYOK key storage** (§3, §8). Clone the
+- [x] **1.4 Per-provider BYOK key storage** (§3, §8). Clone the
   `getAisKey`/`setAisKey` pattern from `js/ais.js` (`?key=` param or
   `localStorage`), keyed per-provider so OpenRouter and DeepSeek keys coexist;
   Ollama needs none. *Done when:* keys persist across reload and are namespaced
-  per provider.
+  per provider. **Shipped 2026-07-09:** OpenRouter and DeepSeek keys persist under provider-specific localStorage names; provider-specific URL params win; generic `?key=` seeds only the initial provider (`?provider=deepseek&key=...` works); Ollama ignores key storage. Mocked localStorage smoke test passed.
 - [ ] **1.5 Agent tool-use loop** (`harness.js`, §3). Send `messages`+`tools`;
   while the response has `tool_calls`, execute against the registry and append
   `role:"tool"` results; stop on a plain assistant message. Enforce the

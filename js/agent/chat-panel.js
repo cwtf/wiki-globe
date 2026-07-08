@@ -1,6 +1,7 @@
 import {
   availableModels,
   getProviderBaseUrl,
+  getInitialProviderId,
   getProviderKey,
   providerById,
   providers,
@@ -48,6 +49,7 @@ export class AgentChatPanel {
 
   _populateProviders() {
     this.providerEl.replaceChildren(...providers().map((provider) => new Option(provider.label, provider.id)));
+    this.providerEl.value = getInitialProviderId();
   }
 
   _bind() {

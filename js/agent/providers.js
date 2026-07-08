@@ -54,35 +54,50 @@ export function providerById(id) {
   return providers().find((provider) => provider.id === id) ?? providers()[0];
 }
 
+export function getInitialProviderId() {
+  const params = currentParams();
+  return providerById(params.get("agentProvider") || params.get("provider")).id;
+}
+
 export function getProviderKey(providerId) {
-  const params = new URLSearchParams(location.search);
-  const providerParam = params.get(`${providerId}Key`) || params.get(`agent-${providerId}-key`);
-  const genericParam = params.get("key");
-  const fromUrl = providerParam || genericParam;
-  if (fromUrl) {
-    setProviderKey(providerId, fromUrl);
-    return fromUrl;
+  const provider = providerById(providerId);
+  if (!provider.requiresKey) return null;
+
+  const params = currentParams();
+  const providerParam = params.get(`${provider.id}Key`) || params.get(`agent-${provider.id}-key`);
+  if (providerParam) {
+    setProviderKey(provider.id, providerParam);
+    return providerParam;
   }
-  try { return localStorage.getItem(keyStorageName(providerId)); } catch { return null; }
+
+  const genericParam = params.get("key");
+  if (genericParam && provider.id === getInitialProviderId()) {
+    setProviderKey(provider.id, genericParam);
+    return genericParam;
+  }
+
+  try { return localStorage.getItem(keyStorageName(provider.id)); } catch { return null; }
 }
 
 export function setProviderKey(providerId, key) {
+  const provider = providerById(providerId);
+  if (!provider.requiresKey) return;
   try {
-    if (key) localStorage.setItem(keyStorageName(providerId), key);
-    else localStorage.removeItem(keyStorageName(providerId));
+    if (key) localStorage.setItem(keyStorageName(provider.id), key);
+    else localStorage.removeItem(keyStorageName(provider.id));
   } catch { /* private mode */ }
 }
 
 export function getProviderBaseUrl(providerId) {
   const provider = providerById(providerId);
-  const params = new URLSearchParams(location.search);
-  const fromUrl = params.get(`${providerId}BaseUrl`) || params.get(`agent-${providerId}-base-url`);
+  const params = currentParams();
+  const fromUrl = params.get(`${provider.id}BaseUrl`) || params.get(`agent-${provider.id}-base-url`);
   if (fromUrl) {
-    setProviderBaseUrl(providerId, fromUrl);
+    setProviderBaseUrl(provider.id, fromUrl);
     return stripTrailingSlash(fromUrl);
   }
   try {
-    return stripTrailingSlash(localStorage.getItem(baseUrlStorageName(providerId)) || provider.baseUrl);
+    return stripTrailingSlash(localStorage.getItem(baseUrlStorageName(provider.id)) || provider.baseUrl);
   } catch {
     return provider.baseUrl;
   }
@@ -92,8 +107,8 @@ export function setProviderBaseUrl(providerId, baseUrl) {
   try {
     const provider = providerById(providerId);
     const value = stripTrailingSlash(baseUrl || provider.baseUrl);
-    if (value && value !== provider.baseUrl) localStorage.setItem(baseUrlStorageName(providerId), value);
-    else localStorage.removeItem(baseUrlStorageName(providerId));
+    if (value && value !== provider.baseUrl) localStorage.setItem(baseUrlStorageName(provider.id), value);
+    else localStorage.removeItem(baseUrlStorageName(provider.id));
   } catch { /* private mode */ }
 }
 
@@ -209,6 +224,10 @@ async function fetchOllamaModels(baseUrl) {
   } catch {
     return [];
   }
+}
+
+function currentParams() {
+  return new URLSearchParams(globalThis.location?.search ?? "");
 }
 
 function keyStorageName(providerId) {
