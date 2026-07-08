@@ -1,5 +1,15 @@
 import { countryAreaKm2, formatArea, loadCountryGeo } from "../country-geo.js";
 import { fillFeature } from "../layers/heatmap.js";
+import {
+  classifyIncome,
+  incomeBandLabel,
+  loadCountryStats,
+  normalizeIncomeGroup,
+  STAT_INDICATORS,
+  statValue,
+  statYear,
+  WORLD_BANK_INCOME_BANDS,
+} from "../country-stats.js";
 
 const AGENT_MARKER = "agent-session";
 const PIN_COLOR = Cesium.Color.fromCssColorString("#facc15");
@@ -22,12 +32,23 @@ const MAX_SPARQL_LIMIT = 300;
 const NOMINATIM_SEARCH_URL = "https://nominatim.openstreetmap.org/search";
 const DEFAULT_GEOCODE_LIMIT = 5;
 const MAX_GEOCODE_LIMIT = 5;
+const NETWORK_TIMEOUT_MS = 15000;
+const MAX_STATS_ROWS = 250;
 
 export const OK_STATUS = "ok";
 export const NO_DATA_STATUS = "no_data";
+export const ERROR_STATUS = "error";
 
 export function noData(reason, detail = null) {
   return { status: NO_DATA_STATUS, reason, detail, data: null };
+}
+
+// A transient/retryable failure (network throw, timeout, rate limit, 5xx) —
+// distinct from no_data, which means the requested data is genuinely outside
+// tool coverage. The model must treat these differently: retry/report an error
+// vs. state the data is unavailable. It must never invent a failure reason.
+export function toolError(reason, detail = null) {
+  return { status: ERROR_STATUS, reason, detail, data: null };
 }
 
 export function ok(data = {}) {
@@ -36,6 +57,10 @@ export function ok(data = {}) {
 
 export function isNoDataResult(result) {
   return result?.status === NO_DATA_STATUS;
+}
+
+export function isErrorResult(result) {
+  return result?.status === ERROR_STATUS;
 }
 
 export class AgentToolRegistry {
@@ -106,6 +131,31 @@ export class AgentToolRegistry {
               limit: { type: "integer", minimum: 1, maximum: MAX_SPARQL_LIMIT, description: "Maximum rows returned to the model; appended as LIMIT when the query has no LIMIT." },
             },
             required: ["query"],
+          },
+        },
+      },
+      {
+        type: "function",
+        function: {
+          name: "country_stats",
+          description: "Read Wiki Globe's bundled per-country World Bank / UNDP indicators (GDP per capita, GNI, HDI, life expectancy, population density, internet users, and more) by ISO-3166 alpha-3 code, with NO network call. PREFER THIS over wiki_search/wikidata_sparql for standard country economic and development statistics and for World Bank income-group classification — Wikidata does not reliably carry GDP-per-capita or income group. Optionally filter to a World Bank income group; every returned country also includes its income-group classification. Feed the returned values straight into color_countries or label_countries.",
+          parameters: {
+            type: "object",
+            properties: {
+              indicator: {
+                type: "string",
+                enum: Object.keys(STAT_INDICATORS),
+                description: "Which indicator value to return. Defaults to gdpNominal (GDP per capita, current US$).",
+              },
+              iso3: { type: "string", minLength: 3, maxLength: 3, description: "Optional single ISO3 code; omit to return every country with data." },
+              incomeGroup: {
+                type: "string",
+                enum: ["low", "lower_middle", "upper_middle", "high"],
+                description: "Optional World Bank income-group filter (approximate; see the incomeGroupBasis disclaimer in the result).",
+              },
+              sort: { type: "string", enum: ["asc", "desc"], description: "Optional sort of the returned indicator value." },
+              limit: { type: "integer", minimum: 1, maximum: MAX_STATS_ROWS, description: "Optional cap on the number of countries returned." },
+            },
           },
         },
       },
@@ -247,6 +297,7 @@ export class AgentToolRegistry {
     if (name === "wiki_search") return this.wikiSearch(args);
     if (name === "wiki_extract") return this.wikiExtract(args);
     if (name === "wikidata_sparql") return this.wikidataSparql(args);
+    if (name === "country_stats") return this.countryStats(args);
     if (name === "geocode") return this.geocode(args);
     if (name === "label_countries") return this.labelCountries(args);
     if (name === "color_countries") return this.colorCountries(args);
@@ -297,8 +348,8 @@ export class AgentToolRegistry {
       format: "json",
       origin: "*",
     });
-    const res = await this.networkQueue.enqueue(() => fetch(url));
-    if (!res.ok) return noData(`Wikipedia search HTTP ${res.status}.`);
+    const res = await this.networkQueue.enqueue(() => fetchWithTimeout(url));
+    if (!res.ok) return httpFailure(res.status, "Wikipedia search");
     const data = await res.json();
     const hits = data?.query?.search ?? [];
     if (hits.length === 0) return noData(`No relevant Wikipedia pages found for "${q}".`);
@@ -316,9 +367,9 @@ export class AgentToolRegistry {
   async wikiExtract({ title }) {
     const t = String(title ?? "").trim();
     if (!t) return noData("Missing Wikipedia page title.");
-    const res = await this.networkQueue.enqueue(() => fetch(`${WIKIPEDIA_SUMMARY_URL}${encodeURIComponent(t)}`));
+    const res = await this.networkQueue.enqueue(() => fetchWithTimeout(`${WIKIPEDIA_SUMMARY_URL}${encodeURIComponent(t)}`));
     if (res.status === 404) return noData(`No Wikipedia summary found for "${t}".`);
-    if (!res.ok) return noData(`Wikipedia summary HTTP ${res.status}.`);
+    if (!res.ok) return httpFailure(res.status, "Wikipedia summary");
     const summary = await res.json();
     if (summary.type === "disambiguation") {
       return noData(`"${summary.title ?? t}" is a disambiguation page; use wiki_search to choose a specific page.`);
@@ -343,10 +394,10 @@ export class AgentToolRegistry {
     const boundedQuery = withSparqlLimit(q, rowLimit);
     const url = new URL(WIKIDATA_SPARQL_URL);
     url.search = new URLSearchParams({ format: "json", query: boundedQuery });
-    const res = await this.networkQueue.enqueue(() => fetch(url, {
+    const res = await this.networkQueue.enqueue(() => fetchWithTimeout(url, {
       headers: { Accept: "application/sparql-results+json" },
     }));
-    if (!res.ok) return noData(`Wikidata SPARQL HTTP ${res.status}.`);
+    if (!res.ok) return httpFailure(res.status, "Wikidata SPARQL");
     const data = await res.json();
     const rows = normalizeSparqlRows(data?.results?.bindings ?? []);
     if (rows.length === 0) return noData("Wikidata SPARQL query returned zero rows.");
@@ -354,6 +405,87 @@ export class AgentToolRegistry {
       variables: data?.head?.vars ?? Object.keys(rows[0] ?? {}),
       rowCount: rows.length,
       rows,
+    });
+  }
+
+  async countryStats({ indicator = "gdpNominal", iso3 = null, incomeGroup = null, sort = null, limit = null }) {
+    const key = String(indicator ?? "gdpNominal").trim();
+    if (!STAT_INDICATORS[key]) {
+      return noData(`Unknown indicator "${indicator}". Available: ${Object.keys(STAT_INDICATORS).join(", ")}.`);
+    }
+    let wantGroup = null;
+    if (incomeGroup != null && String(incomeGroup).trim() !== "") {
+      wantGroup = normalizeIncomeGroup(incomeGroup);
+      if (!wantGroup) return noData(`Unknown income group "${incomeGroup}". Use low, lower_middle, upper_middle, or high.`);
+    }
+
+    // May throw (network/timeout) → the harness converts that into a
+    // retryable error result, distinct from a genuine no_data.
+    const stats = await loadCountryStats();
+    const meta = STAT_INDICATORS[key];
+
+    // The World Bank feed mixes in region/income aggregates (e.g. "LTE" =
+    // Late-demographic dividend) that pass an ISO3 regex but are not countries.
+    // Restrict to codes present in the polygon dataset, which is also what
+    // color_countries / label_countries need to render anything.
+    const geo = await loadCountryGeo();
+    const realCountries = new Set(geo.map((feature) => feature.id));
+
+    const wantIso3 = iso3 != null ? String(iso3).trim().toUpperCase() : null;
+    if (wantIso3 && !/^[A-Z]{3}$/.test(wantIso3)) {
+      return noData("country_stats iso3 must be an ISO-3166 alpha-3 country code.");
+    }
+    if (wantIso3 && !realCountries.has(wantIso3)) {
+      return noData(`ISO3 ${wantIso3} is not a mappable country in the dataset.`);
+    }
+    const ids = wantIso3 ? [wantIso3] : Object.keys(stats.countries);
+    if (wantIso3 && !stats.countries[wantIso3]) {
+      return noData(`No bundled statistics for ISO3 ${wantIso3}.`);
+    }
+
+    const rows = [];
+    for (const id of ids) {
+      if (!realCountries.has(id)) continue;
+      const row = stats.countries[id];
+      if (!row) continue;
+      const value = statValue(row[key]);
+      if (!Number.isFinite(value)) continue;
+      const groupKey = classifyIncome(statValue(row.gdpNominal));
+      if (wantGroup && groupKey !== wantGroup) continue;
+      rows.push({
+        iso3: id,
+        name: row.name ?? id,
+        value,
+        year: statYear(row[key]),
+        incomeGroup: groupKey,
+        incomeGroupLabel: incomeBandLabel(groupKey),
+      });
+    }
+
+    if (rows.length === 0) {
+      const scope = wantGroup ? ` in income group "${wantGroup}"` : "";
+      return noData(`No bundled "${key}" values found${scope}${wantIso3 ? ` for ${wantIso3}` : ""}.`);
+    }
+
+    if (sort === "asc") rows.sort((a, b) => a.value - b.value);
+    else if (sort === "desc") rows.sort((a, b) => b.value - a.value);
+    const capped = limit ? rows.slice(0, clampInteger(limit, 1, MAX_STATS_ROWS, MAX_STATS_ROWS)) : rows.slice(0, MAX_STATS_ROWS);
+
+    return ok({
+      indicator: key,
+      indicatorLabel: meta.label,
+      unit: meta.unit,
+      dataSource: stats.sourceLabel,
+      live: stats.live,
+      generatedAt: stats.generatedAt,
+      incomeGroupBasis: {
+        note: WORLD_BANK_INCOME_BANDS.disclaimer,
+        asOf: WORLD_BANK_INCOME_BANDS.asOf,
+        proxyBasis: WORLD_BANK_INCOME_BANDS.proxyBasis,
+      },
+      count: capped.length,
+      totalMatched: rows.length,
+      countries: capped,
     });
   }
 
@@ -370,8 +502,8 @@ export class AgentToolRegistry {
       namedetails: "1",
       "accept-language": "en",
     });
-    const res = await this.networkQueue.enqueue(() => fetch(url));
-    if (!res.ok) return noData(`Nominatim geocode HTTP ${res.status}.`);
+    const res = await this.networkQueue.enqueue(() => fetchWithTimeout(url));
+    if (!res.ok) return httpFailure(res.status, "Nominatim geocode");
     const places = await res.json();
     if (!Array.isArray(places) || places.length === 0) return noData(`No geocoding results found for "${q}".`);
     const results = places.map(normalizeNominatimPlace).filter(Boolean);
@@ -605,6 +737,23 @@ export class ThrottleQueue {
     });
     return this.tail;
   }
+}
+
+// fetch with a hard timeout so one slow/expensive endpoint (e.g. an overweight
+// SPARQL query) cannot hang the whole agent loop. On timeout the returned
+// promise rejects, which the harness turns into a retryable tool error.
+function fetchWithTimeout(input, init = {}, ms = NETWORK_TIMEOUT_MS) {
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(new DOMException(`request timed out after ${ms} ms`, "TimeoutError")), ms);
+  return fetch(input, { ...init, signal: ctl.signal }).finally(() => clearTimeout(timer));
+}
+
+// Classify an HTTP failure: 408/429/5xx are transient (retryable error), other
+// 4xx are treated as no_data (the request itself won't succeed on retry).
+function httpFailure(status, label) {
+  const transient = status === 408 || status === 429 || status >= 500;
+  const msg = `${label} HTTP ${status}.`;
+  return transient ? toolError(msg, { status, retryable: true }) : noData(msg, { status });
 }
 
 function validLatLon(lat, lon) {

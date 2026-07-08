@@ -169,6 +169,7 @@ labelling every country at once.
 | `wikidata_sparql(query)` | `query.wikidata.org/sparql` | Prefer this over `wiki_search` whenever the fact is a scalar per-entity property at scale (e.g. `P474` calling code, `P2046` area) — far less hallucination risk than parsing a 195-row table out of prose. |
 | `geocode(placeName)` | Nominatim `/search` | New — forward-geocode counterpart to the reverse call already used. |
 | `country_area(iso3)` | `countryAreaKm2` (local, no network) | Exposes existing computed data as a callable tool; powers ratio questions like the China/Ukraine example with zero network calls. |
+| `country_stats(indicator, iso3?, incomeGroup?, sort?, limit?)` | `data/country-stats.latest.json` (World Bank/UNDP, live-first) + `country-data.js` bundled fallback, via `js/country-stats.js` | **Shipped.** Per-country GDP-per-capita, GNI, HDI, life expectancy, and ~15 other bundled indicators by ISO3, plus a World Bank income-group classification. **This is the correct source for country economic/development stats and income groups — Wikidata does *not* reliably carry GDP-per-capita (P2132 is empty for major economies) or income group, so prefer this over `wikidata_sparql`/`wiki_search` for these.** Restricts to codes present in the polygon set (drops World Bank aggregates like "LTE"), so results feed straight into `color_countries`/`label_countries`. Income bands are a sourced constant applied to GDP-per-capita as a proxy for Atlas GNI, disclosed in the result (`incomeGroupBasis`) per §9. |
 | `fx_rates()` *(example)* | `frankfurter.app` (free, keyless, CORS-enabled) | Concrete instance of "dedicated live-data tool" — exchange rates are a live-numeric-data problem, not a search problem, and shouldn't be answered from Wikipedia/Wikidata. Follows the same live-fetch-with-fallback shape already used per indicator in `heatmap.js`. |
 
 ### 5.4 Ephemeris / time-varying astronomy tools (new category)
@@ -205,6 +206,7 @@ Sanity-check the tool inventory against the queries discussed:
 - **"Newly industrialized countries"** → `wiki_extract("Newly industrialized country")` → LLM reads the list → `highlight_country` per match (map name → ISO3 via existing country-geo lookup).
 - **"Telephone country code of all countries"** → `wikidata_sparql(P474 query)` → `label_countries({...})`.
 - **"Colour grade by closeness to high-income status"** → existing World Bank GNI data (already live/bundled in `heatmap.js`/`country-data.js`) + a sourced high-income threshold constant → LLM/tool computes `(threshold − value) / threshold` per country → `color_countries({...})`.
+- **"Show all upper-middle-income countries and their GDP per capita"** → `country_stats({indicator:"gdpNominal", incomeGroup:"upper_middle"})` (bundled World Bank data, zero network) → `color_countries`/`label_countries` from the returned values. *Note:* an early build answered this with a fabricated "connectivity issues" excuse and a memorized country list because no tool exposed the bundled World Bank stats — the model fell through to wiki/Wikidata, which genuinely can't serve GDP-per-capita or income group. `country_stats` closes that gap; the §9 error/no_data status split (below) stops the fabricated-excuse behavior.
 - **"How many Ukraines fit into China"** → `country_area("UKR")`, `country_area("CHN")` → arithmetic (no network) → state the ratio, optionally `tile_shape_into_country` if the stretch feature ships, otherwise fall back to a single `truesize.js` overlay for eyeballing.
 - **"Exchange rate of currencies on the globe"** → `fx_rates()` → `color_countries` or per-country `add_pin` labels.
 - **"Trace the path of the upcoming solar eclipse"** → `eclipse_path()` (astronomy-engine finds the next global eclipse, reconstructs the central line as sampled `{lat, lon, time}` points, behind the compute-heavy confirmation dialog) → `draw_route(points)`. If no eclipse falls in the searched range, returns `NO DATA` and the model says so rather than drawing a guessed track (§9).
@@ -308,6 +310,18 @@ Concrete requirements:
 - **Tools must return an explicit "no data" signal**, distinguishable from an
   empty-but-valid result, rather than throwing an opaque error the model
   might paper over or reinterpret as license to guess.
+- **A transient failure must be a distinct status from "no data" — shipped.**
+  There are now three tool-result statuses: `ok`, `no_data` (genuinely outside
+  tool coverage — authoritative, don't guess), and `error` (a retryable
+  network/timeout/rate-limit failure — the data may well exist). Collapsing a
+  network throw into `no_data` (the original behavior) is what let a model
+  invent "connectivity issues" and answer an income-group query from memory.
+  The harness now returns `toolError` on a thrown tool, `httpFailure` classifies
+  429/5xx/timeout as `error` vs other 4xx as `no_data`, all network fetches
+  have a hard timeout (a single overweight SPARQL query could otherwise hang
+  the whole loop), and the system prompt forbids inventing a failure cause —
+  the model must quote the tool's actual `reason` and offer to retry. The chat
+  badge gains an `ERROR` state alongside `NO DATA`.
 - **System prompt must instruct the model**: for any factual, geographic, or
   quantitative claim, only state what a tool actually returned; if no tool
   covers the request, say so explicitly rather than answering from training
@@ -515,6 +529,25 @@ still runs (`preview_start` against the `wiki-globe` launch config, port 8080).
 - [x] **4.1 `country_area(iso3)`** (§5.3) — expose `countryAreaKm2` from
   `js/country-geo.js` as a callable tool (no network). *Unlocks area-ratio
   questions like "how many Ukraines fit into China" (§6).* **Shipped 2026-07-09:** `AgentToolRegistry` now exposes `country_area(iso3)`, resolves present-day ISO3 features from `loadCountryGeo`, computes `countryAreaKm2` locally with no network call, returns numeric and formatted area plus source metadata, and reports `no_data` for malformed or unknown ISO3 codes. Verified with mocked country-geo smoke tests.
+
+- [x] **4.2 `country_stats` bundled-indicator tool + error/no_data split**
+  (§5.3, §9) — new `js/country-stats.js` live-first loader
+  (`data/country-stats.latest.json` → bundled `country-data.js` fallback) and a
+  `country_stats(indicator, iso3?, incomeGroup?, sort?, limit?)` tool exposing
+  per-country World Bank/UNDP indicators + a sourced (disclosed-proxy) World
+  Bank income-group classification, restricted to polygon-backed countries so
+  it feeds `color_countries`/`label_countries` cleanly. Also split tool results
+  into `ok`/`no_data`/`error`, added `fetchWithTimeout` + `httpFailure` to every
+  network tool, made `harness._executeTool` return a retryable `error` on throw,
+  and hardened the system prompt against fabricated failure reasons and
+  memorized lists. **Shipped 2026-07-09:** motivated by an "upper-middle-income
+  countries + GDP per capita" query that the harness had no tool for and
+  answered from memory with a fake "connectivity issues" excuse. Verified
+  in-browser: `country_stats({incomeGroup:"upper_middle"})` returns 43 real
+  countries (World Bank aggregates like "LTE" dropped) live, feeds
+  `color_countries` with zero missing, single-country + aggregate-rejection
+  paths correct; a thrown tool now yields `error` (not `no_data`) with the real
+  reason and an `ERROR` badge.
 
 ### Phase 5 — Stretch (§10.5, gated)
 

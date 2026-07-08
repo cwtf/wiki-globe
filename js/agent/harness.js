@@ -1,13 +1,18 @@
 import { completeChat } from "./providers.js";
-import { isNoDataResult, noData, NO_DATA_STATUS } from "./tools.js";
+import { ERROR_STATUS, isErrorResult, isNoDataResult, noData, NO_DATA_STATUS, toolError } from "./tools.js";
 
-export { NO_DATA_STATUS };
+export { NO_DATA_STATUS, ERROR_STATUS };
 
 export const GROUNDED_SYSTEM_PROMPT = `You operate Wiki Globe by calling tools.
 
-Hard rule: for factual, geographic, quantitative, or visual claims, only state what a tool returned in this conversation. If no available tool covers the request, say that the data is not available instead of answering from memory. Never invent borders, rankings, routes, coordinates, or numeric values.
+Hard rule: for factual, geographic, quantitative, or visual claims, only state what a tool returned in this conversation. If no available tool covers the request, say that the data is not available instead of answering from memory. Never invent borders, rankings, routes, coordinates, or numeric values. Never output a list of countries, values, or rankings from your own memory as if it were data — if you did not get it from a tool result, you do not have it.
 
-Tool results have this contract: {"status":"ok","data":...} means grounded data is available; {"status":"no_data","reason":"...","detail":...,"data":null} means the requested data or operation is outside tool coverage or unavailable. Treat "no_data" as authoritative, not as permission to guess.
+Tool results use three statuses:
+- {"status":"ok","data":...} — grounded data you may use.
+- {"status":"no_data","reason":"...","data":null} — the request is genuinely outside tool coverage or returned nothing. Treat this as authoritative, not as permission to guess. Tell the user that specific thing is not available.
+- {"status":"error","reason":"...","data":null} — a transient failure (network, timeout, rate limit). This does NOT mean the data does not exist. Report the actual reason from the result and that it can be retried; offer to retry. Do NOT substitute an answer from memory, and do NOT invent a cause such as "connectivity issues" — quote the reason the tool gave.
+
+For country economic and development statistics (GDP per capita, GNI, HDI, life expectancy, population indicators) and World Bank income-group classification, use the country_stats tool first — it reads bundled World Bank/UNDP data with no network dependency. Do not fall back to wiki_search/wikidata_sparql for these; Wikidata does not reliably carry GDP-per-capita or income group.
 
 If a user asks for something like historical/dynastic borders, unsourced rankings, unknown coordinates, or any claim no tool can actually retrieve or compute, explicitly refuse with a short explanation that Wiki Globe has no tool data for that request. Prefer clearing previous agent overlays before starting a new independent map request unless the user asks to add to the existing view.`;
 
@@ -37,6 +42,7 @@ export class AgentHarness {
     let usedCalls = 0;
     let budgetLimit = maxToolCalls;
     let hadNoData = false;
+    let hadError = false;
     let lastUsage = { input: 0, output: 0, total: null };
 
     while (true) {
@@ -63,7 +69,7 @@ export class AgentHarness {
           callbacks.onMessage?.(fallback, { usage: lastUsage, status: "error" });
           return { content: fallback, usage: lastUsage, status: "error" };
         }
-        const status = hadNoData ? NO_DATA_STATUS : "ok";
+        const status = hadError ? ERROR_STATUS : hadNoData ? NO_DATA_STATUS : "ok";
         callbacks.onMessage?.(content, { usage: lastUsage, status });
         return { content, usage: lastUsage, status };
       }
@@ -107,6 +113,7 @@ export class AgentHarness {
           ? noData(`Malformed arguments for ${call.name}: ${parsed.error}`)
           : await this._executeTool(call.name, parsed.args);
         if (isNoDataResult(result)) hadNoData = true;
+        if (isErrorResult(result)) hadError = true;
         callbacks.onTool?.({ name: call.name, args: parsed.args, result, status: result.status });
         this.messages.push({
           role: "tool",
@@ -122,7 +129,10 @@ export class AgentHarness {
     try {
       return await this.tools.execute(name, args);
     } catch (e) {
-      return noData(`Tool ${name} failed: ${e.message}`);
+      // A thrown tool is a transient/unexpected failure, not evidence the data
+      // is out of coverage. Surface it as a retryable error so the model does
+      // not treat it as license to answer from memory.
+      return toolError(`Tool ${name} failed: ${e.message}`, { retryable: true });
     }
   }
 }

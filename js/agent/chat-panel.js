@@ -8,7 +8,7 @@ import {
   setProviderBaseUrl,
   setProviderKey,
 } from "./providers.js";
-import { AgentHarness, NO_DATA_STATUS } from "./harness.js";
+import { AgentHarness, ERROR_STATUS, NO_DATA_STATUS } from "./harness.js";
 import { AgentToolRegistry } from "./tools.js";
 
 const OLLAMA_HINT = "For Ollama, start the server with OLLAMA_ORIGINS allowing this page origin, for example OLLAMA_ORIGINS=http://localhost:8080. Models are read from /api/tags when reachable.";
@@ -144,12 +144,12 @@ export class AgentChatPanel {
           onUsage: (usage) => this._renderUsage(usage),
           onMessage: (content, meta) => {
             this.outputEl.textContent = content;
-            this._setBadge(meta.status === NO_DATA_STATUS ? "nodata" : meta.status === "error" ? "nodata" : "live");
+            this._setBadge(meta.status === ERROR_STATUS ? "error" : meta.status === NO_DATA_STATUS ? "nodata" : "live");
           },
         },
       });
       this._renderUsage(result.usage);
-      this._setStatus(result.status === "ok" ? "Complete" : "Stopped");
+      this._setStatus(statusLabel(result.status));
       this.inputEl.value = "";
     } catch (e) {
       if (e.name === "AbortError") {
@@ -234,6 +234,7 @@ export class AgentChatPanel {
       loading: ["...", "loading"],
       live: ["LIVE", "live"],
       nodata: ["NO DATA", "demo"],
+      error: ["ERROR", "demo"],
     };
     const [label, cls] = map[state] ?? map.idle;
     this.badgeEl.textContent = label;
@@ -248,4 +249,12 @@ export class AgentChatPanel {
     toggle?.setAttribute("aria-label", label);
     if (toggle) toggle.title = label;
   }
+}
+
+function statusLabel(status) {
+  if (status === "ok") return "Complete";
+  if (status === ERROR_STATUS) return "Tool error — retryable";
+  if (status === NO_DATA_STATUS) return "No data available";
+  if (status === "stopped") return "Stopped";
+  return "Done";
 }
