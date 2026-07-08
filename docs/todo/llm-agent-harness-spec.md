@@ -411,12 +411,12 @@ still runs (`preview_start` against the `wiki-globe` launch config, port 8080).
   `localStorage`), keyed per-provider so OpenRouter and DeepSeek keys coexist;
   Ollama needs none. *Done when:* keys persist across reload and are namespaced
   per provider. **Shipped 2026-07-09:** OpenRouter and DeepSeek keys persist under provider-specific localStorage names; provider-specific URL params win; generic `?key=` seeds only the initial provider (`?provider=deepseek&key=...` works); Ollama ignores key storage. Mocked localStorage smoke test passed.
-- [ ] **1.5 Agent tool-use loop** (`harness.js`, §3). Send `messages`+`tools`;
+- [x] **1.5 Agent tool-use loop** (`harness.js`, §3). Send `messages`+`tools`;
   while the response has `tool_calls`, execute against the registry and append
   `role:"tool"` results; stop on a plain assistant message. Enforce the
   per-turn tool-call budget (§8) and the malformed/missing-tool-call graceful
   failure (§8, tell the user the model doesn't support tool use well). *Done
-  when:* a multi-step query completes a full loop with a capped call count.
+  when:* a multi-step query completes a full loop with a capped call count. **Shipped 2026-07-09:** `AgentHarness` now supports injected chat completion for deterministic testing, appends `role:"tool"` results, aggregates token usage, caps tool calls, converts malformed arguments/tool exceptions into `no_data` results, and returns a clear tool-use support error when a model finishes with missing tool calls. Mocked smoke tests covered happy path, budget cap, malformed arguments, and missing tool calls.
 - [ ] **1.6 Chat panel UI** (`chat-panel.js`, §3). Clone the `#wiki-panel` /
   `#wp-toggle` collapse pattern at [index.html:376](index.html:376) into a new
   `#agent-panel` / `#agent-toggle` pair. Include: provider selector,

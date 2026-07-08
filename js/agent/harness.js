@@ -15,25 +15,29 @@ export class AgentHarness {
   constructor(toolRegistry, opts = {}) {
     this.tools = toolRegistry;
     this.maxToolCalls = opts.maxToolCalls ?? DEFAULT_TOOL_BUDGET;
-    this.messages = [{ role: "system", content: opts.systemPrompt ?? GROUNDED_SYSTEM_PROMPT }];
+    this.systemPrompt = opts.systemPrompt ?? GROUNDED_SYSTEM_PROMPT;
+    this.chatComplete = opts.chatComplete ?? completeChat;
+    this.messages = [{ role: "system", content: this.systemPrompt }];
   }
 
   reset() {
-    this.messages = [{ role: "system", content: GROUNDED_SYSTEM_PROMPT }];
+    this.messages = [{ role: "system", content: this.systemPrompt }];
   }
 
-  async run(userText, opts) {
+  async run(userText, opts = {}) {
     const callbacks = opts.callbacks ?? {};
     const user = String(userText ?? "").trim();
     if (!user) throw new Error("Ask the agent something first.");
 
+    const chatComplete = opts.chatComplete ?? this.chatComplete;
+    const maxToolCalls = opts.maxToolCalls ?? this.maxToolCalls;
     this.messages.push({ role: "user", content: user });
     let usedCalls = 0;
     let lastUsage = { input: 0, output: 0, total: null };
 
     while (true) {
       callbacks.onStatus?.("thinking");
-      const response = await completeChat({
+      const response = await chatComplete({
         providerId: opts.providerId,
         model: opts.model,
         key: opts.key,
@@ -50,7 +54,7 @@ export class AgentHarness {
       const toolCalls = normalizeToolCalls(message.tool_calls);
       if (toolCalls.length === 0) {
         const content = String(message.content ?? "").trim();
-        if (!content) {
+        if (!content || response.finishReason === "tool_calls") {
           const fallback = "The selected model did not return a usable message or tool call. It may not support OpenAI-style tool use reliably.";
           callbacks.onMessage?.(fallback, { usage: lastUsage, status: "error" });
           return { content: fallback, usage: lastUsage, status: "error" };
@@ -59,8 +63,8 @@ export class AgentHarness {
         return { content, usage: lastUsage, status: "ok" };
       }
 
-      if (usedCalls + toolCalls.length > this.maxToolCalls) {
-        const msg = `Stopped after ${this.maxToolCalls} tool calls to avoid a runaway loop.`;
+      if (usedCalls + toolCalls.length > maxToolCalls) {
+        const msg = `Stopped after ${maxToolCalls} tool calls to avoid a runaway loop.`;
         this.messages.push({ role: "tool", tool_call_id: "tool-budget", name: "tool_budget", content: JSON.stringify(noData(msg)) });
         callbacks.onMessage?.(msg, { usage: lastUsage, status: NO_DATA_STATUS });
         return { content: msg, usage: lastUsage, status: NO_DATA_STATUS };
@@ -72,7 +76,7 @@ export class AgentHarness {
         callbacks.onTool?.({ name: call.name, args: parsed.args, status: parsed.error ? "error" : "running" });
         const result = parsed.error
           ? noData(`Malformed arguments for ${call.name}: ${parsed.error}`)
-          : await this.tools.execute(call.name, parsed.args);
+          : await this._executeTool(call.name, parsed.args);
         callbacks.onTool?.({ name: call.name, args: parsed.args, result, status: result.status });
         this.messages.push({
           role: "tool",
@@ -81,6 +85,14 @@ export class AgentHarness {
           content: JSON.stringify(result),
         });
       }
+    }
+  }
+
+  async _executeTool(name, args) {
+    try {
+      return await this.tools.execute(name, args);
+    } catch (e) {
+      return noData(`Tool ${name} failed: ${e.message}`);
     }
   }
 }
