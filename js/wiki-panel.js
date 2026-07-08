@@ -99,6 +99,7 @@ export class WikiPanel {
     this._clearPin();
     this._clearCircle();
     this._clearMarkers();
+    this._setCollapsed(false);
     this.el.classList.add("open", "moon");
     this.coordsEl.textContent =
       `${bodyName} · ${Math.abs(lat).toFixed(2)}° ${lat >= 0 ? "N" : "S"},  ` +
@@ -126,6 +127,7 @@ export class WikiPanel {
     this.radiusM = this.radiusKm() * 1000;
     this._placePin(lat, lon);
     this._placeCircle(lat, lon);
+    this._setCollapsed(false);
     this.el.classList.add("open");
     this.search();
   }
@@ -266,6 +268,16 @@ export class WikiPanel {
 
   openArticlePopup(article) {
     openArticlePopup(article);
+  }
+
+  _setCollapsed(collapsed) {
+    this.el.classList.toggle("collapsed", collapsed);
+    const toggle = document.getElementById("wp-toggle");
+    if (!toggle) return;
+    const label = collapsed ? "Expand Wikipedia panel" : "Collapse Wikipedia panel";
+    toggle.setAttribute("aria-expanded", String(!collapsed));
+    toggle.setAttribute("aria-label", label);
+    toggle.title = label;
   }
 
   // --- search ----------------------------------------------------------------

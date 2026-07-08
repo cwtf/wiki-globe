@@ -25,6 +25,7 @@ const AUTOROTATE_IDLE_MS = 8000;
 const AUTOROTATE_MIN_HEIGHT = 1.2e6;  // stop spinning once zoomed into the map
 const EARTH_DEPART_DURATION = 1.2;      // seconds; camera pull-back before an Earth-origin proxy transition
 const EARTH_DEPART_HEIGHT_FACTOR = 1.5; // multiple of the target's proxyDistance to clear it before the proxy appears
+const COMPACT_SIDE_MENU_QUERY = "(max-width: 1199px)";
 async function boot() {
   await loadHeatmapMetrics();
 
@@ -100,6 +101,7 @@ async function boot() {
     CHILD_MOON_BODY_KEYS.map((key) => [key, new ChildMoonLayer(viewer, key)])
   );
   const wiki = new WikiPanel(viewer);
+  setupResponsiveSideMenus();
 
   ships.init();
   sats.init();
@@ -777,6 +779,51 @@ async function boot() {
 
   // handy for debugging from the console
   window.__globe = { viewer, sats, flights, ships, heat, wiki, truesize, search, sun, moon, mars, planets, childMoons, bodyLayers };
+}
+
+function setupResponsiveSideMenus() {
+  const compact = window.matchMedia(COMPACT_SIDE_MENU_QUERY);
+  const panels = [
+    {
+      el: document.getElementById("panel"),
+      toggle: document.getElementById("panel-toggle"),
+      collapseLabel: "Collapse controls panel",
+      expandLabel: "Expand controls panel",
+    },
+    {
+      el: document.getElementById("wiki-panel"),
+      toggle: document.getElementById("wp-toggle"),
+      collapseLabel: "Collapse Wikipedia panel",
+      expandLabel: "Expand Wikipedia panel",
+    },
+  ];
+
+  for (const panel of panels) {
+    if (!panel.el || !panel.toggle) continue;
+    let userChanged = false;
+
+    function setCollapsed(collapsed) {
+      panel.el.classList.toggle("collapsed", collapsed);
+      panel.toggle.setAttribute("aria-expanded", String(!collapsed));
+      panel.toggle.setAttribute("aria-label", collapsed ? panel.expandLabel : panel.collapseLabel);
+      panel.toggle.title = collapsed ? panel.expandLabel : panel.collapseLabel;
+    }
+
+    setCollapsed(compact.matches);
+    panel.toggle.addEventListener("click", () => {
+      userChanged = true;
+      setCollapsed(!panel.el.classList.contains("collapsed"));
+    });
+
+    const onCompactChanged = (event) => {
+      if (!userChanged) setCollapsed(event.matches);
+    };
+    if (compact.addEventListener) {
+      compact.addEventListener("change", onCompactChanged);
+    } else {
+      compact.addListener(onCompactChanged);
+    }
+  }
 }
 
 function enhanceHeatmapSelect(select) {
