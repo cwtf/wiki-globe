@@ -35,7 +35,12 @@ export class AgentChatPanel {
     this.statusEl = document.getElementById("agent-status");
     this.submitEl = document.getElementById("agent-submit");
     this.cancelEl = document.getElementById("agent-cancel");
+    this.checkpointEl = document.getElementById("agent-checkpoint");
+    this.checkpointMsgEl = document.getElementById("agent-checkpoint-msg");
+    this.continueEl = document.getElementById("agent-continue");
+    this.terminateEl = document.getElementById("agent-terminate");
     this.abort = null;
+    this.checkpointResolve = null;
     this.modelLoadSeq = 0;
 
     this.tools = opts.tools ?? new AgentToolRegistry(viewer);
@@ -79,6 +84,8 @@ export class AgentChatPanel {
   _bind() {
     document.getElementById("agent-close")?.addEventListener("click", () => this._setCollapsed(true));
     this.cancelEl?.addEventListener("click", () => this._cancel());
+    this.continueEl?.addEventListener("click", () => this._resolveCheckpoint("continue"));
+    this.terminateEl?.addEventListener("click", () => this._resolveCheckpoint("terminate"));
     this.providerEl.addEventListener("change", () => this._syncProvider());
     this.keyEl.addEventListener("change", () => setProviderKey(this.providerEl.value, this.keyEl.value.trim()));
     this.baseEl.addEventListener("change", () => {
@@ -132,6 +139,7 @@ export class AgentChatPanel {
         signal: this.abort.signal,
         callbacks: {
           onStatus: (status) => this._setStatus(status === "thinking" ? "Thinking..." : status),
+          onCheckpoint: (info) => this._askCheckpoint(info),
           onTool: (entry) => this._logTool(entry),
           onUsage: (usage) => this._renderUsage(usage),
           onMessage: (content, meta) => {
@@ -154,15 +162,41 @@ export class AgentChatPanel {
       this._setStatus("Error");
       this._setBadge("nodata");
     } finally {
+      this._resolveCheckpoint("terminate");
       this.abort = null;
       this._setRunning(false);
     }
   }
 
   _cancel(opts = {}) {
+    // A pending budget checkpoint is resolved as terminate so an in-flight
+    // cancel also unblocks the awaiting harness loop.
+    this._resolveCheckpoint("terminate");
     if (!this.abort) return;
     this.abort.abort();
     if (!opts.silent) this._setStatus("Cancelling...");
+  }
+
+  // Show the continue/terminate prompt when the harness hits its tool-call
+  // budget, and return a promise that resolves with the user's decision.
+  _askCheckpoint(info) {
+    if (!this.checkpointEl) return Promise.resolve("terminate");
+    return new Promise((resolve) => {
+      this.checkpointResolve = resolve;
+      const pending = info.pending?.length ? ` Next: ${info.pending.join(", ")}.` : "";
+      this.checkpointMsgEl.textContent =
+        `Paused after ${info.usedCalls} tool calls.${pending} Continue for up to ${info.budget} more, or terminate?`;
+      this.checkpointEl.hidden = false;
+      this._setStatus("Waiting for continue or terminate");
+    });
+  }
+
+  _resolveCheckpoint(decision) {
+    if (!this.checkpointResolve) return;
+    const resolve = this.checkpointResolve;
+    this.checkpointResolve = null;
+    if (this.checkpointEl) this.checkpointEl.hidden = true;
+    resolve(decision);
   }
 
   _logTool(entry) {

@@ -436,7 +436,7 @@ still runs (`preview_start` against the `wiki-globe` launch config, port 8080).
   per-turn tool-call budget (§8) and the malformed/missing-tool-call graceful
   failure (§8, tell the user the model doesn't support tool use well). *Done
   when:* a multi-step query completes a full loop with a capped call count. **Shipped 2026-07-09:** `AgentHarness` now supports injected chat completion for deterministic testing, appends `role:"tool"` results, aggregates token usage, caps tool calls, converts malformed arguments/tool exceptions into `no_data` results, and returns a clear tool-use support error when a model finishes with missing tool calls. Mocked smoke tests covered happy path, budget cap, malformed arguments, and missing tool calls. **Superseded 2026-07-09:** §8's runaway-loop guardrail was changed from a silent hard cap to a **pause-and-prompt (continue/terminate) checkpoint** *after* this task shipped — the current hard-stop is now a known deviation from §8. Do not re-tick; the checkpoint behavior is tracked as task **1.9** below.
-- [ ] **1.9 Budget checkpoint (continue/terminate)** (§8) — revise the shipped
+- [x] **1.9 Budget checkpoint (continue/terminate)** (§8) — revise the shipped
   1.5 hard cap into a pausing checkpoint. When the per-turn tool-call budget is
   reached, suspend the loop with `messages` + fired-tools state intact and
   prompt the user via the compute-heavy confirmation-dialog surface
@@ -447,6 +447,19 @@ still runs (`preview_start` against the `wiki-globe` launch config, port 8080).
   intended action if known). *Done when:* a query that exceeds the initial
   budget pauses, offers continue/terminate, and on continue resumes without
   re-planning; on terminate leaves a clean chat state and intact overlays.
+  **Shipped 2026-07-09:** `DEFAULT_TOOL_BUDGET` raised 12→20; `harness.run`
+  now calls an `onCheckpoint({usedCalls, budget, pending})` callback at the
+  budget boundary — `continue` bumps `budgetLimit` by another 20 and resumes
+  the same loop; `terminate` pushes a `no_data` tool result for *every* pending
+  `tool_call` id (fixing a latent dangling-tool_calls bug in the old hard-stop)
+  and returns `status:"stopped"`. No `onCheckpoint` handler defaults to
+  terminate so headless/test callers stay bounded. `chat-panel.js` renders a
+  `#agent-checkpoint` continue/terminate prompt (naming the pending tools),
+  and `_cancel`/`finally` resolve any pending checkpoint as terminate so an
+  in-flight cancel unblocks the awaiting loop. Verified in-browser: first
+  checkpoint at exactly 20 calls, continue → second at 40, terminate → clean
+  stop with zero dangling tool_calls; UI prompt show/hide + Continue/Terminate/
+  Cancel resolution all confirmed against the running app.
 - [x] **1.6 Chat panel UI** (`chat-panel.js`, §3). Clone the `#wiki-panel` /
   `#wp-toggle` collapse pattern at [index.html:376](index.html:376) into a new
   `#agent-panel` / `#agent-toggle` pair. Include: provider selector,
@@ -531,7 +544,12 @@ still runs (`preview_start` against the `wiki-globe` launch config, port 8080).
   in Phase 1; and (b) the **compute-heavy gate** (first heavy tool is 5.1
   `tile_shape_into_country`, also 5.2 `eclipse_path`). Same surface, two
   callers — build it once with a generic "here's what's about to happen /
-  proceed / stop" shape rather than a tiling-specific warning.
+  proceed / stop" shape rather than a tiling-specific warning. **Partial
+  2026-07-09:** task 1.9 shipped an inline `#agent-checkpoint` continue/
+  terminate prompt in `chat-panel.js` (its own two-button block, not a shared
+  modal). When the compute-heavy gate is built, factor these two into one
+  reusable surface rather than adding a second bespoke prompt — the 1.9 block
+  is the de-facto template.
 - [ ] **Adversarial groundedness test set** (§9, §11) — a fixed list of
   obscure/ancient/contested/nonexistent-entity prompts that must reliably
   produce a refusal, re-run per provider and per model (local Ollama models are

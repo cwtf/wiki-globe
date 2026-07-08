@@ -11,7 +11,7 @@ Tool results have this contract: {"status":"ok","data":...} means grounded data 
 
 If a user asks for something like historical/dynastic borders, unsourced rankings, unknown coordinates, or any claim no tool can actually retrieve or compute, explicitly refuse with a short explanation that Wiki Globe has no tool data for that request. Prefer clearing previous agent overlays before starting a new independent map request unless the user asks to add to the existing view.`;
 
-const DEFAULT_TOOL_BUDGET = 12;
+const DEFAULT_TOOL_BUDGET = 20;
 
 export class AgentHarness {
   constructor(toolRegistry, opts = {}) {
@@ -35,6 +35,7 @@ export class AgentHarness {
     const maxToolCalls = opts.maxToolCalls ?? this.maxToolCalls;
     this.messages.push({ role: "user", content: user });
     let usedCalls = 0;
+    let budgetLimit = maxToolCalls;
     let hadNoData = false;
     let lastUsage = { input: 0, output: 0, total: null };
 
@@ -67,11 +68,35 @@ export class AgentHarness {
         return { content, usage: lastUsage, status };
       }
 
-      if (usedCalls + toolCalls.length > maxToolCalls) {
-        const msg = `Stopped after ${maxToolCalls} tool calls to avoid a runaway loop.`;
-        this.messages.push({ role: "tool", tool_call_id: "tool-budget", name: "tool_budget", content: JSON.stringify(noData(msg)) });
-        callbacks.onMessage?.(msg, { usage: lastUsage, status: NO_DATA_STATUS });
-        return { content: msg, usage: lastUsage, status: NO_DATA_STATUS };
+      // Budget checkpoint: instead of hard-stopping mid-task, pause and let the
+      // user continue (grant another budget's worth of calls) or terminate
+      // cleanly. The loop cannot advance past this point without a decision, so
+      // an unbounded runaway is still impossible.
+      if (usedCalls + toolCalls.length > budgetLimit) {
+        const decision = await requestCheckpoint(callbacks, {
+          usedCalls,
+          budget: maxToolCalls,
+          pending: toolCalls.map((call) => call.name),
+        });
+        if (decision === "continue") {
+          budgetLimit += maxToolCalls;
+        } else {
+          // Terminate cleanly. Every pending tool_call the model just requested
+          // still needs a matching tool result, or the next turn's messages
+          // array is malformed (dangling tool_calls). Overlays drawn so far are
+          // left in place.
+          for (const call of toolCalls) {
+            this.messages.push({
+              role: "tool",
+              tool_call_id: call.id,
+              name: call.name,
+              content: JSON.stringify(noData("Stopped by user at the tool-call checkpoint; not executed.")),
+            });
+          }
+          const msg = `Stopped at your request after ${usedCalls} tool calls. Overlays drawn so far are kept.`;
+          callbacks.onMessage?.(msg, { usage: lastUsage, status: NO_DATA_STATUS });
+          return { content: msg, usage: lastUsage, status: "stopped" };
+        }
       }
 
       for (const call of toolCalls) {
@@ -100,6 +125,14 @@ export class AgentHarness {
       return noData(`Tool ${name} failed: ${e.message}`);
     }
   }
+}
+
+// Ask the UI whether to continue past the tool-call budget. With no handler
+// wired (headless/test callers), default to terminate so the loop stays bounded.
+async function requestCheckpoint(callbacks, info) {
+  if (!callbacks.onCheckpoint) return "terminate";
+  const decision = await callbacks.onCheckpoint(info);
+  return decision === "continue" ? "continue" : "terminate";
 }
 
 function normalizeToolCalls(toolCalls) {
