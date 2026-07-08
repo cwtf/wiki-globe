@@ -451,10 +451,10 @@ still runs (`preview_start` against the `wiki-globe` launch config, port 8080).
   this over `wiki_search` whenever the fact is a scalar per-entity property at
   scale) in this tool's own JSON-schema `description` field, not just as prose
   in this doc — the model only sees what's in the schema at call time. **Shipped 2026-07-09:** `AgentToolRegistry` now exposes a read-only `wikidata_sparql(query, limit?)` SELECT wrapper using `query.wikidata.org/sparql`, reuses the shared network queue, appends a bounded LIMIT when absent, normalizes SPARQL JSON bindings into structured row values, returns `no_data` for zero rows/non-SELECT/HTTP failures, and includes the Wikidata-over-Wikipedia scalar-property preference in the tool schema. Verified with mocked SPARQL smoke tests.
-- [ ] **2.3 `geocode(placeName)`** (§5.3) — forward Nominatim `/search`, the
+- [x] **2.3 `geocode(placeName)`** (§5.3) — forward Nominatim `/search`, the
   sibling of the `/reverse` call already in `js/wiki-panel.js`. Route through
   the throttle/batch layer (§8) — Nominatim caps at ~1 req/sec and needs a real
-  User-Agent. *Unlocks the "newly industrialized countries" query class (§6).*
+  User-Agent. *Unlocks the "newly industrialized countries" query class (§6).* **Shipped 2026-07-09:** `AgentToolRegistry` now exposes `geocode(placeName, limit?)` via Nominatim `/search`, routes requests through the shared throttle queue, caps results at five, returns normalized coordinates/address/bounding-box metadata, and reports `no_data` for empty, invalid, or failed lookups. Browser fetch cannot set the forbidden `User-Agent` header manually, so this relies on the browser UA/Referer plus throttled one-at-a-time requests. Verified with mocked Nominatim smoke tests.
 
 ### Phase 3 — Bulk primitives (§10.3)
 

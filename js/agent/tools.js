@@ -12,6 +12,9 @@ const DEFAULT_WIKI_LIMIT = 5;
 const WIKIDATA_SPARQL_URL = "https://query.wikidata.org/sparql";
 const DEFAULT_SPARQL_LIMIT = 100;
 const MAX_SPARQL_LIMIT = 300;
+const NOMINATIM_SEARCH_URL = "https://nominatim.openstreetmap.org/search";
+const DEFAULT_GEOCODE_LIMIT = 5;
+const MAX_GEOCODE_LIMIT = 5;
 
 export const OK_STATUS = "ok";
 export const NO_DATA_STATUS = "no_data";
@@ -101,6 +104,21 @@ export class AgentToolRegistry {
       {
         type: "function",
         function: {
+          name: "geocode",
+          description: "Forward-geocode a named place with Nominatim search and return candidate latitude/longitude points. Use this to turn place names into coordinates before add_pin or draw_route; results are throttled because the public Nominatim service is rate-limited.",
+          parameters: {
+            type: "object",
+            properties: {
+              placeName: { type: "string", minLength: 1 },
+              limit: { type: "integer", minimum: 1, maximum: MAX_GEOCODE_LIMIT, description: "Maximum number of candidate places to return." },
+            },
+            required: ["placeName"],
+          },
+        },
+      },
+      {
+        type: "function",
+        function: {
           name: "highlight_country",
           description: "Outline one present-day country by ISO-3166 alpha-3 code. Use only for current country borders already in the local country dataset.",
           parameters: {
@@ -159,6 +177,7 @@ export class AgentToolRegistry {
     if (name === "wiki_search") return this.wikiSearch(args);
     if (name === "wiki_extract") return this.wikiExtract(args);
     if (name === "wikidata_sparql") return this.wikidataSparql(args);
+    if (name === "geocode") return this.geocode(args);
     if (name === "highlight_country") return this.highlightCountry(args);
     if (name === "draw_route") return this.drawRoute(args);
     if (name === "clear_agent_overlays") return this.clearAgentOverlays();
@@ -263,6 +282,28 @@ export class AgentToolRegistry {
       rowCount: rows.length,
       rows,
     });
+  }
+
+  async geocode({ placeName, limit = DEFAULT_GEOCODE_LIMIT }) {
+    const q = String(placeName ?? "").trim();
+    if (!q) return noData("Missing place name to geocode.");
+    const n = clampInteger(limit, 1, MAX_GEOCODE_LIMIT, DEFAULT_GEOCODE_LIMIT);
+    const url = new URL(NOMINATIM_SEARCH_URL);
+    url.search = new URLSearchParams({
+      q,
+      format: "jsonv2",
+      limit: String(n),
+      addressdetails: "1",
+      namedetails: "1",
+      "accept-language": "en",
+    });
+    const res = await this.networkQueue.enqueue(() => fetch(url));
+    if (!res.ok) return noData(`Nominatim geocode HTTP ${res.status}.`);
+    const places = await res.json();
+    if (!Array.isArray(places) || places.length === 0) return noData(`No geocoding results found for "${q}".`);
+    const results = places.map(normalizeNominatimPlace).filter(Boolean);
+    if (results.length === 0) return noData(`No valid geocoding coordinates found for "${q}".`);
+    return ok({ query: q, results });
   }
 
   async highlightCountry({ iso3, color = null }) {
@@ -394,6 +435,37 @@ function normalizeSparqlValue(value) {
   if (value?.datatype) out.datatype = value.datatype;
   if (value?.["xml:lang"]) out.lang = value["xml:lang"];
   return out;
+}
+
+function normalizeNominatimPlace(place) {
+  const lat = Number(place?.lat);
+  const lon = Number(place?.lon);
+  if (!validLatLon(lat, lon)) return null;
+  return {
+    displayName: place.display_name ?? place.name ?? "",
+    lat,
+    lon,
+    category: place.category ?? place.class ?? null,
+    type: place.type ?? null,
+    importance: numberOrNull(place.importance),
+    osmType: place.osm_type ?? null,
+    osmId: place.osm_id ?? null,
+    boundingBox: normalizeBoundingBox(place.boundingbox),
+    address: place.address ?? null,
+    name: place.name ?? place.namedetails?.name ?? null,
+  };
+}
+
+function normalizeBoundingBox(value) {
+  if (!Array.isArray(value) || value.length < 4) return null;
+  const [south, north, west, east] = value.map(Number);
+  if (![south, north, west, east].every(Number.isFinite)) return null;
+  return { south, north, west, east };
+}
+
+function numberOrNull(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
 }
 
 function safeColor(value, fallback) {
