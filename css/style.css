@@ -1505,6 +1505,40 @@ body.right-panel-resizing {
 .agent-empty p {
   margin: 0 0 12px;
 }
+.agent-setup-card {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(110, 243, 255, 0.055);
+  border: 1px solid rgba(110, 243, 255, 0.18);
+  border-radius: 8px;
+  text-align: left;
+}
+.agent-setup-title {
+  color: #eafcff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+.agent-setup-steps {
+  margin: 0;
+  padding-left: 17px;
+  color: #b7c4d8;
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+.agent-setup-steps li {
+  margin: 0 0 5px;
+}
+.agent-setup-steps li:last-child {
+  margin-bottom: 0;
+}
+.agent-setup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 .agent-example-label {
   margin-bottom: 7px;
   color: #b7c4d8;

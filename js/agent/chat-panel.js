@@ -18,6 +18,12 @@ import { AgentToolRegistry } from "./tools.js";
 
 const OLLAMA_HINT = "For Ollama, start the server with OLLAMA_ORIGINS allowing this page origin, for example OLLAMA_ORIGINS=http://localhost:8080. Models are read from /api/tags when reachable.";
 const EMPTY_STATE_MESSAGE = "Ask the globe agent to search, reason, and draw on the map.";
+const SETUP_STATE_MESSAGE = "Set up a provider before the globe agent can answer.";
+const SETUP_GUIDE_STEPS = [
+  "Paste an API key for OpenRouter or DeepSeek.",
+  "Or choose Ollama if you run a local OpenAI-compatible server.",
+  "Settings are stored only in this browser.",
+];
 const EXAMPLE_PROMPTS = [
   "Show me major volcanoes near the Pacific Ring of Fire.",
   "Find cities most at risk from sea level rise.",
@@ -78,11 +84,11 @@ export class AgentChatPanel {
     this.harness = opts.harness ?? new AgentHarness(this.tools);
     this.sessions = loadStoredSessions();
     this.activeSessionId = this._createSession({ activate: true }).id;
-    this._renderEmptyState();
 
     this._populateProviders();
     this._bind();
     this._syncProvider();
+    this._renderEmptyState();
     this._setStatus("Idle");
   }
 
@@ -136,6 +142,10 @@ export class AgentChatPanel {
     });
     this.keyEl.addEventListener("change", () => {
       this._markSettingsChanged();
+      this._renderEmptyState();
+    });
+    this.keyEl.addEventListener("input", () => {
+      this._renderEmptyState();
     });
     this.baseEl.addEventListener("change", () => {
       this._markSettingsChanged();
@@ -150,8 +160,18 @@ export class AgentChatPanel {
     });
     this.transcriptEl?.addEventListener("click", (event) => {
       const target = event.target.closest?.("[data-agent-example-prompt]");
-      if (!target) return;
-      this._useExamplePrompt(target.dataset.agentExamplePrompt);
+      if (target) {
+        this._useExamplePrompt(target.dataset.agentExamplePrompt);
+        return;
+      }
+      const setup = event.target.closest?.("[data-agent-setup]");
+      if (setup) {
+        this._showSetupGuide();
+      }
+      const useProvider = event.target.closest?.("[data-agent-use-provider]");
+      if (useProvider) {
+        this._selectProviderForSetup(useProvider.dataset.agentUseProvider);
+      }
     });
   }
 
@@ -167,6 +187,7 @@ export class AgentChatPanel {
       this.ollamaHintEl.hidden = provider.id !== "ollama";
       this.ollamaHintEl.textContent = provider.id === "ollama" ? OLLAMA_HINT : "";
     }
+    this._renderEmptyState();
     await this.refreshModels();
   }
 
@@ -174,10 +195,17 @@ export class AgentChatPanel {
     const text = this.inputEl.value.trim();
     if (!text) return;
     this._cancel({ silent: true });
-    this.abort = new AbortController();
     const provider = providerById(this.providerEl.value);
     const model = this.modelOverrideEl.value.trim() || this.modelEl.value || provider.defaultModel;
     const key = provider.requiresKey ? this.keyEl.value.trim() : null;
+    if (provider.requiresKey && !key) {
+      this._showSetupGuide();
+      this._appendSetupNotice(provider);
+      this._setBadge("error");
+      this._setStatus(`${provider.label} needs an API key`);
+      return;
+    }
+    this.abort = new AbortController();
     this._saveSettings({ silent: true });
 
     this._setRunning(true);
@@ -356,6 +384,7 @@ export class AgentChatPanel {
     setProviderModelOverride(provider.id, this.modelOverrideEl.value.trim());
     if (this.settingsSaveMsgEl) this.settingsSaveMsgEl.textContent = "Saved for this browser";
     if (!opts.silent) this._setStatus(`Saved ${provider.label} settings`);
+    this._renderEmptyState();
   }
 
   _markSettingsChanged() {
@@ -798,7 +827,45 @@ export class AgentChatPanel {
   _renderEmptyState() {
     if (!this.emptyEl) return;
     const message = document.createElement("p");
-    message.textContent = EMPTY_STATE_MESSAGE;
+    const needsSetup = this._needsProviderSetup();
+    message.textContent = needsSetup ? SETUP_STATE_MESSAGE : EMPTY_STATE_MESSAGE;
+
+    if (needsSetup) {
+      const setupCard = document.createElement("div");
+      setupCard.className = "agent-setup-card";
+
+      const title = document.createElement("div");
+      title.className = "agent-setup-title";
+      title.textContent = "Connect a model";
+
+      const steps = document.createElement("ol");
+      steps.className = "agent-setup-steps";
+      for (const step of SETUP_GUIDE_STEPS) {
+        const item = document.createElement("li");
+        item.textContent = step;
+        steps.appendChild(item);
+      }
+
+      const actions = document.createElement("div");
+      actions.className = "agent-setup-actions";
+
+      const setupButton = document.createElement("button");
+      setupButton.className = "agent-submit";
+      setupButton.type = "button";
+      setupButton.textContent = "Open settings";
+      setupButton.dataset.agentSetup = "settings";
+
+      const ollamaButton = document.createElement("button");
+      ollamaButton.className = "agent-cancel";
+      ollamaButton.type = "button";
+      ollamaButton.textContent = "Use Ollama";
+      ollamaButton.dataset.agentUseProvider = "ollama";
+
+      actions.append(setupButton, ollamaButton);
+      setupCard.append(title, steps, actions);
+      this.emptyEl.replaceChildren(message, setupCard);
+      return;
+    }
 
     const promptLabel = document.createElement("div");
     promptLabel.className = "agent-example-label";
@@ -816,6 +883,32 @@ export class AgentChatPanel {
     }
 
     this.emptyEl.replaceChildren(message, promptLabel, list);
+  }
+
+  _needsProviderSetup() {
+    const provider = providerById(this.providerEl?.value);
+    return Boolean(provider.requiresKey && !this.keyEl?.value?.trim());
+  }
+
+  _showSetupGuide() {
+    this._toggleSettings(true);
+    this._renderEmptyState();
+    const provider = providerById(this.providerEl.value);
+    const target = provider.requiresKey ? this.keyEl : this.baseEl;
+    target?.focus();
+  }
+
+  _selectProviderForSetup(providerId) {
+    const provider = providerById(providerId);
+    this.providerEl.value = provider.id;
+    this._markSettingsChanged();
+    this._syncProvider();
+    this._showSetupGuide();
+  }
+
+  _appendSetupNotice(provider) {
+    if (!this.emptyEl?.hidden) return;
+    this._appendNotice(`${provider.label} needs an API key. Open settings to paste one, or choose Ollama for a local provider.`);
   }
 
   _useExamplePrompt(prompt) {
