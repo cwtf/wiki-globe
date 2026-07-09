@@ -165,7 +165,8 @@ labelling every country at once.
 
 | Tool | Backing endpoint | Notes |
 |---|---|---|
-| `wiki_search(query)` / `wiki_extract(title)` | `en.wikipedia.org/w/api.php`, REST summary | Best for fuzzy/contested concepts (e.g. "newly industrialized countries") where an LLM reads prose and extracts a list — prefer this only when there's no clean structured property. |
+| `wiki_search(query)` / `wiki_extract(title)` | `en.wikipedia.org/w/api.php`, REST summary | Best for fuzzy/contested concepts (e.g. "newly industrialized countries") where an LLM reads prose and extracts a list — prefer this only when there's no clean structured property. **Note the coverage boundary:** `wiki_extract` hits the REST *summary* endpoint and returns only the article's **lead paragraph**, not its body. Table-/list-driven questions (see `wiki_article` below) are not answerable from it. |
+| `wiki_article(title, section?)` | `en.wikipedia.org/w/api.php?action=parse&prop=text` | **Shipped 2026-07-09.** Fetches the FULL article body — section prose *and* every `table.wikitable` parsed (via `DOMParser`) into structured `{caption, headers[], rows[][]}`. Closes the gap where the summary-only `wiki_extract` couldn't reach an article's tabulated content (the motivating case: "countries a Malaysian passport holder can enter visa-free", whose ~193-row table lives in the body — `wiki_search`→`wiki_extract` only ever saw the lead blurb, so the model fell through to `[UNVERIFIED]` memory). Bounded so a long article can't blow the context: ≤10 wikitables, ≤500 rows total across tables, cells clamped to 160 chars, body prose to 6000 chars, with a `truncated` flag. Reference/edit-link noise stripped before extraction; `scope="row"` header cells (e.g. the country name) are kept as ordinary leading cell values. Returns `no_data` on a missing title/section. Feed the extracted country column straight into `highlight_country`/`color_countries`/`label_countries`. Still defer to `wikidata_sparql` first when the same fact is a structured per-entity property at scale. |
 | `wikidata_sparql(query)` | `query.wikidata.org/sparql` | Prefer this over `wiki_search` whenever the fact is a scalar per-entity property at scale (e.g. `P474` calling code, `P2046` area) — far less hallucination risk than parsing a 195-row table out of prose. |
 | `geocode(placeName)` | Nominatim `/search` | New — forward-geocode counterpart to the reverse call already used. |
 | `country_area(iso3)` | `countryAreaKm2` (local, no network) | Exposes existing computed data as a callable tool; powers ratio questions like the China/Ukraine example with zero network calls. |
@@ -204,6 +205,7 @@ both of which reuse patterns already defined elsewhere in this spec.
 Sanity-check the tool inventory against the queries discussed:
 
 - **"Newly industrialized countries"** → `wiki_extract("Newly industrialized country")` → LLM reads the list → `highlight_country` per match (map name → ISO3 via existing country-geo lookup).
+- **"Countries a Malaysian passport holder can enter visa-free"** → `wiki_article("Visa requirements for Malaysian citizens")` → LLM reads the returned `{headers, rows}` table (Country / Visa requirement / Allowed stay / Notes), filters rows where the requirement column reads "Visa not required" → `highlight_country`/`color_countries` per match. *Note:* this class was previously unanswerable — `wiki_extract` returns only the lead summary, so the visa table (article body) was invisible and the model fell through to `[UNVERIFIED]` memory. `wiki_article` closes that gap (verified 2026-07-09: 193 rows extracted, 120 "Visa not required").
 - **"Telephone country code of all countries"** → `wikidata_sparql(P474 query)` → `label_countries({...})`.
 - **"Colour grade by closeness to high-income status"** → existing World Bank GNI data (already live/bundled in `heatmap.js`/`country-data.js`) + a sourced high-income threshold constant → LLM/tool computes `(threshold − value) / threshold` per country → `color_countries({...})`.
 - **"Show all upper-middle-income countries and their GDP per capita"** → `country_stats({indicator:"gdpNominal", incomeGroup:"upper_middle"})` (bundled World Bank data, zero network) → `color_countries`/`label_countries` from the returned values. *Note:* an early build answered this with a fabricated "connectivity issues" excuse and a memorized country list because no tool exposed the bundled World Bank stats — the model fell through to wiki/Wikidata, which genuinely can't serve GDP-per-capita or income group. `country_stats` closes that gap; the §9 error/no_data status split (below) stops the fabricated-excuse behavior.
@@ -534,6 +536,27 @@ still runs (`preview_start` against the `wiki-globe` launch config, port 8080).
   sibling of the `/reverse` call already in `js/wiki-panel.js`. Route through
   the throttle/batch layer (§8) — Nominatim caps at ~1 req/sec and needs a real
   User-Agent. *Unlocks the "newly industrialized countries" query class (§6).* **Shipped 2026-07-09:** `AgentToolRegistry` now exposes `geocode(placeName, limit?)` via Nominatim `/search`, routes requests through the shared throttle queue, caps results at five, returns normalized coordinates/address/bounding-box metadata, and reports `no_data` for empty, invalid, or failed lookups. Browser fetch cannot set the forbidden `User-Agent` header manually, so this relies on the browser UA/Referer plus throttled one-at-a-time requests. Verified with mocked Nominatim smoke tests.
+- [x] **2.4 `wiki_article(title, section?)`** (§5.3) — full-article-body reader,
+  added to close a coverage gap surfaced by "show all countries a Malaysian
+  passport holder can travel to visa-free": `wiki_search` finds the page but
+  the only content-fetch tool, `wiki_extract`, hits the REST *summary* endpoint
+  and returns just the lead paragraph, so the article's ~193-row visa table (the
+  actual answer) was unreachable and the model fell through to `[UNVERIFIED]`
+  memory. **Shipped 2026-07-09:** `AgentToolRegistry.wikiArticle` fetches
+  `action=parse&prop=text&formatversion=2`, walks the rendered HTML with
+  `DOMParser`, and returns every `table.wikitable` as structured
+  `{caption, headers[], rows[][]}` plus body prose. Bounded (≤10 tables, ≤500
+  rows total, 160-char cells, 6000-char prose, `truncated` flag) so a long
+  article can't blow context; strips reference/edit-link noise and keeps
+  `scope="row"` header cells (country names) as leading values; routed through
+  the shared throttle queue; returns `no_data` on missing title/section and a
+  retryable `error` if `DOMParser` is unavailable. `wiki_extract`'s schema
+  description now flags it as lead-summary-only and points at `wiki_article` for
+  body tables. **Verified in-browser 2026-07-09** against
+  `window.__globe.agent.tools.wikiArticle({title:"Visa requirements for
+  Malaysian citizens"})`: 3 wikitables, main table 193 rows with clean
+  `[country, requirement, allowed stay, notes]` cells, 120 rows matching "Visa
+  not required", no console errors.
 
 ### Phase 3 — Bulk primitives (§10.3)
 

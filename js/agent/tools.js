@@ -27,6 +27,13 @@ const DEFAULT_CHOROPLETH_COLORS = [[79, 195, 247], [250, 204, 21], [239, 68, 68]
 const WIKIPEDIA_API_URL = "https://en.wikipedia.org/w/api.php";
 const WIKIPEDIA_SUMMARY_URL = "https://en.wikipedia.org/api/rest_v1/page/summary/";
 const DEFAULT_WIKI_LIMIT = 5;
+// wiki_article body-extraction caps: the summary endpoint returns only the
+// lead paragraph, so wiki_article parses the full rendered HTML — bounded so a
+// long article (e.g. a ~230-row visa-requirement table) can't blow the context.
+const MAX_WIKI_TABLES = 10;
+const MAX_WIKI_ROWS_TOTAL = 500;
+const MAX_WIKI_CELL_CHARS = 160;
+const MAX_WIKI_TEXT_CHARS = 6000;
 const WIKIDATA_SPARQL_URL = "https://query.wikidata.org/sparql";
 const DEFAULT_SPARQL_LIMIT = 100;
 const MAX_SPARQL_LIMIT = 300;
@@ -118,11 +125,26 @@ export class AgentToolRegistry {
         type: "function",
         function: {
           name: "wiki_extract",
-          description: "Fetch a concise English Wikipedia REST summary for an exact page title returned by wiki_search or supplied by the user.",
+          description: "Fetch a concise English Wikipedia REST LEAD SUMMARY (intro paragraph only) for an exact page title returned by wiki_search or supplied by the user. This omits the article body — when the answer lives in a data table or section list (e.g. a visa-requirement or medal table), use wiki_article instead, which returns the tabulated content the summary drops.",
           parameters: {
             type: "object",
             properties: {
               title: { type: "string", minLength: 1 },
+            },
+            required: ["title"],
+          },
+        },
+      },
+      {
+        type: "function",
+        function: {
+          name: "wiki_article",
+          description: "Fetch the FULL body of an English Wikipedia article for an exact page title — its section prose AND its data tables (wikitables) parsed into structured header/row arrays. Use this whenever the answer is a list or table inside the article body rather than a scalar fact or the lead summary: e.g. 'Visa requirements for <nationality> citizens', discographies, medal counts, election results. wiki_extract only returns the one-paragraph lead and will miss this content. Still prefer wikidata_sparql first when the same fact is a structured per-entity Wikidata property at scale.",
+          parameters: {
+            type: "object",
+            properties: {
+              title: { type: "string", minLength: 1, description: "Exact article title, e.g. from wiki_search." },
+              section: { type: "integer", minimum: 0, description: "Optional section index to fetch just one section's tables/prose instead of the whole article." },
             },
             required: ["title"],
           },
@@ -321,6 +343,7 @@ export class AgentToolRegistry {
     if (name === "add_pin") return this.addPin(args);
     if (name === "wiki_search") return this.wikiSearch(args);
     if (name === "wiki_extract") return this.wikiExtract(args);
+    if (name === "wiki_article") return this.wikiArticle(args);
     if (name === "wikidata_sparql") return this.wikidataSparql(args);
     if (name === "country_stats") return this.countryStats(args);
     if (name === "geocode") return this.geocode(args);
@@ -409,6 +432,59 @@ export class AgentToolRegistry {
       url: summary.content_urls?.desktop?.page ?? wikiArticleUrl(summary.title ?? t),
       lat: summary.coordinates?.lat ?? null,
       lon: summary.coordinates?.lon ?? null,
+    });
+  }
+
+  async wikiArticle({ title, section = null }) {
+    const t = String(title ?? "").trim();
+    if (!t) return noData("Missing Wikipedia page title.");
+    if (!globalThis.DOMParser) {
+      return toolError("wiki_article needs a browser DOMParser environment.");
+    }
+    const params = {
+      action: "parse",
+      page: t,
+      prop: "text",
+      redirects: "1",
+      formatversion: "2",
+      disablelimitreport: "1",
+      disableeditsection: "1",
+      format: "json",
+      origin: "*",
+    };
+    let sectionIndex = null;
+    if (section != null && String(section).trim() !== "") {
+      sectionIndex = clampInteger(section, 0, 999, null);
+      if (sectionIndex == null) return noData("wiki_article section must be a non-negative integer index.");
+      params.section = String(sectionIndex);
+    }
+    const url = new URL(WIKIPEDIA_API_URL);
+    url.search = new URLSearchParams(params);
+    const res = await this.networkQueue.enqueue(() => fetchWithTimeout(url));
+    if (!res.ok) return httpFailure(res.status, "Wikipedia parse");
+    const data = await res.json();
+    if (data?.error) {
+      const code = data.error.code ?? "";
+      if (code === "missingtitle" || code === "nosuchpageid" || code === "nosuchsection") {
+        return noData(`No Wikipedia article content found for "${t}"${sectionIndex != null ? ` section ${sectionIndex}` : ""}.`);
+      }
+      return noData(`Wikipedia parse failed for "${t}": ${data.error.info ?? code}.`);
+    }
+    const resolvedTitle = data?.parse?.title ?? t;
+    const rawHtml = typeof data?.parse?.text === "string" ? data.parse.text : data?.parse?.text?.["*"];
+    if (!rawHtml) return noData(`Wikipedia article "${resolvedTitle}" returned no parseable content.`);
+    const { tables, text, truncated } = extractWikiArticle(rawHtml);
+    if (tables.length === 0 && !text) {
+      return noData(`Wikipedia article "${resolvedTitle}"${sectionIndex != null ? ` section ${sectionIndex}` : ""} had no extractable tables or prose.`);
+    }
+    return ok({
+      title: resolvedTitle,
+      url: wikiArticleUrl(resolvedTitle),
+      section: sectionIndex,
+      tableCount: tables.length,
+      tables,
+      text,
+      truncated,
     });
   }
 
@@ -1133,6 +1209,83 @@ function safeColor(value, fallback) {
 
 function stripHtml(value) {
   return String(value).replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+}
+
+// Parse the rendered HTML from action=parse into structured wikitables plus
+// body prose. The REST summary endpoint (wiki_extract) only carries the lead
+// paragraph, so table/list-driven questions need the full DOM walked here.
+function extractWikiArticle(html) {
+  const doc = new DOMParser().parseFromString(String(html), "text/html");
+  const root = doc.body;
+  if (!root) return { tables: [], text: "", truncated: false };
+  // Strip editorial/reference noise so cell + paragraph text stays clean
+  // ("[1]" citation markers, edit links, empty spacers).
+  root.querySelectorAll("style, sup.reference, .reference, .mw-editsection, .noprint, .mw-empty-elt")
+    .forEach((el) => el.remove());
+
+  let truncated = false;
+  let rowBudget = MAX_WIKI_ROWS_TOTAL;
+  const tables = [];
+  for (const tableEl of root.querySelectorAll("table.wikitable")) {
+    if (tables.length >= MAX_WIKI_TABLES || rowBudget <= 0) {
+      truncated = true;
+      break;
+    }
+    const parsed = parseWikiTable(tableEl, rowBudget);
+    if (!parsed) continue;
+    rowBudget -= parsed.rows.length;
+    if (parsed.truncated) truncated = true;
+    tables.push({ caption: parsed.caption, headers: parsed.headers, rowCount: parsed.rows.length, rows: parsed.rows });
+  }
+
+  const paragraphs = [];
+  let textLen = 0;
+  for (const p of root.querySelectorAll("p")) {
+    if (p.closest("table")) continue; // skip prose nested inside tables
+    const s = collapseWs(p.textContent ?? "");
+    if (!s) continue;
+    if (textLen + s.length > MAX_WIKI_TEXT_CHARS) {
+      truncated = true;
+      break;
+    }
+    paragraphs.push(s);
+    textLen += s.length;
+  }
+
+  return { tables, text: paragraphs.join("\n\n"), truncated };
+}
+
+function parseWikiTable(tableEl, rowBudget) {
+  const caption = collapseWs(tableEl.querySelector("caption")?.textContent ?? "");
+  let headers = [];
+  const rows = [];
+  let truncated = false;
+  for (const tr of tableEl.querySelectorAll("tr")) {
+    const cells = Array.from(tr.querySelectorAll("th, td"));
+    if (cells.length === 0) continue;
+    const values = cells.map((cell) => clampCellText(collapseWs(cell.textContent ?? "")));
+    // The first all-<th> row is the header; later rows keep their leading
+    // scope="row" <th> (e.g. the country name) as an ordinary cell value.
+    if (headers.length === 0 && cells.every((cell) => cell.tagName === "TH")) {
+      headers = values;
+      continue;
+    }
+    if (rows.length >= rowBudget) {
+      truncated = true;
+      break;
+    }
+    rows.push(values);
+  }
+  if (headers.length === 0 && rows.length === 0) return null;
+  return { caption, headers, rows, truncated };
+}
+
+function collapseWs(value) {
+  return String(value).replace(/\s+/g, " ").trim();
+}
+
+function clampCellText(value) {
+  return value.length > MAX_WIKI_CELL_CHARS ? `${value.slice(0, MAX_WIKI_CELL_CHARS - 1)}…` : value;
 }
 
 function wikiArticleUrl(title) {
