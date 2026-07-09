@@ -1171,6 +1171,20 @@ html, body {
   font-size: 11px;
   line-height: 1.4;
 }
+.agent-settings-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding-top: 2px;
+}
+.agent-settings-actions .agent-submit {
+  flex: 0 0 auto;
+}
+.agent-settings-save-msg {
+  min-width: 0;
+  color: var(--text-dim);
+  font-size: 11px;
+}
 .agent-ollama-hint {
   background: rgba(255, 179, 71, 0.08);
   border: 1px solid rgba(255, 179, 71, 0.22);

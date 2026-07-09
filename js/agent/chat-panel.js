@@ -2,11 +2,16 @@ import {
   availableModels,
   getProviderBaseUrl,
   getInitialProviderId,
+  getProviderModel,
+  getProviderModelOverride,
   getProviderKey,
   providerById,
   providers,
+  setInitialProviderId,
   setProviderBaseUrl,
   setProviderKey,
+  setProviderModel,
+  setProviderModelOverride,
 } from "./providers.js";
 import { AgentHarness, ERROR_STATUS, NO_DATA_STATUS, UNVERIFIED_STATUS } from "./harness.js";
 import { AgentToolRegistry } from "./tools.js";
@@ -40,6 +45,8 @@ export class AgentChatPanel {
     this.newSessionEl = document.getElementById("agent-new-session");
     this.noteEl = document.getElementById("agent-provider-note");
     this.ollamaHintEl = document.getElementById("agent-ollama-hint");
+    this.saveSettingsEl = document.getElementById("agent-save-settings");
+    this.settingsSaveMsgEl = document.getElementById("agent-settings-save-msg");
     this.statusEl = document.getElementById("agent-status");
     this.submitEl = document.getElementById("agent-submit");
     this.cancelEl = document.getElementById("agent-cancel");
@@ -72,16 +79,23 @@ export class AgentChatPanel {
     try {
       const models = await availableModels(provider.id, this.baseEl.value);
       if (seq !== this.modelLoadSeq) return;
+      const savedModel = getProviderModel(provider.id);
       const list = models.length ? models : provider.seedModels;
+      if (savedModel && !list.includes(savedModel)) list.unshift(savedModel);
       this.modelEl.replaceChildren(...list.map((model) => new Option(model, model)));
-      this.modelEl.value = list.includes(provider.defaultModel) ? provider.defaultModel : (list[0] ?? provider.defaultModel);
+      this.modelEl.value = savedModel && list.includes(savedModel)
+        ? savedModel
+        : list.includes(provider.defaultModel) ? provider.defaultModel : (list[0] ?? provider.defaultModel);
       if (provider.id === "ollama") {
         this._setStatus(models.length ? "Ollama models loaded" : "Using Ollama seed models");
       }
     } catch (e) {
       if (seq !== this.modelLoadSeq) return;
-      this.modelEl.replaceChildren(...provider.seedModels.map((model) => new Option(model, model)));
-      this.modelEl.value = provider.defaultModel;
+      const savedModel = getProviderModel(provider.id);
+      const list = [...provider.seedModels];
+      if (savedModel && !list.includes(savedModel)) list.unshift(savedModel);
+      this.modelEl.replaceChildren(...list.map((model) => new Option(model, model)));
+      this.modelEl.value = savedModel && list.includes(savedModel) ? savedModel : provider.defaultModel;
       this._setStatus(`Model list unavailable: ${e.message}`);
     } finally {
       if (seq === this.modelLoadSeq) this.modelEl.disabled = false;
@@ -101,12 +115,20 @@ export class AgentChatPanel {
     this.cancelEl?.addEventListener("click", () => this._cancel());
     this.continueEl?.addEventListener("click", () => this._resolveCheckpoint(this.continueEl.dataset.decision || "continue", { record: true }));
     this.terminateEl?.addEventListener("click", () => this._resolveCheckpoint(this.terminateEl.dataset.decision || "terminate", { record: true }));
-    this.providerEl.addEventListener("change", () => this._syncProvider());
-    this.keyEl.addEventListener("change", () => setProviderKey(this.providerEl.value, this.keyEl.value.trim()));
+    this.providerEl.addEventListener("change", () => {
+      this._markSettingsChanged();
+      this._syncProvider();
+    });
+    this.keyEl.addEventListener("change", () => {
+      this._markSettingsChanged();
+    });
     this.baseEl.addEventListener("change", () => {
-      setProviderBaseUrl(this.providerEl.value, this.baseEl.value.trim());
+      this._markSettingsChanged();
       this.refreshModels();
     });
+    this.modelEl.addEventListener("change", () => this._markSettingsChanged());
+    this.modelOverrideEl.addEventListener("input", () => this._markSettingsChanged());
+    this.saveSettingsEl?.addEventListener("click", () => this._saveSettings());
     this.form.addEventListener("submit", (event) => {
       event.preventDefault();
       this._submit();
@@ -119,6 +141,7 @@ export class AgentChatPanel {
     this.baseRow.hidden = !provider.configurableBaseUrl;
     this.keyEl.value = provider.requiresKey ? (getProviderKey(provider.id) ?? "") : "";
     this.baseEl.value = getProviderBaseUrl(provider.id);
+    this.modelOverrideEl.value = getProviderModelOverride(provider.id) ?? "";
     this.noteEl.textContent = provider.id === "ollama" ? "Local OpenAI-compatible Ollama endpoint." : (provider.setupNote ?? "");
     if (this.ollamaHintEl) {
       this.ollamaHintEl.hidden = provider.id !== "ollama";
@@ -135,8 +158,7 @@ export class AgentChatPanel {
     const provider = providerById(this.providerEl.value);
     const model = this.modelOverrideEl.value.trim() || this.modelEl.value || provider.defaultModel;
     const key = provider.requiresKey ? this.keyEl.value.trim() : null;
-    if (provider.requiresKey) setProviderKey(provider.id, key);
-    if (provider.configurableBaseUrl) setProviderBaseUrl(provider.id, this.baseEl.value.trim());
+    this._saveSettings({ silent: true });
 
     this._setRunning(true);
     this._setBadge("loading");
@@ -289,10 +311,26 @@ export class AgentChatPanel {
     this.modelOverrideEl.disabled = running;
     this.inputEl.disabled = running;
     if (this.newSessionEl) this.newSessionEl.disabled = running;
+    if (this.saveSettingsEl) this.saveSettingsEl.disabled = running;
   }
 
   _setStatus(status) {
     if (this.statusEl) this.statusEl.textContent = status;
+  }
+
+  _saveSettings(opts = {}) {
+    const provider = providerById(this.providerEl.value);
+    setInitialProviderId(provider.id);
+    if (provider.requiresKey) setProviderKey(provider.id, this.keyEl.value.trim());
+    if (provider.configurableBaseUrl) setProviderBaseUrl(provider.id, this.baseEl.value.trim());
+    setProviderModel(provider.id, this.modelEl.value || provider.defaultModel);
+    setProviderModelOverride(provider.id, this.modelOverrideEl.value.trim());
+    if (this.settingsSaveMsgEl) this.settingsSaveMsgEl.textContent = "Saved for this browser";
+    if (!opts.silent) this._setStatus(`Saved ${provider.label} settings`);
+  }
+
+  _markSettingsChanged() {
+    if (this.settingsSaveMsgEl) this.settingsSaveMsgEl.textContent = "Unsaved changes";
   }
 
   _setBadge(state) {

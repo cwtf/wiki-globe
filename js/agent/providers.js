@@ -56,7 +56,45 @@ export function providerById(id) {
 
 export function getInitialProviderId() {
   const params = currentParams();
-  return providerById(params.get("agentProvider") || params.get("provider")).id;
+  const fromUrl = params.get("agentProvider") || params.get("provider");
+  if (fromUrl) return providerById(fromUrl).id;
+  try {
+    return providerById(localStorage.getItem(providerStorageName())).id;
+  } catch {
+    return providers()[0].id;
+  }
+}
+
+export function setInitialProviderId(providerId) {
+  try {
+    localStorage.setItem(providerStorageName(), providerById(providerId).id);
+  } catch { /* private mode */ }
+}
+
+export function getProviderModel(providerId) {
+  try { return localStorage.getItem(modelStorageName(providerById(providerId).id)); } catch { return null; }
+}
+
+export function setProviderModel(providerId, model) {
+  try {
+    const provider = providerById(providerId);
+    const value = String(model ?? "").trim();
+    if (value) localStorage.setItem(modelStorageName(provider.id), value);
+    else localStorage.removeItem(modelStorageName(provider.id));
+  } catch { /* private mode */ }
+}
+
+export function getProviderModelOverride(providerId) {
+  try { return localStorage.getItem(modelOverrideStorageName(providerById(providerId).id)); } catch { return null; }
+}
+
+export function setProviderModelOverride(providerId, model) {
+  try {
+    const provider = providerById(providerId);
+    const value = String(model ?? "").trim();
+    if (value) localStorage.setItem(modelOverrideStorageName(provider.id), value);
+    else localStorage.removeItem(modelOverrideStorageName(provider.id));
+  } catch { /* private mode */ }
 }
 
 export function getProviderKey(providerId) {
@@ -240,6 +278,18 @@ function keyStorageName(providerId) {
 
 function baseUrlStorageName(providerId) {
   return `${STORAGE_PREFIX}.${providerId}.baseUrl`;
+}
+
+function providerStorageName() {
+  return `${STORAGE_PREFIX}.provider`;
+}
+
+function modelStorageName(providerId) {
+  return `${STORAGE_PREFIX}.${providerId}.model`;
+}
+
+function modelOverrideStorageName(providerId) {
+  return `${STORAGE_PREFIX}.${providerId}.modelOverride`;
 }
 
 function stripTrailingSlash(value) {

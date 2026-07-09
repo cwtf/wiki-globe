@@ -29,7 +29,7 @@ Never use this fallback before trying tools, and never use it to paper over a tr
 
 Prefer clearing previous agent overlays before starting a new independent map request unless the user asks to add to the existing view.`;
 
-const DEFAULT_TOOL_BUDGET = 20;
+const DEFAULT_TOOL_BUDGET = 50;
 
 export class AgentHarness {
   constructor(toolRegistry, opts = {}) {
