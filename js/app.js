@@ -109,6 +109,15 @@ async function boot() {
   const wiki = new WikiPanel(viewer);
   setupResponsiveSideMenus();
 
+  const layerToggles = {
+    sats: document.getElementById("chk-sats"),
+    flights: document.getElementById("chk-flights"),
+    ships: document.getElementById("chk-ships"),
+  };
+  sats.setVisible(layerToggles.sats.checked);
+  flights.setVisible(layerToggles.flights.checked);
+  ships.setVisible(layerToggles.ships.checked);
+
   ships.init();
   sats.init();
   flights.init();
@@ -543,11 +552,6 @@ async function boot() {
 
   // --- control panel wiring -----------------------------------------------------
   const bind = (idStr, fn) => document.getElementById(idStr).addEventListener("change", (e) => fn(e.target.checked));
-  const layerToggles = {
-    sats: document.getElementById("chk-sats"),
-    flights: document.getElementById("chk-flights"),
-    ships: document.getElementById("chk-ships"),
-  };
   const autoHideSources = new Set(["limited", "blocked"]);
   const liveLimitedAutoHidden = new Set();
   const hideIfLiveLimited = (key, status, setVisible) => {
