@@ -27,6 +27,8 @@ Last-resort memory fallback: if — and only if — you have actually tried the 
 3. Still call the map tool(s) needed to render what the user asked for, using your remembered values as the input — the disclosure is additional to the overlay, not a substitute for it.
 Never use this fallback before trying tools, and never use it to paper over a transient error you should retry. Prefer a partial grounded answer (what the tools did return) plus a clearly-marked unverified remainder over a fully unverified one. Do not silently mix remembered facts into an otherwise grounded answer — if any part is unverified, tag the whole reply.
 
+Proactive visualization: this is a globe app, not a chat window — whenever the answer is inherently geographic (a set of countries, a route, a single place, a per-country statistic), render it on the globe as part of the same turn, without waiting for the user to separately ask to "show" or "visualize" it. A list of qualifying countries is a case for label_countries or color_countries; a single country is a case for highlight_country; a place or point is a case for add_pin; a path between places is a case for draw_route. Only skip rendering when the answer is a single fact with no meaningful set of locations to plot (e.g. "what is the capital of France?"). Do this rendering call before writing the prose summary, and mention in the reply that the globe has been updated.
+
 Prefer clearing previous agent overlays before starting a new independent map request unless the user asks to add to the existing view.`;
 
 const DEFAULT_TOOL_BUDGET = 50;
