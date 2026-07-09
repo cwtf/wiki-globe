@@ -80,7 +80,9 @@ export class WikiPanel {
   }
 
   isOpen() {
-    return this.el.classList.contains("open") && !this.el.classList.contains("collapsed");
+    return this.el.classList.contains("open") &&
+      this.el.classList.contains("right-panel-pane-active") &&
+      !this.el.classList.contains("collapsed");
   }
 
   radiusKm() {
@@ -133,12 +135,16 @@ export class WikiPanel {
   }
 
   close() {
+    const wasActive = this.el.classList.contains("right-panel-pane-active") ||
+      (!this.el.classList.contains("right-panel-pane-inactive") && !this.el.classList.contains("collapsed"));
     this.el.classList.remove("open", "moon");
-    this._setCollapsed(true);
-    this.el.dispatchEvent(new CustomEvent("right-panel:closed", {
-      bubbles: true,
-      detail: { panel: "wiki" },
-    }));
+    if (wasActive) {
+      this._setCollapsed(true);
+      this.el.dispatchEvent(new CustomEvent("right-panel:closed", {
+        bubbles: true,
+        detail: { panel: "wiki" },
+      }));
+    }
     this.moonMode = false;
     this.searchSeq++;
     this._clearPin();

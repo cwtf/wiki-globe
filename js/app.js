@@ -791,8 +791,9 @@ async function boot() {
 function setupResponsiveSideMenus() {
   const compact = window.matchMedia(COMPACT_SIDE_MENU_QUERY);
   const controls = new Map();
-  const tabButtons = Array.from(document.querySelectorAll("[data-right-panel-tab]"));
   let activeRightPanel = null;
+  let rightPanelCollapsed = true;
+  let rightPanelUserChanged = false;
   const panels = [
     {
       id: "controls",
@@ -819,6 +820,43 @@ function setupResponsiveSideMenus() {
       rightPanel: true,
     },
   ];
+  const rightPanels = panels.filter((panel) => panel.rightPanel);
+
+  function syncRightPanels() {
+    for (const panel of rightPanels) {
+      const active = !rightPanelCollapsed && panel.id === activeRightPanel;
+      panel.el.classList.toggle("collapsed", rightPanelCollapsed);
+      panel.el.classList.toggle("right-panel-pane-active", active);
+      panel.el.classList.toggle("right-panel-pane-inactive", !active);
+      panel.toggle.setAttribute("aria-expanded", String(active));
+      if (rightPanelCollapsed) {
+        panel.toggle.setAttribute("aria-label", panel.expandLabel);
+        panel.toggle.title = panel.expandLabel;
+      } else if (active) {
+        panel.toggle.setAttribute("aria-label", panel.collapseLabel);
+        panel.toggle.title = panel.collapseLabel;
+      } else {
+        const label = panel.id === "wiki" ? "Switch to Wikipedia panel" : "Switch to agent panel";
+        panel.toggle.setAttribute("aria-label", label);
+        panel.toggle.title = label;
+      }
+    }
+  }
+
+  function setRightPanelActive(panelId, opts = {}) {
+    const control = controls.get(panelId);
+    if (!control?.panel.rightPanel) return;
+    activeRightPanel = panelId;
+    rightPanelCollapsed = false;
+    if (panelId === "wiki" && opts.forceOpen) control.panel.el.classList.add("open");
+    syncRightPanels();
+  }
+
+  function setRightPanelCollapsed(collapsed) {
+    rightPanelCollapsed = collapsed;
+    if (collapsed) activeRightPanel = null;
+    syncRightPanels();
+  }
 
   for (const panel of panels) {
     if (!panel.el || !panel.toggle) continue;
@@ -829,35 +867,35 @@ function setupResponsiveSideMenus() {
       panel.toggle.setAttribute("aria-expanded", String(!collapsed));
       panel.toggle.setAttribute("aria-label", collapsed ? panel.expandLabel : panel.collapseLabel);
       panel.toggle.title = collapsed ? panel.expandLabel : panel.collapseLabel;
-      if (!panel.rightPanel) return;
-
-      if (!collapsed) {
-        if (panel.id === "wiki" && opts.forceOpen) panel.el.classList.add("open");
-        const visible = panel.id !== "wiki" || panel.el.classList.contains("open");
-        if (!visible) return;
-        for (const other of controls.values()) {
-          if (other.panel.rightPanel && other.panel.id !== panel.id) {
-            other.setCollapsed(true, { silent: true });
-          }
-        }
-        activeRightPanel = panel.id;
-        syncRightPanelTabs(activeRightPanel);
-      } else if (!opts.silent && activeRightPanel === panel.id) {
-        activeRightPanel = null;
-        syncRightPanelTabs(null);
-      }
     }
 
     controls.set(panel.id, { panel, setCollapsed });
-    setCollapsed(panel.defaultCollapsed || compact.matches);
+    if (panel.rightPanel) {
+      panel.el.classList.add("collapsed", "right-panel-pane-inactive");
+      panel.toggle.setAttribute("aria-expanded", "false");
+      panel.toggle.setAttribute("aria-label", panel.expandLabel);
+      panel.toggle.title = panel.expandLabel;
+    } else {
+      setCollapsed(panel.defaultCollapsed || compact.matches);
+    }
     panel.toggle.addEventListener("click", () => {
+      if (panel.rightPanel) {
+        rightPanelUserChanged = true;
+        const active = !rightPanelCollapsed && activeRightPanel === panel.id;
+        if (active) setRightPanelCollapsed(true);
+        else setRightPanelActive(panel.id, { forceOpen: panel.id === "wiki" });
+        return;
+      }
       userChanged = true;
-      const collapsed = panel.el.classList.contains("collapsed");
-      setCollapsed(!collapsed, { forceOpen: panel.id === "wiki" && collapsed });
+      setCollapsed(!panel.el.classList.contains("collapsed"));
     });
 
     const onCompactChanged = (event) => {
-      if (!userChanged) setCollapsed(panel.defaultCollapsed || event.matches);
+      if (panel.rightPanel) {
+        if (!rightPanelUserChanged && event.matches) setRightPanelCollapsed(true);
+      } else if (!userChanged) {
+        setCollapsed(panel.defaultCollapsed || event.matches);
+      }
     };
     if (compact.addEventListener) {
       compact.addEventListener("change", onCompactChanged);
@@ -866,32 +904,8 @@ function setupResponsiveSideMenus() {
     }
   }
 
-  function syncRightPanelTabs(panelId) {
-    for (const button of tabButtons) {
-      const ownerPanel = button.closest("#wiki-panel") ? "wiki" : "agent";
-      const selected = button.dataset.rightPanelTab === panelId && ownerPanel === panelId;
-      button.setAttribute("aria-selected", String(selected));
-      button.tabIndex = panelId ? (ownerPanel === panelId ? (selected ? 0 : -1) : -1) : 0;
-    }
-  }
-
   function activateRightPanel(panelId) {
-    const control = controls.get(panelId);
-    if (!control) return;
-    control.setCollapsed(false, { forceOpen: panelId === "wiki" });
-  }
-
-  for (const button of tabButtons) {
-    button.addEventListener("click", () => activateRightPanel(button.dataset.rightPanelTab));
-    button.addEventListener("keydown", (event) => {
-      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
-      event.preventDefault();
-      const tabs = ["wiki", "agent"];
-      const current = tabs.indexOf(button.dataset.rightPanelTab);
-      const next = tabs[(current + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length];
-      activateRightPanel(next);
-      document.querySelector(`#${next === "wiki" ? "wiki-panel" : "agent-panel"} [data-right-panel-tab="${next}"]`)?.focus();
-    });
+    setRightPanelActive(panelId, { forceOpen: panelId === "wiki" });
   }
 
   document.addEventListener("right-panel:activate", (event) => {
@@ -899,11 +913,10 @@ function setupResponsiveSideMenus() {
   });
   document.addEventListener("right-panel:closed", (event) => {
     if (activeRightPanel === event.detail?.panel) {
-      activeRightPanel = null;
-      syncRightPanelTabs(null);
+      setRightPanelCollapsed(true);
     }
   });
-  syncRightPanelTabs(null);
+  syncRightPanels();
   setupRightPanelResize();
 }
 
