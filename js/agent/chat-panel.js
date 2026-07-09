@@ -17,6 +17,14 @@ import { AgentHarness, ERROR_STATUS, NO_DATA_STATUS, UNVERIFIED_STATUS } from ".
 import { AgentToolRegistry } from "./tools.js";
 
 const OLLAMA_HINT = "For Ollama, start the server with OLLAMA_ORIGINS allowing this page origin, for example OLLAMA_ORIGINS=http://localhost:8080. Models are read from /api/tags when reachable.";
+const EMPTY_STATE_MESSAGE = "Ask the globe agent to search, reason, and draw on the map.";
+const EXAMPLE_PROMPTS = [
+  "Show me major volcanoes near the Pacific Ring of Fire.",
+  "Find cities most at risk from sea level rise.",
+  "Trace Magellan's voyage around the world.",
+  "Show the countries where Malaysian passport holders can travel to visa-free",
+  "Show the countries that can travel to Malaysia visa-free",
+];
 
 export class AgentChatPanel {
   constructor(viewer, opts = {}) {
@@ -64,6 +72,7 @@ export class AgentChatPanel {
 
     this.tools = opts.tools ?? new AgentToolRegistry(viewer);
     this.harness = opts.harness ?? new AgentHarness(this.tools);
+    this._renderEmptyState();
 
     this._populateProviders();
     this._bind();
@@ -132,6 +141,11 @@ export class AgentChatPanel {
     this.form.addEventListener("submit", (event) => {
       event.preventDefault();
       this._submit();
+    });
+    this.transcriptEl?.addEventListener("click", (event) => {
+      const target = event.target.closest?.("[data-agent-example-prompt]");
+      if (!target) return;
+      this._useExamplePrompt(target.dataset.agentExamplePrompt);
     });
   }
 
@@ -385,7 +399,7 @@ export class AgentChatPanel {
     this.transcriptEl.replaceChildren();
     this.emptyEl = document.createElement("div");
     this.emptyEl.className = "agent-empty";
-    this.emptyEl.textContent = "Ask the globe agent to search, reason, and draw on the map.";
+    this._renderEmptyState();
     this.transcriptEl.append(
       ...[this.emptyEl, this.checkpointEl, this.outputEl, this.toolLogEl].filter(Boolean),
     );
@@ -519,6 +533,37 @@ export class AgentChatPanel {
 
   _hideEmpty() {
     if (this.emptyEl) this.emptyEl.hidden = true;
+  }
+
+  _renderEmptyState() {
+    if (!this.emptyEl) return;
+    const message = document.createElement("p");
+    message.textContent = EMPTY_STATE_MESSAGE;
+
+    const promptLabel = document.createElement("div");
+    promptLabel.className = "agent-example-label";
+    promptLabel.textContent = "Try one of these:";
+
+    const list = document.createElement("div");
+    list.className = "agent-example-list";
+    for (const prompt of EXAMPLE_PROMPTS) {
+      const button = document.createElement("button");
+      button.className = "agent-example-prompt";
+      button.type = "button";
+      button.textContent = prompt;
+      button.dataset.agentExamplePrompt = prompt;
+      list.appendChild(button);
+    }
+
+    this.emptyEl.replaceChildren(message, promptLabel, list);
+  }
+
+  _useExamplePrompt(prompt) {
+    const text = String(prompt ?? "").trim();
+    if (!text || !this.inputEl) return;
+    this.inputEl.value = text;
+    this.inputEl.focus();
+    this.inputEl.setSelectionRange(text.length, text.length);
   }
 
   _scrollTranscript() {

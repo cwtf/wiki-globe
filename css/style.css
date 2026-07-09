@@ -1313,6 +1313,41 @@ body.right-panel-resizing {
   text-align: center;
 }
 .agent-empty[hidden] { display: none; }
+.agent-empty p {
+  margin: 0 0 12px;
+}
+.agent-example-label {
+  margin-bottom: 7px;
+  color: #b7c4d8;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+.agent-example-list {
+  display: grid;
+  gap: 7px;
+  text-align: left;
+}
+.agent-example-prompt {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 8px;
+  color: #d8e2f1;
+  cursor: pointer;
+  font: 12px "Segoe UI", system-ui, sans-serif;
+  line-height: 1.35;
+  padding: 8px 9px;
+  text-align: left;
+}
+.agent-example-prompt:hover,
+.agent-example-prompt:focus-visible {
+  background: rgba(110, 243, 255, 0.10);
+  border-color: rgba(110, 243, 255, 0.34);
+  color: #eefcff;
+  outline: none;
+}
 .agent-message {
   display: flex;
   flex-direction: column;

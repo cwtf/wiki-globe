@@ -494,7 +494,17 @@
       <div id="agent-history-list" class="agent-history-list"></div>
     </div>
     <div id="agent-transcript" class="agent-transcript" aria-live="polite">
-      <div class="agent-empty">Ask the globe agent to search, reason, and draw on the map.</div>
+      <div class="agent-empty">
+        <p>Ask the globe agent to search, reason, and draw on the map.</p>
+        <div class="agent-example-label">Try one of these:</div>
+        <div class="agent-example-list">
+          <button class="agent-example-prompt" type="button" data-agent-example-prompt="Show me major volcanoes near the Pacific Ring of Fire.">Show me major volcanoes near the Pacific Ring of Fire.</button>
+          <button class="agent-example-prompt" type="button" data-agent-example-prompt="Find cities most at risk from sea level rise.">Find cities most at risk from sea level rise.</button>
+          <button class="agent-example-prompt" type="button" data-agent-example-prompt="Trace Magellan's voyage around the world.">Trace Magellan's voyage around the world.</button>
+          <button class="agent-example-prompt" type="button" data-agent-example-prompt="Show the countries where Malaysian passport holders can travel to visa-free">Show the countries where Malaysian passport holders can travel to visa-free</button>
+          <button class="agent-example-prompt" type="button" data-agent-example-prompt="Show the countries that can travel to Malaysia visa-free">Show the countries that can travel to Malaysia visa-free</button>
+        </div>
+      </div>
       <div class="agent-checkpoint" id="agent-checkpoint" hidden>
         <div class="agent-message-meta">Confirmation</div>
         <div class="agent-checkpoint-msg" id="agent-checkpoint-msg"></div>
