@@ -7,6 +7,7 @@
 import { GEOJSON_URL } from "./country-data.js";
 
 const R_KM = 6371.0088; // mean Earth radius
+const GEOJSON_FALLBACK_URL = "data/country-boundaries.latest.geojson";
 
 let geoPromise = null;
 
@@ -19,9 +20,17 @@ export function loadCountryGeo() {
 }
 
 async function fetchGeo() {
-  const resp = await fetch(GEOJSON_URL);
-  if (!resp.ok) throw new Error(`geojson ${resp.status}`);
-  const gj = await resp.json();
+  let gj;
+  try {
+    const resp = await fetch(GEOJSON_URL);
+    if (!resp.ok) throw new Error(`geojson ${resp.status}`);
+    gj = await resp.json();
+  } catch (e) {
+    console.warn(`Live country boundary fetch failed (${e.message}); using bundled fallback.`);
+    const resp = await fetch(GEOJSON_FALLBACK_URL);
+    if (!resp.ok) throw new Error(`bundled geojson fallback ${resp.status}`);
+    gj = await resp.json();
+  }
   return gj.features.map((f) => {
     const g = f.geometry;
     const polys = g.type === "Polygon" ? [g.coordinates]

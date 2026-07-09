@@ -25,6 +25,10 @@ const EXAMPLE_PROMPTS = [
   "Show the countries where Malaysian passport holders can travel to visa-free",
   "Show the countries that can travel to Malaysia visa-free",
 ];
+const CHAT_HISTORY_STORAGE_KEY = "wikiglobe.agent.chatSessions.v1";
+const MAX_HISTORY_SESSIONS = 20;
+const MAX_PERSISTED_MESSAGES_PER_SESSION = 80;
+const MAX_PERSISTED_MESSAGE_CHARS = 12000;
 
 export class AgentChatPanel {
   constructor(viewer, opts = {}) {
@@ -72,6 +76,8 @@ export class AgentChatPanel {
 
     this.tools = opts.tools ?? new AgentToolRegistry(viewer);
     this.harness = opts.harness ?? new AgentHarness(this.tools);
+    this.sessions = loadStoredSessions();
+    this.activeSessionId = this._createSession({ activate: true }).id;
     this._renderEmptyState();
 
     this._populateProviders();
@@ -177,7 +183,10 @@ export class AgentChatPanel {
     this._setRunning(true);
     this._setBadge("loading");
     this._setStatus(`Thinking with ${provider.label} / ${model}`);
-    this.currentSessionTitle ??= text;
+    const session = this._activeSession() ?? this._createSession({ activate: true });
+    session.title ??= text;
+    this.currentSessionTitle = session.title;
+    this._touchSession(session);
     this._appendMessage("user", text);
     this.activeAssistantEl = this._appendMessage("assistant", "Thinking...", { state: "thinking" });
     this.activeToolGroup = null;
@@ -207,20 +216,26 @@ export class AgentChatPanel {
       this._renderUsage(result.usage);
       this._setStatus(statusLabel(result.status));
       this.inputEl.value = "";
+      this._syncHarnessMessages();
     } catch (e) {
       if (e.name === "AbortError") {
         this._updateAssistantMessage("Request cancelled.", { status: "stopped" });
         this._setStatus("Cancelled");
         this._setBadge("idle");
+        this._syncHarnessMessages();
         return;
       }
       this._updateAssistantMessage(e.message, { status: ERROR_STATUS });
       this._setStatus("Error");
       this._setBadge("error");
+      this._syncHarnessMessages();
     } finally {
       this._resolveCheckpoint("terminate");
       this.abort = null;
       this._setRunning(false);
+      this._syncHarnessMessages();
+      this._saveHistory();
+      this._renderHistory();
     }
   }
 
@@ -380,22 +395,107 @@ export class AgentChatPanel {
     }
   }
 
-  _newSession() {
-    if (this.abort) return;
-    this.harness.reset();
+  _createSession({ activate = false } = {}) {
+    const now = Date.now();
+    const session = {
+      id: `session-${now}-${Math.random().toString(36).slice(2, 8)}`,
+      title: null,
+      createdAt: now,
+      updatedAt: now,
+      transcript: [],
+      harnessMessages: null,
+    };
+    this.sessions.unshift(session);
+    if (activate) this.activeSessionId = session.id;
+    this._pruneSessions();
+    return session;
+  }
+
+  _activeSession() {
+    return this.sessions.find((session) => session.id === this.activeSessionId) ?? null;
+  }
+
+  _historySessions() {
+    const active = this._activeSession();
+    const saved = this.sessions
+      .filter((session) => session.id !== this.activeSessionId && this._sessionHasTranscript(session))
+      .sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
+    return active ? [active, ...saved] : saved;
+  }
+
+  _sessionHasTranscript(session) {
+    return (session?.transcript ?? []).some((item) => item.type === "message" || item.type === "notice");
+  }
+
+  _touchSession(session = this._activeSession()) {
+    if (!session) return;
+    session.updatedAt = Date.now();
+    this._pruneSessions();
+  }
+
+  _recordTranscriptItem(item) {
+    const session = this._activeSession() ?? this._createSession({ activate: true });
+    const out = {
+      id: `item-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      ...item,
+    };
+    session.transcript.push(out);
+    this._touchSession(session);
+    this._saveHistory();
+    return out;
+  }
+
+  _updateTranscriptItem(id, patch) {
+    if (!id) return;
+    const session = this._activeSession();
+    const item = session?.transcript?.find((entry) => entry.id === id);
+    if (!item) return;
+    Object.assign(item, patch);
+    this._touchSession(session);
+    this._saveHistory();
+  }
+
+  _syncHarnessMessages() {
+    const session = this._activeSession();
+    if (!session || !this.harness?.getMessages) return;
+    session.harnessMessages = this.harness.getMessages();
+    this._touchSession(session);
+  }
+
+  _loadSession(sessionId) {
+    if (this.abort || sessionId === this.activeSessionId) return;
+    const session = this.sessions.find((entry) => entry.id === sessionId);
+    if (!session) return;
+    this.activeSessionId = session.id;
+    this.currentSessionTitle = session.title ?? null;
+    this.pendingToolEls.clear();
+    this.activeAssistantEl = null;
+    this.activeToolGroup = null;
+    this.inputEl.value = "";
     this._resolveCheckpoint("terminate");
+    this._restoreHarnessMessages(session);
+    this._renderSessionTranscript(session);
+    this._setStatus(session.title ? "Loaded previous session" : "Loaded session");
+    this._setBadge("idle");
+    this._toggleHistory(false);
+    this._renderHistory();
+  }
+
+  _restoreHarnessMessages(session) {
+    if (!this.harness?.setMessages) return;
+    const messages = session.harnessMessages?.length
+      ? session.harnessMessages
+      : messagesFromTranscript(session.transcript);
+    this.harness.setMessages(messages);
+  }
+
+  _resetTranscriptView() {
     this.pendingToolEls.clear();
     this.activeAssistantEl = null;
     this.activeToolGroup = null;
     this.outputEl.textContent = "";
     this.toolLogEl.textContent = "";
     this.usageEl.textContent = "Tokens: input 0, output 0";
-    this.inputEl.value = "";
-    this.currentSessionTitle = null;
-    this._setStatus("New session");
-    this._setBadge("idle");
-    this._toggleSettings(false);
-    this._toggleHistory(false);
     this.transcriptEl.replaceChildren();
     this.emptyEl = document.createElement("div");
     this.emptyEl.className = "agent-empty";
@@ -404,34 +504,123 @@ export class AgentChatPanel {
       ...[this.emptyEl, this.checkpointEl, this.outputEl, this.toolLogEl].filter(Boolean),
     );
     if (this.checkpointEl) this.checkpointEl.hidden = true;
+  }
+
+  _renderSessionTranscript(session) {
+    this._resetTranscriptView();
+    if (!this._sessionHasTranscript(session)) return;
+    this._hideEmpty();
+    for (const item of session.transcript) {
+      if (item.type === "message") {
+        this._appendMessage(item.role, item.content, {
+          record: false,
+          state: item.state ?? undefined,
+          status: item.status ?? undefined,
+        });
+      } else if (item.type === "notice") {
+        const notice = document.createElement("div");
+        notice.className = "agent-notice";
+        notice.textContent = item.content;
+        this.transcriptEl.appendChild(notice);
+      }
+    }
+    this._scrollTranscript();
+  }
+
+  _saveHistory() {
+    try {
+      const sessions = this.sessions
+        .filter((session) => this._sessionHasTranscript(session))
+        .slice(0, MAX_HISTORY_SESSIONS)
+        .map((session) => ({
+          id: session.id,
+          title: session.title,
+          createdAt: session.createdAt,
+          updatedAt: session.updatedAt,
+          transcript: session.transcript
+            .filter((item) => item.type === "message" || item.type === "notice")
+            .slice(-MAX_PERSISTED_MESSAGES_PER_SESSION)
+            .map(persistTranscriptItem)
+            .filter(Boolean),
+        }));
+      localStorage.setItem(CHAT_HISTORY_STORAGE_KEY, JSON.stringify(sessions));
+    } catch { /* private mode or quota */ }
+  }
+
+  _pruneSessions() {
+    const active = this._activeSession();
+    const saved = this.sessions
+      .filter((session) => session.id !== this.activeSessionId && this._sessionHasTranscript(session))
+      .sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0))
+      .slice(0, MAX_HISTORY_SESSIONS - 1);
+    this.sessions = active ? [active, ...saved] : saved;
+  }
+
+  _newSession() {
+    if (this.abort) return;
+    this.harness.reset();
+    this._resolveCheckpoint("terminate");
+    const current = this._activeSession();
+    if (current && this._sessionHasTranscript(current)) {
+      this._createSession({ activate: true });
+    } else if (current) {
+      current.title = null;
+      current.transcript = [];
+      current.harnessMessages = null;
+      this._touchSession(current);
+    }
+    this.inputEl.value = "";
+    this.currentSessionTitle = null;
+    this._setStatus("New session");
+    this._setBadge("idle");
+    this._toggleSettings(false);
+    this._toggleHistory(false);
+    this._resetTranscriptView();
+    this._saveHistory();
     this._renderHistory();
   }
 
   _renderHistory() {
     if (!this.historyListEl) return;
     this.historyListEl.replaceChildren();
-    const item = document.createElement("button");
-    item.className = "agent-history-item";
-    item.type = "button";
-    item.disabled = true;
+    const sessions = this._historySessions();
+    for (const session of sessions) {
+      const item = document.createElement("button");
+      item.className = "agent-history-item";
+      item.type = "button";
+      item.dataset.sessionId = session.id;
+      item.disabled = session.id === this.activeSessionId;
 
-    const title = document.createElement("span");
-    title.className = "agent-history-item-title";
-    title.textContent = this.currentSessionTitle ? truncate(this.currentSessionTitle, 58) : "Current session";
+      const title = document.createElement("span");
+      title.className = "agent-history-item-title";
+      title.textContent = session.title ? truncate(session.title, 58) : "Current session";
 
-    const meta = document.createElement("span");
-    meta.className = "agent-history-item-meta";
-    meta.textContent = this.currentSessionTitle ? "Open now" : "No messages yet";
+      const meta = document.createElement("span");
+      meta.className = "agent-history-item-meta";
+      meta.textContent = session.id === this.activeSessionId
+        ? (this._sessionHasTranscript(session) ? "Open now" : "No messages yet")
+        : sessionMeta(session);
 
-    item.append(title, meta);
-    this.historyListEl.append(item);
+      item.append(title, meta);
+      item.addEventListener("click", () => this._loadSession(session.id));
+      this.historyListEl.append(item);
+    }
   }
 
   _appendMessage(role, content, opts = {}) {
     this._hideEmpty();
+    const item = opts.record === false ? null : this._recordTranscriptItem({
+      type: "message",
+      role,
+      content,
+      state: opts.state ?? null,
+      status: opts.status ?? null,
+    });
     const row = document.createElement("div");
     row.className = `agent-message ${role}`;
     if (opts.state) row.dataset.state = opts.state;
+    if (opts.status) row.dataset.status = opts.status;
+    if (item) row.dataset.sessionItemId = item.id;
 
     const meta = document.createElement("div");
     meta.className = "agent-message-meta";
@@ -494,6 +683,11 @@ export class AgentChatPanel {
     if (bubble) this._renderBubble(bubble, content, "assistant");
     this.outputEl.textContent = content;
     this.activeAssistantEl = row;
+    this._updateTranscriptItem(row.dataset.sessionItemId, {
+      content,
+      state: null,
+      status: meta.status ?? "ok",
+    });
     this._scrollTranscript();
   }
 
@@ -507,9 +701,11 @@ export class AgentChatPanel {
 
   _appendNotice(text) {
     this._hideEmpty();
+    const item = this._recordTranscriptItem({ type: "notice", content: text });
     const notice = document.createElement("div");
     notice.className = "agent-notice";
     notice.textContent = text;
+    if (item) notice.dataset.sessionItemId = item.id;
     this.transcriptEl.appendChild(notice);
     this._scrollTranscript();
   }
@@ -584,6 +780,95 @@ export class AgentChatPanel {
       detail: { panel: "agent" },
     }));
   }
+}
+
+function loadStoredSessions() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(CHAT_HISTORY_STORAGE_KEY) || "[]");
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .map((session) => normalizeStoredSession(session))
+      .filter(Boolean)
+      .sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0))
+      .slice(0, MAX_HISTORY_SESSIONS);
+  } catch {
+    return [];
+  }
+}
+
+function normalizeStoredSession(session) {
+  if (!session || typeof session !== "object") return null;
+  const transcript = Array.isArray(session.transcript)
+    ? session.transcript.map(normalizeTranscriptItem).filter(Boolean)
+    : [];
+  if (!transcript.length) return null;
+  const now = Date.now();
+  return {
+    id: String(session.id || `session-${now}-${Math.random().toString(36).slice(2, 8)}`),
+    title: session.title ? String(session.title) : firstUserMessage(transcript),
+    createdAt: Number(session.createdAt) || now,
+    updatedAt: Number(session.updatedAt) || Number(session.createdAt) || now,
+    transcript,
+    harnessMessages: null,
+  };
+}
+
+function normalizeTranscriptItem(item) {
+  if (!item || typeof item !== "object") return null;
+  if (item.type === "notice") {
+    return {
+      id: String(item.id || `item-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+      type: "notice",
+      content: clampStoredContent(item.content),
+    };
+  }
+  if (item.type !== "message" || !["user", "assistant"].includes(item.role)) return null;
+  return {
+    id: String(item.id || `item-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+    type: "message",
+    role: item.role,
+    content: clampStoredContent(item.content),
+    state: item.state ? String(item.state) : null,
+    status: item.status ? String(item.status) : null,
+  };
+}
+
+function persistTranscriptItem(item) {
+  const clean = normalizeTranscriptItem(item);
+  if (!clean) return null;
+  return clean;
+}
+
+function messagesFromTranscript(transcript = []) {
+  return transcript
+    .filter((item) => item.type === "message" && ["user", "assistant"].includes(item.role))
+    .map((item) => ({
+      role: item.role,
+      content: String(item.content ?? ""),
+    }));
+}
+
+function firstUserMessage(transcript = []) {
+  return transcript.find((item) => item.type === "message" && item.role === "user")?.content ?? null;
+}
+
+function sessionMeta(session) {
+  const count = (session.transcript ?? []).filter((item) => item.type === "message").length;
+  const date = new Date(session.updatedAt ?? session.createdAt ?? Date.now());
+  const when = Number.isFinite(date.getTime()) ? date.toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }) : "Saved";
+  return `${count} message${count === 1 ? "" : "s"} - ${when}`;
+}
+
+function clampStoredContent(value) {
+  const text = String(value ?? "");
+  return text.length > MAX_PERSISTED_MESSAGE_CHARS
+    ? `${text.slice(0, MAX_PERSISTED_MESSAGE_CHARS - 3)}...`
+    : text;
 }
 
 function truncate(text, max) {

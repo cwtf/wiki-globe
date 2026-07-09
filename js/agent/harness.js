@@ -46,6 +46,17 @@ export class AgentHarness {
     this.messages = [{ role: "system", content: this.systemPrompt }];
   }
 
+  getMessages() {
+    return cloneMessages(this.messages);
+  }
+
+  setMessages(messages) {
+    const clean = Array.isArray(messages) ? cloneMessages(messages) : [];
+    this.messages = clean[0]?.role === "system"
+      ? clean
+      : [{ role: "system", content: this.systemPrompt }, ...clean.filter((message) => message?.role !== "system")];
+  }
+
   async run(userText, opts = {}) {
     const callbacks = opts.callbacks ?? {};
     const user = String(userText ?? "").trim();
@@ -189,4 +200,12 @@ function addUsage(a, b) {
   const output = (a.output ?? 0) + (b.output ?? 0);
   const total = a.total != null || b.total != null ? (a.total ?? 0) + (b.total ?? 0) : null;
   return { input, output, total };
+}
+
+function cloneMessages(messages) {
+  try {
+    return structuredClone(messages);
+  } catch {
+    return JSON.parse(JSON.stringify(messages ?? []));
+  }
 }
