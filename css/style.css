@@ -1379,6 +1379,48 @@ html, body {
   font: 11px Consolas, "Cascadia Mono", monospace;
   padding: 7px 9px;
 }
+.agent-tool-group {
+  align-self: stretch;
+}
+.agent-tool-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-left: 3px solid rgba(110, 243, 255, 0.65);
+  border-radius: 8px;
+  color: #cbd5e1;
+  cursor: pointer;
+  font: 11.5px "Segoe UI", system-ui, sans-serif;
+  padding: 7px 9px;
+}
+.agent-tool-summary::-webkit-details-marker { display: none; }
+.agent-tool-summary::before {
+  content: "+";
+  color: var(--cyan);
+  font: 700 13px Consolas, "Cascadia Mono", monospace;
+}
+.agent-tool-group[open] .agent-tool-summary::before {
+  content: "-";
+}
+.agent-tool-summary-label {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.agent-tool-summary-meta {
+  color: var(--text-dim);
+  flex: 0 0 auto;
+  font: 10.5px Consolas, "Cascadia Mono", monospace;
+}
+.agent-tool-list {
+  display: grid;
+  gap: 7px;
+  padding-top: 7px;
+}
 .agent-tool.ok { color: var(--green); }
 .agent-tool.no_data,
 .agent-tool.error { color: var(--amber); }

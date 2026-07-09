@@ -51,6 +51,7 @@ export class AgentChatPanel {
     this.checkpointResolve = null;
     this.modelLoadSeq = 0;
     this.activeAssistantEl = null;
+    this.activeToolGroup = null;
     this.pendingToolEls = new Map();
     this.currentSessionTitle = null;
 
@@ -143,6 +144,7 @@ export class AgentChatPanel {
     this.currentSessionTitle ??= text;
     this._appendMessage("user", text);
     this.activeAssistantEl = this._appendMessage("assistant", "Thinking...", { state: "thinking" });
+    this.activeToolGroup = null;
     this.outputEl.textContent = "";
     this.toolLogEl.textContent = "";
     this.usageEl.textContent = "Tokens: input 0, output 0";
@@ -260,7 +262,10 @@ export class AgentChatPanel {
     line.className = `agent-tool ${status}`;
     line.textContent = `${status}: ${entry.name}${result}`;
     line.title = JSON.stringify({ args: entry.args ?? {}, result: entry.result ?? null });
-    if (!line.parentElement) this.transcriptEl.appendChild(line);
+    const group = this._ensureToolGroup();
+    if (!line.parentElement) group.list.appendChild(line);
+    if (status !== "running") group.completed += 1;
+    this._renderToolGroupSummary(group);
     const mirror = document.createElement("div");
     mirror.className = line.className;
     mirror.textContent = line.textContent;
@@ -329,6 +334,7 @@ export class AgentChatPanel {
     this._resolveCheckpoint("terminate");
     this.pendingToolEls.clear();
     this.activeAssistantEl = null;
+    this.activeToolGroup = null;
     this.outputEl.textContent = "";
     this.toolLogEl.textContent = "";
     this.usageEl.textContent = "Tokens: input 0, output 0";
@@ -387,6 +393,45 @@ export class AgentChatPanel {
     this.transcriptEl.appendChild(row);
     this._scrollTranscript();
     return row;
+  }
+
+  _ensureToolGroup() {
+    if (this.activeToolGroup) return this.activeToolGroup;
+    this._hideEmpty();
+
+    const details = document.createElement("details");
+    details.className = "agent-tool-group";
+
+    const summary = document.createElement("summary");
+    summary.className = "agent-tool-summary";
+
+    const label = document.createElement("span");
+    label.className = "agent-tool-summary-label";
+
+    const meta = document.createElement("span");
+    meta.className = "agent-tool-summary-meta";
+
+    const list = document.createElement("div");
+    list.className = "agent-tool-list";
+
+    summary.append(label, meta);
+    details.append(summary, list);
+    this.transcriptEl.appendChild(details);
+
+    this.activeToolGroup = { details, summary, label, meta, list, completed: 0 };
+    this._renderToolGroupSummary(this.activeToolGroup);
+    this._scrollTranscript();
+    return this.activeToolGroup;
+  }
+
+  _renderToolGroupSummary(group) {
+    const total = group.list.children.length;
+    group.label.textContent = `Tool calls (${total})`;
+    group.meta.textContent = total === 0
+      ? "Waiting"
+      : group.completed < total
+        ? `${group.completed}/${total} complete`
+        : "Complete";
   }
 
   _updateAssistantMessage(content, meta = {}) {
