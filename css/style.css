@@ -1011,15 +1011,24 @@ html, body {
   border-color: rgba(110, 243, 255, 0.35);
   color: #fff;
 }
+.agent-icon-button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
 #agent-close {
   font-size: 23px;
+}
+#agent-history-toggle {
+  font-size: 17px;
+  font-weight: 650;
 }
 #agent-new-session {
   font-size: 20px;
   font-weight: 650;
 }
 
-.agent-settings {
+.agent-settings,
+.agent-history {
   position: absolute;
   top: 58px;
   left: 14px;
@@ -1035,9 +1044,11 @@ html, body {
   border-radius: 8px;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.52);
 }
-.agent-settings[hidden] { display: none; }
+.agent-settings[hidden],
+.agent-history[hidden] { display: none; }
 .agent-form,
-.agent-settings {
+.agent-settings,
+.agent-history {
   color-scheme: dark;
 }
 .agent-form label,
@@ -1169,6 +1180,44 @@ html, body {
 }
 .agent-ollama-hint[hidden] { display: none; }
 
+.agent-history-title {
+  color: var(--text-dim);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+.agent-history-list {
+  display: grid;
+  gap: 6px;
+}
+.agent-history-item {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: inherit;
+  padding: 8px 9px;
+  text-align: left;
+}
+.agent-history-item:disabled {
+  cursor: default;
+  opacity: 1;
+}
+.agent-history-item-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.agent-history-item-meta {
+  color: var(--text-dim);
+  font-size: 10.5px;
+}
+
 .agent-transcript {
   flex: 1;
   min-height: 0;
@@ -1179,9 +1228,11 @@ html, body {
   padding: 14px;
 }
 .agent-transcript::-webkit-scrollbar,
-.agent-settings::-webkit-scrollbar { width: 8px; }
+.agent-settings::-webkit-scrollbar,
+.agent-history::-webkit-scrollbar { width: 8px; }
 .agent-transcript::-webkit-scrollbar-thumb,
-.agent-settings::-webkit-scrollbar-thumb {
+.agent-settings::-webkit-scrollbar-thumb,
+.agent-history::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.12);
   border-radius: 4px;
 }

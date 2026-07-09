@@ -424,6 +424,15 @@
         title="Agent settings"
       >&#9881;</button>
       <button
+        id="agent-history-toggle"
+        class="agent-icon-button"
+        type="button"
+        aria-controls="agent-history"
+        aria-expanded="false"
+        title="Chat history"
+        aria-label="Chat history"
+      >&#8634;</button>
+      <button
         id="agent-new-session"
         class="agent-icon-button"
         type="button"
@@ -455,6 +464,10 @@
       </label>
       <div class="agent-provider-note" id="agent-provider-note"></div>
       <div class="agent-ollama-hint" id="agent-ollama-hint" hidden></div>
+    </div>
+    <div id="agent-history" class="agent-history" hidden>
+      <div class="agent-history-title">Chat history</div>
+      <div id="agent-history-list" class="agent-history-list"></div>
     </div>
     <div id="agent-transcript" class="agent-transcript" aria-live="polite">
       <div class="agent-empty">Ask the globe agent to search, reason, and draw on the map.</div>

@@ -34,6 +34,9 @@ export class AgentChatPanel {
     this.badgeEl = document.getElementById("agent-badge");
     this.settingsEl = document.getElementById("agent-settings");
     this.settingsToggleEl = document.getElementById("agent-settings-toggle");
+    this.historyEl = document.getElementById("agent-history");
+    this.historyToggleEl = document.getElementById("agent-history-toggle");
+    this.historyListEl = document.getElementById("agent-history-list");
     this.newSessionEl = document.getElementById("agent-new-session");
     this.noteEl = document.getElementById("agent-provider-note");
     this.ollamaHintEl = document.getElementById("agent-ollama-hint");
@@ -49,6 +52,7 @@ export class AgentChatPanel {
     this.modelLoadSeq = 0;
     this.activeAssistantEl = null;
     this.pendingToolEls = new Map();
+    this.currentSessionTitle = null;
 
     this.tools = opts.tools ?? new AgentToolRegistry(viewer);
     this.harness = opts.harness ?? new AgentHarness(this.tools);
@@ -91,6 +95,7 @@ export class AgentChatPanel {
   _bind() {
     document.getElementById("agent-close")?.addEventListener("click", () => this._setCollapsed(true));
     this.settingsToggleEl?.addEventListener("click", () => this._toggleSettings());
+    this.historyToggleEl?.addEventListener("click", () => this._toggleHistory());
     this.newSessionEl?.addEventListener("click", () => this._newSession());
     this.cancelEl?.addEventListener("click", () => this._cancel());
     this.continueEl?.addEventListener("click", () => this._resolveCheckpoint(this.continueEl.dataset.decision || "continue", { record: true }));
@@ -135,6 +140,7 @@ export class AgentChatPanel {
     this._setRunning(true);
     this._setBadge("loading");
     this._setStatus(`Thinking with ${provider.label} / ${model}`);
+    this.currentSessionTitle ??= text;
     this._appendMessage("user", text);
     this.activeAssistantEl = this._appendMessage("assistant", "Thinking...", { state: "thinking" });
     this.outputEl.textContent = "";
@@ -303,6 +309,18 @@ export class AgentChatPanel {
     const open = force ?? this.settingsEl.hidden;
     this.settingsEl.hidden = !open;
     this.settingsToggleEl.setAttribute("aria-expanded", String(open));
+    if (open) this._toggleHistory(false);
+  }
+
+  _toggleHistory(force) {
+    if (!this.historyEl || !this.historyToggleEl) return;
+    const open = force ?? this.historyEl.hidden;
+    this.historyEl.hidden = !open;
+    this.historyToggleEl.setAttribute("aria-expanded", String(open));
+    if (open) {
+      this._toggleSettings(false);
+      this._renderHistory();
+    }
   }
 
   _newSession() {
@@ -315,9 +333,11 @@ export class AgentChatPanel {
     this.toolLogEl.textContent = "";
     this.usageEl.textContent = "Tokens: input 0, output 0";
     this.inputEl.value = "";
+    this.currentSessionTitle = null;
     this._setStatus("New session");
     this._setBadge("idle");
     this._toggleSettings(false);
+    this._toggleHistory(false);
     this.transcriptEl.replaceChildren();
     this.emptyEl = document.createElement("div");
     this.emptyEl.className = "agent-empty";
@@ -326,6 +346,27 @@ export class AgentChatPanel {
       ...[this.emptyEl, this.checkpointEl, this.outputEl, this.toolLogEl].filter(Boolean),
     );
     if (this.checkpointEl) this.checkpointEl.hidden = true;
+    this._renderHistory();
+  }
+
+  _renderHistory() {
+    if (!this.historyListEl) return;
+    this.historyListEl.replaceChildren();
+    const item = document.createElement("button");
+    item.className = "agent-history-item";
+    item.type = "button";
+    item.disabled = true;
+
+    const title = document.createElement("span");
+    title.className = "agent-history-item-title";
+    title.textContent = this.currentSessionTitle ? truncate(this.currentSessionTitle, 58) : "Current session";
+
+    const meta = document.createElement("span");
+    meta.className = "agent-history-item-meta";
+    meta.textContent = this.currentSessionTitle ? "Open now" : "No messages yet";
+
+    item.append(title, meta);
+    this.historyListEl.append(item);
   }
 
   _appendMessage(role, content, opts = {}) {
@@ -396,12 +437,18 @@ export class AgentChatPanel {
   _setCollapsed(collapsed) {
     this.el.classList.toggle("collapsed", collapsed);
     if (collapsed) this._toggleSettings(false);
+    if (collapsed) this._toggleHistory(false);
     const toggle = document.getElementById("agent-toggle");
     const label = collapsed ? "Expand agent panel" : "Collapse agent panel";
     toggle?.setAttribute("aria-expanded", String(!collapsed));
     toggle?.setAttribute("aria-label", label);
     if (toggle) toggle.title = label;
   }
+}
+
+function truncate(text, max) {
+  const str = String(text ?? "").trim();
+  return str.length > max ? `${str.slice(0, max - 1)}...` : str;
 }
 
 function statusLabel(status) {
