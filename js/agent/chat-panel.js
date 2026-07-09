@@ -387,7 +387,7 @@ export class AgentChatPanel {
 
     const bubble = document.createElement("div");
     bubble.className = "agent-bubble";
-    bubble.textContent = content;
+    this._renderBubble(bubble, content, role);
 
     row.append(meta, bubble);
     this.transcriptEl.appendChild(row);
@@ -439,10 +439,18 @@ export class AgentChatPanel {
     delete row.dataset.state;
     row.dataset.status = meta.status ?? "ok";
     const bubble = row.querySelector(".agent-bubble");
-    if (bubble) bubble.textContent = content;
+    if (bubble) this._renderBubble(bubble, content, "assistant");
     this.outputEl.textContent = content;
     this.activeAssistantEl = row;
     this._scrollTranscript();
+  }
+
+  _renderBubble(bubble, content, role) {
+    if (role === "assistant") {
+      renderMarkdownInto(bubble, content);
+    } else {
+      bubble.textContent = content;
+    }
   }
 
   _appendNotice(text) {
@@ -494,6 +502,213 @@ export class AgentChatPanel {
 function truncate(text, max) {
   const str = String(text ?? "").trim();
   return str.length > max ? `${str.slice(0, max - 1)}...` : str;
+}
+
+function renderMarkdownInto(target, markdown) {
+  target.replaceChildren(...markdownBlocks(String(markdown ?? "")));
+}
+
+function markdownBlocks(markdown) {
+  const lines = markdown.replace(/\r\n?/g, "\n").split("\n");
+  const blocks = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    if (!lines[i].trim()) {
+      i++;
+      continue;
+    }
+
+    const fence = lines[i].match(/^\s*```(\w+)?\s*$/);
+    if (fence) {
+      const code = [];
+      i++;
+      while (i < lines.length && !/^\s*```\s*$/.test(lines[i])) code.push(lines[i++]);
+      if (i < lines.length) i++;
+      const pre = document.createElement("pre");
+      const el = document.createElement("code");
+      if (fence[1]) el.dataset.lang = fence[1];
+      el.textContent = code.join("\n");
+      pre.appendChild(el);
+      blocks.push(pre);
+      continue;
+    }
+
+    const heading = lines[i].match(/^(#{1,4})\s+(.+)$/);
+    if (heading) {
+      const el = document.createElement(`h${heading[1].length}`);
+      appendInline(el, heading[2].trim());
+      blocks.push(el);
+      i++;
+      continue;
+    }
+
+    if (/^\s*>/.test(lines[i])) {
+      const quote = [];
+      while (i < lines.length && (/^\s*>/.test(lines[i]) || !lines[i].trim())) {
+        quote.push(lines[i].replace(/^\s*>\s?/, ""));
+        i++;
+      }
+      const el = document.createElement("blockquote");
+      el.append(...markdownBlocks(quote.join("\n")));
+      blocks.push(el);
+      continue;
+    }
+
+    if (isTableStart(lines, i)) {
+      const tableLines = [lines[i], lines[i + 1]];
+      i += 2;
+      while (i < lines.length && /\|/.test(lines[i]) && lines[i].trim()) tableLines.push(lines[i++]);
+      blocks.push(renderTable(tableLines));
+      continue;
+    }
+
+    const listMatch = lines[i].match(/^(\s*)([-*+]|\d+\.)\s+(.+)$/);
+    if (listMatch) {
+      const ordered = /\d+\./.test(listMatch[2]);
+      const el = document.createElement(ordered ? "ol" : "ul");
+      while (i < lines.length) {
+        const item = lines[i].match(/^(\s*)([-*+]|\d+\.)\s+(.+)$/);
+        if (!item || /\d+\./.test(item[2]) !== ordered) break;
+        const li = document.createElement("li");
+        appendInline(li, item[3].trim());
+        el.appendChild(li);
+        i++;
+      }
+      blocks.push(el);
+      continue;
+    }
+
+    if (/^\s*-{3,}\s*$/.test(lines[i])) {
+      blocks.push(document.createElement("hr"));
+      i++;
+      continue;
+    }
+
+    const paragraph = [];
+    while (
+      i < lines.length &&
+      lines[i].trim() &&
+      !/^\s*```/.test(lines[i]) &&
+      !/^(#{1,4})\s+/.test(lines[i]) &&
+      !/^\s*>/.test(lines[i]) &&
+      !/^(\s*)([-*+]|\d+\.)\s+/.test(lines[i]) &&
+      !isTableStart(lines, i)
+    ) {
+      paragraph.push(lines[i++].trim());
+    }
+    const el = document.createElement("p");
+    appendInline(el, paragraph.join(" "));
+    blocks.push(el);
+  }
+
+  if (!blocks.length) {
+    const p = document.createElement("p");
+    p.textContent = "";
+    blocks.push(p);
+  }
+  return blocks;
+}
+
+function isTableStart(lines, index) {
+  return /\|/.test(lines[index] ?? "") && /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(lines[index + 1] ?? "");
+}
+
+function renderTable(lines) {
+  const table = document.createElement("table");
+  const thead = document.createElement("thead");
+  const tbody = document.createElement("tbody");
+  const headers = splitTableRow(lines[0]);
+
+  const headRow = document.createElement("tr");
+  for (const header of headers) {
+    const th = document.createElement("th");
+    appendInline(th, header);
+    headRow.appendChild(th);
+  }
+  thead.appendChild(headRow);
+
+  for (const line of lines.slice(2)) {
+    const row = document.createElement("tr");
+    const cells = splitTableRow(line);
+    for (let i = 0; i < Math.max(headers.length, cells.length); i++) {
+      const td = document.createElement("td");
+      appendInline(td, cells[i] ?? "");
+      row.appendChild(td);
+    }
+    tbody.appendChild(row);
+  }
+
+  table.append(thead, tbody);
+  return table;
+}
+
+function splitTableRow(line) {
+  return line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((cell) => cell.trim());
+}
+
+function appendInline(parent, text) {
+  let rest = String(text ?? "");
+  while (rest) {
+    const match = nextInlineMatch(rest);
+    if (!match) {
+      parent.appendChild(document.createTextNode(rest));
+      return;
+    }
+    if (match.index > 0) parent.appendChild(document.createTextNode(rest.slice(0, match.index)));
+    parent.appendChild(match.node);
+    rest = rest.slice(match.index + match.raw.length);
+  }
+}
+
+function nextInlineMatch(text) {
+  const patterns = [
+    {
+      re: /`([^`]+)`/,
+      make: (m) => {
+        const el = document.createElement("code");
+        el.textContent = m[1];
+        return el;
+      },
+    },
+    {
+      re: /\*\*([\s\S]+?)\*\*/,
+      make: (m) => {
+        const el = document.createElement("strong");
+        appendInline(el, m[1]);
+        return el;
+      },
+    },
+    {
+      re: /\*([^*\n]+)\*/,
+      make: (m) => {
+        const el = document.createElement("em");
+        appendInline(el, m[1]);
+        return el;
+      },
+    },
+    {
+      re: /\[([^\]]+)\]\((https?:\/\/[^)\s]+|mailto:[^)\s]+)\)/,
+      make: (m) => {
+        const el = document.createElement("a");
+        el.href = m[2];
+        el.target = "_blank";
+        el.rel = "noopener noreferrer";
+        appendInline(el, m[1]);
+        return el;
+      },
+    },
+  ];
+
+  let best = null;
+  for (const pattern of patterns) {
+    const match = text.match(pattern.re);
+    if (!match) continue;
+    if (!best || match.index < best.index) {
+      best = { index: match.index, raw: match[0], node: pattern.make(match) };
+    }
+  }
+  return best;
 }
 
 function statusLabel(status) {

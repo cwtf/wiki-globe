@@ -1267,13 +1267,107 @@ html, body {
 }
 .agent-bubble {
   overflow-wrap: anywhere;
-  white-space: pre-wrap;
   border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: 8px;
   color: #d8e2f1;
   font-size: 12.5px;
   line-height: 1.55;
   padding: 9px 10px;
+}
+.agent-bubble p {
+  margin: 0 0 0.8em;
+}
+.agent-bubble h1,
+.agent-bubble h2,
+.agent-bubble h3,
+.agent-bubble h4 {
+  margin: 0 0 0.55em;
+  color: #eef6ff;
+  font-size: 1em;
+  line-height: 1.35;
+}
+.agent-bubble p:last-child,
+.agent-bubble ul:last-child,
+.agent-bubble ol:last-child,
+.agent-bubble blockquote:last-child,
+.agent-bubble table:last-child,
+.agent-bubble pre:last-child,
+.agent-bubble h1:last-child,
+.agent-bubble h2:last-child,
+.agent-bubble h3:last-child,
+.agent-bubble h4:last-child {
+  margin-bottom: 0;
+}
+.agent-bubble ul,
+.agent-bubble ol {
+  margin: 0 0 0.85em;
+  padding-left: 20px;
+}
+.agent-bubble li {
+  margin: 0.2em 0;
+}
+.agent-bubble blockquote {
+  margin: 0 0 0.9em;
+  padding: 0 0 0 10px;
+  border-left: 2px solid rgba(110, 243, 255, 0.38);
+  color: #cbd5e1;
+}
+.agent-bubble table {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 0 0 0.95em;
+  border-collapse: collapse;
+  white-space: nowrap;
+}
+.agent-bubble th,
+.agent-bubble td {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  padding: 5px 7px;
+  text-align: left;
+  vertical-align: top;
+}
+.agent-bubble th {
+  background: rgba(255, 255, 255, 0.06);
+  color: #eef6ff;
+  font-weight: 700;
+}
+.agent-bubble code {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 5px;
+  color: #d6f7ff;
+  font-family: Consolas, "Cascadia Mono", monospace;
+  font-size: 0.92em;
+  padding: 0 4px;
+}
+.agent-bubble pre {
+  overflow: auto;
+  margin: 0 0 0.9em;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 8px;
+  padding: 9px 10px;
+}
+.agent-bubble pre code {
+  display: block;
+  background: none;
+  border: 0;
+  padding: 0;
+  white-space: pre;
+}
+.agent-bubble a {
+  color: #9edfff;
+  text-decoration: none;
+}
+.agent-bubble a:hover {
+  text-decoration: underline;
+}
+.agent-bubble hr {
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  margin: 0.9em 0;
 }
 .agent-message.user .agent-bubble {
   background: rgba(110, 243, 255, 0.13);
