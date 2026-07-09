@@ -49,7 +49,7 @@ export class WikiPanel {
 
     document.getElementById("wp-close").addEventListener("click", () => this.close());
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") this.close();
+      if (e.key === "Escape" && this.isOpen()) this.close();
     });
 
     // Radius slider: the circle tracks the slider instantly; the (networked)
@@ -80,7 +80,7 @@ export class WikiPanel {
   }
 
   isOpen() {
-    return this.el.classList.contains("open");
+    return this.el.classList.contains("open") && !this.el.classList.contains("collapsed");
   }
 
   radiusKm() {
@@ -99,8 +99,8 @@ export class WikiPanel {
     this._clearPin();
     this._clearCircle();
     this._clearMarkers();
-    this._setCollapsed(false);
     this.el.classList.add("open", "moon");
+    this._setCollapsed(false);
     this.coordsEl.textContent =
       `${bodyName} · ${Math.abs(lat).toFixed(2)}° ${lat >= 0 ? "N" : "S"},  ` +
       `${Math.abs(lon).toFixed(2)}° ${lon >= 0 ? "E" : "W"}`;
@@ -127,13 +127,18 @@ export class WikiPanel {
     this.radiusM = this.radiusKm() * 1000;
     this._placePin(lat, lon);
     this._placeCircle(lat, lon);
-    this._setCollapsed(false);
     this.el.classList.add("open");
+    this._setCollapsed(false);
     this.search();
   }
 
   close() {
     this.el.classList.remove("open", "moon");
+    this._setCollapsed(true);
+    this.el.dispatchEvent(new CustomEvent("right-panel:closed", {
+      bubbles: true,
+      detail: { panel: "wiki" },
+    }));
     this.moonMode = false;
     this.searchSeq++;
     this._clearPin();
@@ -142,6 +147,8 @@ export class WikiPanel {
     this.items = [];
     this.selected = null;
     this.conflict = null;
+    this.coordsEl.textContent = "";
+    this.resultsEl.innerHTML = `<div class="wp-status">Click the globe or map to discover nearby Wikipedia articles.</div>`;
   }
 
   // --- globe overlays --------------------------------------------------------
@@ -262,6 +269,7 @@ export class WikiPanel {
 
   // Called from the globe when an article marker is clicked.
   focusArticle(article, opts = {}) {
+    this._setCollapsed(false);
     this._select(article, true);
     if (opts.openPopup) openArticlePopup(article);
   }
@@ -278,6 +286,12 @@ export class WikiPanel {
     toggle.setAttribute("aria-expanded", String(!collapsed));
     toggle.setAttribute("aria-label", label);
     toggle.title = label;
+    if (!collapsed) {
+      this.el.dispatchEvent(new CustomEvent("right-panel:activate", {
+        bubbles: true,
+        detail: { panel: "wiki" },
+      }));
+    }
   }
 
   // --- search ----------------------------------------------------------------

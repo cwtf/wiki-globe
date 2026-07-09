@@ -709,7 +709,7 @@ html, body {
   top: 0;
   right: 0;
   height: 100%;
-  width: min(372px, 92vw);
+  width: min(var(--right-panel-width, 392px), calc(100vw - 46px));
   background: var(--bg-glass-2);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -736,11 +736,41 @@ html, body {
   transform: translateX(-100%);
 }
 
+.right-panel-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 10px 14px 0;
+}
+.right-panel-tab {
+  flex: 1;
+  min-width: 0;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 7px;
+  color: var(--text-dim);
+  cursor: pointer;
+  font: 700 11px "Segoe UI", system-ui, sans-serif;
+  letter-spacing: 0.5px;
+  padding: 6px 8px;
+  text-transform: uppercase;
+}
+.right-panel-tab:hover,
+.right-panel-tab:focus-visible {
+  border-color: rgba(110, 243, 255, 0.35);
+  color: var(--text);
+  outline: none;
+}
+.right-panel-tab[aria-selected="true"] {
+  background: rgba(110, 243, 255, 0.14);
+  border-color: rgba(110, 243, 255, 0.42);
+  color: var(--cyan);
+}
+
 .wp-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 18px 4px;
+  padding: 12px 18px 4px;
 }
 .wp-title { font-size: 15px; font-weight: 700; letter-spacing: 0.4px; }
 #wp-close {
@@ -955,7 +985,7 @@ html, body {
   top: 0;
   right: 0;
   height: 100%;
-  width: min(392px, 94vw);
+  width: min(var(--right-panel-width, 392px), calc(100vw - 46px));
   background: var(--bg-glass-2);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -968,19 +998,58 @@ html, body {
 }
 #agent-panel.collapsed { transform: translateX(100%); }
 
+.right-panel-resize-handle {
+  position: absolute;
+  top: 0;
+  left: -5px;
+  z-index: 1;
+  width: 10px;
+  height: 100%;
+  cursor: col-resize;
+  touch-action: none;
+}
+.right-panel-resize-handle::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 4px;
+  width: 1px;
+  height: 100%;
+  background: transparent;
+  transition: background 0.16s ease, box-shadow 0.16s ease;
+}
+.right-panel-resize-handle:hover::before,
+.right-panel-resize-handle:focus-visible::before,
+body.right-panel-resizing .right-panel-resize-handle::before {
+  background: rgba(110, 243, 255, 0.72);
+  box-shadow: 0 0 12px rgba(110, 243, 255, 0.38);
+}
+.right-panel-resize-handle:focus-visible {
+  outline: none;
+}
+#wiki-panel.collapsed .right-panel-resize-handle,
+#agent-panel.collapsed .right-panel-resize-handle {
+  display: none;
+}
+body.right-panel-resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+
 .agent-toggle {
   top: 104px;
   left: 0;
   border-right: 0;
   border-radius: 10px 0 0 10px;
   transform: translateX(-100%);
+  z-index: 2;
 }
 
 .agent-head {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 16px 18px 10px;
+  padding: 12px 18px 10px;
   border-bottom: 1px solid var(--stroke);
   position: relative;
 }

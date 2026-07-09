@@ -534,6 +534,10 @@ export class AgentChatPanel {
     toggle?.setAttribute("aria-expanded", String(!collapsed));
     toggle?.setAttribute("aria-label", label);
     if (toggle) toggle.title = label;
+    this.el.dispatchEvent(new CustomEvent(collapsed ? "right-panel:closed" : "right-panel:activate", {
+      bubbles: true,
+      detail: { panel: "agent" },
+    }));
   }
 }
 

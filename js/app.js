@@ -27,6 +27,11 @@ const AUTOROTATE_MIN_HEIGHT = 1.2e6;  // stop spinning once zoomed into the map
 const EARTH_DEPART_DURATION = 1.2;      // seconds; camera pull-back before an Earth-origin proxy transition
 const EARTH_DEPART_HEIGHT_FACTOR = 1.5; // multiple of the target's proxyDistance to clear it before the proxy appears
 const COMPACT_SIDE_MENU_QUERY = "(max-width: 1199px)";
+const RIGHT_PANEL_WIDTH_STORAGE_KEY = "wikiglobe.agent.panelWidth";
+const RIGHT_PANEL_DEFAULT_WIDTH = 392;
+const RIGHT_PANEL_MIN_WIDTH = 320;
+const RIGHT_PANEL_MAX_WIDTH = 760;
+const RIGHT_PANEL_VIEWPORT_MARGIN = 46;
 async function boot() {
   await loadHeatmapMetrics();
 
@@ -785,25 +790,33 @@ async function boot() {
 
 function setupResponsiveSideMenus() {
   const compact = window.matchMedia(COMPACT_SIDE_MENU_QUERY);
+  const controls = new Map();
+  const tabButtons = Array.from(document.querySelectorAll("[data-right-panel-tab]"));
+  let activeRightPanel = null;
   const panels = [
     {
+      id: "controls",
       el: document.getElementById("panel"),
       toggle: document.getElementById("panel-toggle"),
       collapseLabel: "Collapse controls panel",
       expandLabel: "Expand controls panel",
     },
     {
+      id: "wiki",
       el: document.getElementById("wiki-panel"),
       toggle: document.getElementById("wp-toggle"),
       collapseLabel: "Collapse Wikipedia panel",
       expandLabel: "Expand Wikipedia panel",
+      rightPanel: true,
     },
     {
+      id: "agent",
       el: document.getElementById("agent-panel"),
       toggle: document.getElementById("agent-toggle"),
       collapseLabel: "Collapse agent panel",
       expandLabel: "Expand agent panel",
       defaultCollapsed: true,
+      rightPanel: true,
     },
   ];
 
@@ -811,17 +824,36 @@ function setupResponsiveSideMenus() {
     if (!panel.el || !panel.toggle) continue;
     let userChanged = false;
 
-    function setCollapsed(collapsed) {
+    function setCollapsed(collapsed, opts = {}) {
       panel.el.classList.toggle("collapsed", collapsed);
       panel.toggle.setAttribute("aria-expanded", String(!collapsed));
       panel.toggle.setAttribute("aria-label", collapsed ? panel.expandLabel : panel.collapseLabel);
       panel.toggle.title = collapsed ? panel.expandLabel : panel.collapseLabel;
+      if (!panel.rightPanel) return;
+
+      if (!collapsed) {
+        if (panel.id === "wiki" && opts.forceOpen) panel.el.classList.add("open");
+        const visible = panel.id !== "wiki" || panel.el.classList.contains("open");
+        if (!visible) return;
+        for (const other of controls.values()) {
+          if (other.panel.rightPanel && other.panel.id !== panel.id) {
+            other.setCollapsed(true, { silent: true });
+          }
+        }
+        activeRightPanel = panel.id;
+        syncRightPanelTabs(activeRightPanel);
+      } else if (!opts.silent && activeRightPanel === panel.id) {
+        activeRightPanel = null;
+        syncRightPanelTabs(null);
+      }
     }
 
+    controls.set(panel.id, { panel, setCollapsed });
     setCollapsed(panel.defaultCollapsed || compact.matches);
     panel.toggle.addEventListener("click", () => {
       userChanged = true;
-      setCollapsed(!panel.el.classList.contains("collapsed"));
+      const collapsed = panel.el.classList.contains("collapsed");
+      setCollapsed(!collapsed, { forceOpen: panel.id === "wiki" && collapsed });
     });
 
     const onCompactChanged = (event) => {
@@ -832,6 +864,158 @@ function setupResponsiveSideMenus() {
     } else {
       compact.addListener(onCompactChanged);
     }
+  }
+
+  function syncRightPanelTabs(panelId) {
+    for (const button of tabButtons) {
+      const ownerPanel = button.closest("#wiki-panel") ? "wiki" : "agent";
+      const selected = button.dataset.rightPanelTab === panelId && ownerPanel === panelId;
+      button.setAttribute("aria-selected", String(selected));
+      button.tabIndex = panelId ? (ownerPanel === panelId ? (selected ? 0 : -1) : -1) : 0;
+    }
+  }
+
+  function activateRightPanel(panelId) {
+    const control = controls.get(panelId);
+    if (!control) return;
+    control.setCollapsed(false, { forceOpen: panelId === "wiki" });
+  }
+
+  for (const button of tabButtons) {
+    button.addEventListener("click", () => activateRightPanel(button.dataset.rightPanelTab));
+    button.addEventListener("keydown", (event) => {
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      event.preventDefault();
+      const tabs = ["wiki", "agent"];
+      const current = tabs.indexOf(button.dataset.rightPanelTab);
+      const next = tabs[(current + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length];
+      activateRightPanel(next);
+      document.querySelector(`#${next === "wiki" ? "wiki-panel" : "agent-panel"} [data-right-panel-tab="${next}"]`)?.focus();
+    });
+  }
+
+  document.addEventListener("right-panel:activate", (event) => {
+    activateRightPanel(event.detail?.panel);
+  });
+  document.addEventListener("right-panel:closed", (event) => {
+    if (activeRightPanel === event.detail?.panel) {
+      activeRightPanel = null;
+      syncRightPanelTabs(null);
+    }
+  });
+  syncRightPanelTabs(null);
+  setupRightPanelResize();
+}
+
+function setupRightPanelResize() {
+  const handles = Array.from(document.querySelectorAll(".right-panel-resize-handle"));
+  if (handles.length === 0) return;
+
+  let preferredWidth = restoreRightPanelWidth();
+  let panelWidth = RIGHT_PANEL_DEFAULT_WIDTH;
+  let resizePointerId = null;
+  let activeHandle = null;
+
+  function maxPanelWidth() {
+    return Math.max(260, Math.min(RIGHT_PANEL_MAX_WIDTH, window.innerWidth - RIGHT_PANEL_VIEWPORT_MARGIN));
+  }
+
+  function clampPanelWidth(width) {
+    const max = maxPanelWidth();
+    const min = Math.min(RIGHT_PANEL_MIN_WIDTH, max);
+    const n = Number(width);
+    const fallback = Math.min(RIGHT_PANEL_DEFAULT_WIDTH, max);
+    return Math.round(Math.max(min, Math.min(max, Number.isFinite(n) ? n : fallback)));
+  }
+
+  function setPanelWidth(width, opts = {}) {
+    const n = Number(width);
+    if (!opts.keepPreferred && Number.isFinite(n)) {
+      preferredWidth = Math.max(RIGHT_PANEL_MIN_WIDTH, Math.min(RIGHT_PANEL_MAX_WIDTH, n));
+    }
+    panelWidth = clampPanelWidth(Number.isFinite(n) ? n : preferredWidth);
+    document.documentElement.style.setProperty("--right-panel-width", `${panelWidth}px`);
+    for (const handle of handles) {
+      handle.setAttribute("aria-valuenow", String(panelWidth));
+      handle.setAttribute("aria-valuemin", String(Math.min(RIGHT_PANEL_MIN_WIDTH, maxPanelWidth())));
+      handle.setAttribute("aria-valuemax", String(maxPanelWidth()));
+    }
+    if (opts.save) saveRightPanelWidth(preferredWidth);
+  }
+
+  function startResize(event) {
+    if (event.button != null && event.button !== 0) return;
+    event.preventDefault();
+    resizePointerId = event.pointerId;
+    activeHandle = event.currentTarget;
+    activeHandle?.setPointerCapture?.(event.pointerId);
+    document.body.classList.add("right-panel-resizing");
+    window.addEventListener("pointermove", resizeFromPointer);
+    window.addEventListener("pointerup", endResize);
+    window.addEventListener("pointercancel", endResize);
+    resizeFromPointer(event);
+  }
+
+  function resizeFromPointer(event) {
+    if (resizePointerId != null && event.pointerId !== resizePointerId) return;
+    setPanelWidth(window.innerWidth - event.clientX);
+  }
+
+  function endResize(event) {
+    if (resizePointerId != null && event.pointerId !== resizePointerId) return;
+    try {
+      activeHandle?.releasePointerCapture?.(resizePointerId);
+    } catch {
+      // The pointer may already be released after a browser-level cancel.
+    }
+    resizePointerId = null;
+    activeHandle = null;
+    document.body.classList.remove("right-panel-resizing");
+    window.removeEventListener("pointermove", resizeFromPointer);
+    window.removeEventListener("pointerup", endResize);
+    window.removeEventListener("pointercancel", endResize);
+    saveRightPanelWidth(preferredWidth);
+  }
+
+  function handleKey(event) {
+    const step = event.shiftKey ? 64 : 24;
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      setPanelWidth(panelWidth + step, { save: true });
+    } else if (event.key === "ArrowRight") {
+      event.preventDefault();
+      setPanelWidth(panelWidth - step, { save: true });
+    } else if (event.key === "Home") {
+      event.preventDefault();
+      setPanelWidth(RIGHT_PANEL_MIN_WIDTH, { save: true });
+    } else if (event.key === "End") {
+      event.preventDefault();
+      setPanelWidth(RIGHT_PANEL_MAX_WIDTH, { save: true });
+    }
+  }
+
+  for (const handle of handles) {
+    handle.addEventListener("pointerdown", startResize);
+    handle.addEventListener("keydown", handleKey);
+  }
+  window.addEventListener("resize", () => setPanelWidth(preferredWidth, { keepPreferred: true }));
+  setPanelWidth(preferredWidth);
+}
+
+function restoreRightPanelWidth() {
+  try {
+    const saved = Number(localStorage.getItem(RIGHT_PANEL_WIDTH_STORAGE_KEY));
+    return Number.isFinite(saved) ? saved : RIGHT_PANEL_DEFAULT_WIDTH;
+  } catch {
+    return RIGHT_PANEL_DEFAULT_WIDTH;
+  }
+}
+
+function saveRightPanelWidth(width) {
+  try {
+    localStorage.setItem(RIGHT_PANEL_WIDTH_STORAGE_KEY, String(width));
+  } catch {
+    // private mode
   }
 }
 

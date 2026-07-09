@@ -374,6 +374,15 @@
 
   <!-- Wikipedia location panel -->
   <div id="wiki-panel">
+    <div
+      id="wiki-resize-handle"
+      class="right-panel-resize-handle"
+      role="separator"
+      aria-label="Resize right panel"
+      aria-orientation="vertical"
+      tabindex="0"
+      title="Drag to resize panel"
+    ></div>
     <button
       id="wp-toggle"
       class="side-collapse-toggle wiki-toggle"
@@ -384,6 +393,10 @@
     >
       Wiki
     </button>
+    <div class="right-panel-tabs" role="tablist" aria-label="Right panel view">
+      <button class="right-panel-tab" type="button" role="tab" data-right-panel-tab="wiki" aria-controls="wiki-panel">Wiki</button>
+      <button class="right-panel-tab" type="button" role="tab" data-right-panel-tab="agent" aria-controls="agent-panel">Agent</button>
+    </div>
     <div class="wp-head">
       <div class="wp-title">Nearby on Wikipedia</div>
       <button id="wp-close" title="Close (Esc)">&times;</button>
@@ -394,11 +407,22 @@
       <input type="range" id="wp-radius" min="0" max="100" value="55" />
       <div class="wp-radius-ends"><span>hyperlocal</span><span>regional / national</span></div>
     </div>
-    <div id="wp-results"></div>
+    <div id="wp-results">
+      <div class="wp-status">Click the globe or map to discover nearby Wikipedia articles.</div>
+    </div>
   </div>
 
   <!-- LLM agent panel -->
   <div id="agent-panel" class="collapsed">
+    <div
+      id="agent-resize-handle"
+      class="right-panel-resize-handle"
+      role="separator"
+      aria-label="Resize right panel"
+      aria-orientation="vertical"
+      tabindex="0"
+      title="Drag to resize panel"
+    ></div>
     <button
       id="agent-toggle"
       class="side-collapse-toggle agent-toggle"
@@ -409,6 +433,10 @@
     >
       Agent
     </button>
+    <div class="right-panel-tabs" role="tablist" aria-label="Right panel view">
+      <button class="right-panel-tab" type="button" role="tab" data-right-panel-tab="wiki" aria-controls="wiki-panel">Wiki</button>
+      <button class="right-panel-tab" type="button" role="tab" data-right-panel-tab="agent" aria-controls="agent-panel">Agent</button>
+    </div>
     <div class="agent-head">
       <div>
         <div class="agent-title">Globe agent</div>
