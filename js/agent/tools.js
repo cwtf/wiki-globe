@@ -18,6 +18,7 @@ const HIGHLIGHT_COLOR = Cesium.Color.fromCssColorString("#6ef3ff").withAlpha(0.9
 const DEFAULT_HEIGHT_M = 2800;
 const LABEL_HEIGHT_M = 5200;
 const MAX_ROUTE_POINTS = 24;
+const MAX_ECLIPSE_ROUTE_POINTS = 160;
 const MAX_COUNTRY_LABELS = 250;
 const MAX_COLOR_COUNTRIES = 250;
 const CHOROPLETH_W = 1440;
@@ -34,6 +35,14 @@ const DEFAULT_GEOCODE_LIMIT = 5;
 const MAX_GEOCODE_LIMIT = 5;
 const NETWORK_TIMEOUT_MS = 15000;
 const MAX_STATS_ROWS = 250;
+const AU_M = 149597870700;
+const KM_PER_AU = 149597870.69098932;
+const SUN_RADIUS_KM = 695700.0;
+const MOON_MEAN_RADIUS_KM = 1737.4;
+const ECLIPSE_SEARCH_LIMIT = 24;
+const ECLIPSE_SAMPLE_MINUTES = 2;
+const ECLIPSE_SAMPLE_WINDOW_HOURS = 4.5;
+const ECLIPSE_ROUTE_HEIGHT_M = 9000;
 
 export const OK_STATUS = "ok";
 export const NO_DATA_STATUS = "no_data";
@@ -239,6 +248,22 @@ export class AgentToolRegistry {
       {
         type: "function",
         function: {
+          name: "eclipse_path",
+          description: "Compute and draw the central path of the next total or annular solar eclipse from an optional start date using local astronomy-engine ephemeris. This is compute-heavy and requires user approval before execution. Returns NO DATA if no central eclipse is found in range.",
+          parameters: {
+            type: "object",
+            properties: {
+              date: {
+                type: "string",
+                description: "Optional ISO date/time to start searching from. Defaults to now.",
+              },
+            },
+          },
+        },
+      },
+      {
+        type: "function",
+        function: {
           name: "highlight_country",
           description: "Outline one present-day country by ISO-3166 alpha-3 code. Use only for current country borders already in the local country dataset.",
           parameters: {
@@ -292,7 +317,7 @@ export class AgentToolRegistry {
     ];
   }
 
-  async execute(name, args) {
+  async execute(name, args, opts = {}) {
     if (name === "add_pin") return this.addPin(args);
     if (name === "wiki_search") return this.wikiSearch(args);
     if (name === "wiki_extract") return this.wikiExtract(args);
@@ -302,6 +327,7 @@ export class AgentToolRegistry {
     if (name === "label_countries") return this.labelCountries(args);
     if (name === "color_countries") return this.colorCountries(args);
     if (name === "country_area") return this.countryArea(args);
+    if (name === "eclipse_path") return this.eclipsePath(args, opts);
     if (name === "highlight_country") return this.highlightCountry(args);
     if (name === "draw_route") return this.drawRoute(args);
     if (name === "clear_agent_overlays") return this.clearAgentOverlays();
@@ -666,21 +692,7 @@ export class AgentToolRegistry {
       .filter((point) => validLatLon(point.lat, point.lon));
     if (clean.length < 2) return noData("A route needs at least two valid points.");
 
-    const positions = [];
-    for (let i = 0; i < clean.length - 1; i++) {
-      const a = clean[i];
-      const b = clean[i + 1];
-      const geodesic = new Cesium.EllipsoidGeodesic(
-        Cesium.Cartographic.fromDegrees(a.lon, a.lat),
-        Cesium.Cartographic.fromDegrees(b.lon, b.lat)
-      );
-      const samples = Math.max(8, Math.min(96, Math.ceil(geodesic.surfaceDistance / 120000)));
-      for (let s = 0; s <= samples; s++) {
-        if (i > 0 && s === 0) continue;
-        const c = geodesic.interpolateUsingFraction(s / samples);
-        positions.push(Cesium.Cartesian3.fromRadians(c.longitude, c.latitude, DEFAULT_HEIGHT_M));
-      }
-    }
+    const positions = routePositions(clean);
 
     const entity = this._track(this.viewer.entities.add({
       polyline: {
@@ -696,6 +708,71 @@ export class AgentToolRegistry {
       properties: { kind: "agent", tool: "draw_route", label },
     }));
     return ok({ entityId: entity.id, pointCount: clean.length, label });
+  }
+
+  async eclipsePath({ date = null } = {}, opts = {}) {
+    const start = parseEclipseStartDate(date);
+    if (!start) return noData("eclipse_path date must be a valid ISO date/time.");
+    if (!globalThis.Astronomy?.SearchGlobalSolarEclipse || !globalThis.Astronomy?.Illumination) {
+      return noData("astronomy-engine is not loaded, so eclipse_path cannot compute an ephemeris.");
+    }
+    if (!globalThis.Cesium?.Transforms || !this.viewer?.entities?.add) {
+      return noData("eclipse_path needs the Cesium viewer and Earth transform helpers.");
+    }
+
+    const approved = await requestComputeApproval(opts, {
+      tool: "eclipse_path",
+      title: "Compute solar-eclipse path",
+      detail: `Search from ${start.toISOString()} and sample the Moon shadow axis for the next central solar eclipse.`,
+      estimate: `Up to ${ECLIPSE_SEARCH_LIMIT} eclipses checked; about ${(ECLIPSE_SAMPLE_WINDOW_HOURS * 60 * 2) / ECLIPSE_SAMPLE_MINUTES + 1} ephemeris samples.`,
+    });
+    if (!approved) return noData("Stopped before running the compute-heavy eclipse_path tool.");
+
+    const found = findNextCentralSolarEclipse(start);
+    if (!found) {
+      return noData(`No total or annular solar eclipse with a central path was found within ${ECLIPSE_SEARCH_LIMIT} global solar eclipses after ${start.toISOString()}.`);
+    }
+
+    const path = sampleEclipseCentralPath(found.eclipse);
+    if (path.length < 2) {
+      return noData(`The ${found.kind} solar eclipse on ${astroDate(found.eclipse.peak).toISOString()} did not produce enough central-line points to draw.`);
+    }
+
+    const entity = this._track(this.viewer.entities.add({
+      polyline: {
+        positions: routePositions(path, ECLIPSE_ROUTE_HEIGHT_M),
+        width: 3,
+        material: new Cesium.PolylineGlowMaterialProperty({
+          color: Cesium.Color.fromCssColorString(found.kind === "total" ? "#facc15" : "#6ef3ff").withAlpha(0.82),
+          glowPower: 0.24,
+          taperPower: 0.8,
+        }),
+        arcType: Cesium.ArcType.GEODESIC,
+      },
+      properties: { kind: "agent", tool: "eclipse_path", eclipseKind: found.kind },
+    }));
+
+    const peakDate = astroDate(found.eclipse.peak);
+    const peak = {
+      lat: numberOrNull(found.eclipse.latitude),
+      lon: normalizeLongitude(numberOrNull(found.eclipse.longitude)),
+      time: peakDate.toISOString(),
+    };
+    return ok({
+      entityId: entity.id,
+      eclipseKind: found.kind,
+      searchStart: start.toISOString(),
+      peak,
+      peakDistanceKm: numberOrNull(found.eclipse.distance),
+      obscuration: numberOrNull(found.eclipse.obscuration),
+      source: "local astronomy-engine ephemeris sampled against Cesium WGS84 ellipsoid",
+      verificationReference: {
+        note: "For the 2026-08-12 total eclipse, NASA Saros 126 lists greatest eclipse near 65.2N, 25.2W at 17:47:06 TD.",
+        url: "https://eclipse.gsfc.nasa.gov/SEsaros/SEsaros126.html",
+      },
+      sampledPoints: path.length,
+      path,
+    });
   }
 
   clearAgentOverlays() {
@@ -719,6 +796,187 @@ export class AgentToolRegistry {
     this.layers.add(layer);
     return layer;
   }
+}
+
+function routePositions(clean, height = DEFAULT_HEIGHT_M) {
+  const positions = [];
+  for (let i = 0; i < clean.length - 1; i++) {
+    const a = clean[i];
+    const b = clean[i + 1];
+    const geodesic = new Cesium.EllipsoidGeodesic(
+      Cesium.Cartographic.fromDegrees(a.lon, a.lat),
+      Cesium.Cartographic.fromDegrees(b.lon, b.lat)
+    );
+    const samples = Math.max(8, Math.min(96, Math.ceil(geodesic.surfaceDistance / 120000)));
+    for (let s = 0; s <= samples; s++) {
+      if (i > 0 && s === 0) continue;
+      const c = geodesic.interpolateUsingFraction(s / samples);
+      positions.push(Cesium.Cartesian3.fromRadians(c.longitude, c.latitude, height));
+    }
+  }
+  return positions;
+}
+
+async function requestComputeApproval(opts, info) {
+  if (!opts?.confirmCompute) return false;
+  const decision = await opts.confirmCompute(info);
+  return decision === "proceed" || decision === true;
+}
+
+function parseEclipseStartDate(value) {
+  if (value == null || String(value).trim() === "") return new Date();
+  const date = new Date(String(value).trim());
+  return Number.isFinite(date.getTime()) ? date : null;
+}
+
+function findNextCentralSolarEclipse(startDate) {
+  const A = globalThis.Astronomy;
+  let cursor = startDate;
+  for (let i = 0; i < ECLIPSE_SEARCH_LIMIT; i++) {
+    const eclipse = A.SearchGlobalSolarEclipse(cursor);
+    const kind = String(eclipse?.kind ?? "").toLowerCase();
+    if ((kind === "total" || kind === "annular") && Number.isFinite(eclipse.latitude) && Number.isFinite(eclipse.longitude)) {
+      return { eclipse, kind };
+    }
+    const peak = eclipse?.peak;
+    cursor = peak?.AddDays ? astroDate(peak.AddDays(10)) : new Date(astroDate(peak).getTime() + 10 * 86400000);
+  }
+  return null;
+}
+
+function sampleEclipseCentralPath(eclipse) {
+  const peak = eclipse.peak;
+  const points = [];
+  const stepDays = ECLIPSE_SAMPLE_MINUTES / 1440;
+  const windowDays = ECLIPSE_SAMPLE_WINDOW_HOURS / 24;
+  for (let dt = -windowDays; dt <= windowDays + 1e-9; dt += stepDays) {
+    const time = peak.AddDays(dt);
+    const point = eclipseSurfacePoint(time);
+    if (point) points.push(point);
+  }
+  return thinRoutePoints(points, MAX_ECLIPSE_ROUTE_POINTS);
+}
+
+function eclipseSurfacePoint(time) {
+  const shadow = moonShadow(time);
+  const rot = earthFixedRotation(time);
+  if (!rot) return null;
+
+  const moonIcrf = Cesium.Cartesian3.fromElements(
+    shadow.moon.x * AU_M,
+    shadow.moon.y * AU_M,
+    shadow.moon.z * AU_M
+  );
+  const axisIcrf = Cesium.Cartesian3.fromElements(shadow.dir.x, shadow.dir.y, shadow.dir.z);
+  if (Cesium.Cartesian3.magnitudeSquared(axisIcrf) === 0) return null;
+  Cesium.Cartesian3.normalize(axisIcrf, axisIcrf);
+
+  const moonFixed = Cesium.Matrix3.multiplyByVector(rot, moonIcrf, new Cesium.Cartesian3());
+  const axisFixed = Cesium.Matrix3.multiplyByVector(rot, axisIcrf, new Cesium.Cartesian3());
+  Cesium.Cartesian3.normalize(axisFixed, axisFixed);
+
+  const ellipsoid = Cesium.Ellipsoid.WGS84;
+  const tMeters = rayEllipsoidDistance(moonFixed, axisFixed, ellipsoid.radii);
+  if (!Number.isFinite(tMeters)) return null;
+
+  const hit = Cesium.Cartesian3.add(
+    moonFixed,
+    Cesium.Cartesian3.multiplyByScalar(axisFixed, tMeters, new Cesium.Cartesian3()),
+    new Cesium.Cartesian3()
+  );
+  const carto = ellipsoid.cartesianToCartographic(hit);
+  if (!carto) return null;
+
+  const dirAu = vectorLength(shadow.dir);
+  const uSurface = (tMeters / AU_M) / dirAu;
+  const umbraRadiusKm = SUN_RADIUS_KM - (1 + uSurface) * (SUN_RADIUS_KM - MOON_MEAN_RADIUS_KM);
+  const kind = umbraRadiusKm > 0.014 ? "total" : "annular";
+  const date = astroDate(time);
+  return {
+    lat: roundCoord(Cesium.Math.toDegrees(carto.latitude)),
+    lon: roundCoord(normalizeLongitude(Cesium.Math.toDegrees(carto.longitude))),
+    time: date.toISOString(),
+    kind,
+    umbraRadiusKm: Math.round(umbraRadiusKm * 1000) / 1000,
+  };
+}
+
+function moonShadow(time) {
+  const A = globalThis.Astronomy;
+  const illum = A.Illumination(A.Body.Moon, time);
+  const moon = illum.gc;
+  const target = { x: -moon.x, y: -moon.y, z: -moon.z };
+  const dir = { x: illum.hc.x, y: illum.hc.y, z: illum.hc.z };
+  const u = dot(dir, target) / dot(dir, dir);
+  const dx = (u * dir.x) - target.x;
+  const dy = (u * dir.y) - target.y;
+  const dz = (u * dir.z) - target.z;
+  return {
+    time,
+    u,
+    r: KM_PER_AU * Math.hypot(dx, dy, dz),
+    k: SUN_RADIUS_KM - (1 + u) * (SUN_RADIUS_KM - MOON_MEAN_RADIUS_KM),
+    moon: { x: moon.x, y: moon.y, z: moon.z },
+    dir,
+  };
+}
+
+function earthFixedRotation(time) {
+  const jd = Cesium.JulianDate.fromDate(astroDate(time));
+  return Cesium.Transforms.computeIcrfToFixedMatrix(jd) ??
+    Cesium.Transforms.computeTemeToPseudoFixedMatrix(jd);
+}
+
+function rayEllipsoidDistance(origin, direction, radii) {
+  const ox = origin.x / radii.x;
+  const oy = origin.y / radii.y;
+  const oz = origin.z / radii.z;
+  const dx = direction.x / radii.x;
+  const dy = direction.y / radii.y;
+  const dz = direction.z / radii.z;
+  const a = dx * dx + dy * dy + dz * dz;
+  const b = 2 * (ox * dx + oy * dy + oz * dz);
+  const c = ox * ox + oy * oy + oz * oz - 1;
+  const disc = b * b - 4 * a * c;
+  if (disc <= 0 || a === 0) return null;
+  const root = Math.sqrt(disc);
+  const t1 = (-b - root) / (2 * a);
+  const t2 = (-b + root) / (2 * a);
+  const hits = [t1, t2].filter((t) => t > 0);
+  return hits.length ? Math.min(...hits) : null;
+}
+
+function thinRoutePoints(points, maxPoints) {
+  if (points.length <= maxPoints) return points;
+  const out = [];
+  for (let i = 0; i < maxPoints; i++) {
+    out.push(points[Math.round(i * (points.length - 1) / (maxPoints - 1))]);
+  }
+  return out;
+}
+
+function astroDate(time) {
+  return time?.date instanceof Date ? time.date : new Date(time);
+}
+
+function dot(a, b) {
+  return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+function vectorLength(v) {
+  return Math.hypot(v.x, v.y, v.z);
+}
+
+function roundCoord(value) {
+  return Math.round(value * 10000) / 10000;
+}
+
+function normalizeLongitude(lon) {
+  if (!Number.isFinite(lon)) return null;
+  let x = lon % 360;
+  if (x <= -180) x += 360;
+  else if (x > 180) x -= 360;
+  return x;
 }
 
 export class ThrottleQueue {

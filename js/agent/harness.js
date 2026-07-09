@@ -129,7 +129,7 @@ export class AgentHarness {
         callbacks.onTool?.({ name: call.name, args: parsed.args, status: parsed.error ? "error" : "running" });
         const result = parsed.error
           ? noData(`Malformed arguments for ${call.name}: ${parsed.error}`)
-          : await this._executeTool(call.name, parsed.args);
+          : await this._executeTool(call.name, parsed.args, callbacks);
         if (isNoDataResult(result)) hadNoData = true;
         if (isErrorResult(result)) hadError = true;
         callbacks.onTool?.({ name: call.name, args: parsed.args, result, status: result.status });
@@ -143,9 +143,11 @@ export class AgentHarness {
     }
   }
 
-  async _executeTool(name, args) {
+  async _executeTool(name, args, callbacks = {}) {
     try {
-      return await this.tools.execute(name, args);
+      return await this.tools.execute(name, args, {
+        confirmCompute: callbacks.onConfirmCompute,
+      });
     } catch (e) {
       // A thrown tool is a transient/unexpected failure, not evidence the data
       // is out of coverage. Surface it as a retryable error so the model does

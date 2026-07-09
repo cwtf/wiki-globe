@@ -577,7 +577,7 @@ still runs (`preview_start` against the `wiki-globe` launch config, port 8080).
   sphere polygon packing extending `js/layers/truesize.js`'s single rigid
   overlay. Must route through the compute-heavy confirmation dialog (§8), not
   fire automatically. Real computational-geometry work — treat as optional.
-- [ ] **5.2 `eclipse_path(date?)`** (§5.4) — reconstruct the next global solar
+- [x] **5.2 `eclipse_path(date?)`** (§5.4) — reconstruct the next global solar
   eclipse's central line from `astronomy-engine` (already loaded, no key, no
   network) by sampling the Sun–Moon shadow axis over the eclipse window;
   render via `draw_route` (§5.1), tag as `agent-session` (§7). Route through
@@ -587,6 +587,14 @@ still runs (`preview_start` against the `wiki-globe` launch config, port 8080).
   greatest-eclipse point, so the full track is your own geometry — verify a
   sampled point against a published path (e.g. a known past eclipse) before
   trusting it, per the CLAUDE.md orientation-verification discipline.
+  **Shipped 2026-07-09:** `AgentToolRegistry` now exposes gated
+  `eclipse_path(date?)`, asks through the shared agent approval prompt before
+  running, skips non-central partial eclipses while searching, samples the
+  Moon shadow axis against Cesium's WGS84 ellipsoid, draws the resulting
+  total/annular central line as an agent-owned route, and returns NASA Saros
+  126 metadata as an orientation check for the 2026-08-12 eclipse. Static
+  module syntax checks passed; in-browser smoke verification was attempted but
+  blocked in this environment by Edge headless profile/GPU/proxy failures.
 
 ### Cross-cutting, do throughout
 
@@ -604,7 +612,10 @@ still runs (`preview_start` against the `wiki-globe` launch config, port 8080).
   terminate prompt in `chat-panel.js` (its own two-button block, not a shared
   modal). When the compute-heavy gate is built, factor these two into one
   reusable surface rather than adding a second bespoke prompt — the 1.9 block
-  is the de-facto template.
+  is the de-facto template. **Partial 2026-07-09:** the same two-button
+  `#agent-checkpoint` surface now also serves compute-heavy approval
+  (`Proceed`/`Stop`) for `eclipse_path`, wired through `harness` callbacks into
+  tool execution.
 - [ ] **Adversarial groundedness test set** (§9, §11) — a fixed list of
   obscure/ancient/contested/nonexistent-entity prompts that must reliably
   produce a refusal, re-run per provider and per model (local Ollama models are
