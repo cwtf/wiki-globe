@@ -14,7 +14,7 @@ import {
   setProviderModelOverride,
 } from "./providers.js";
 import { AgentHarness, ERROR_STATUS, NO_DATA_STATUS, UNVERIFIED_STATUS } from "./harness.js";
-import { AgentToolRegistry } from "./tools.js";
+import { AgentToolRegistry, OVERLAY_TOOL_NAMES } from "./tools.js";
 
 const OLLAMA_HINT = "For Ollama, start the server with OLLAMA_ORIGINS allowing this page origin, for example OLLAMA_ORIGINS=http://localhost:8080. Models are read from /api/tags when reachable.";
 const EMPTY_STATE_MESSAGE = "Ask the globe agent to search, reason, and draw on the map.";
@@ -35,6 +35,7 @@ const CHAT_HISTORY_STORAGE_KEY = "wikiglobe.agent.chatSessions.v1";
 const MAX_HISTORY_SESSIONS = 20;
 const MAX_PERSISTED_MESSAGES_PER_SESSION = 80;
 const MAX_PERSISTED_MESSAGE_CHARS = 12000;
+const MAX_OVERLAY_OPS_PER_SESSION = 200;
 
 export class AgentChatPanel {
   constructor(viewer, opts = {}) {
@@ -336,6 +337,7 @@ export class AgentChatPanel {
 
   _logTool(entry) {
     const status = entry.status ?? "running";
+    if (status !== "running") this._recordOverlayOp(entry);
     const line = status === "running" ? this._createToolLine(entry) : this._takePendingToolLine(entry.name);
     const result = entry.result?.status ? ` -> ${entry.result.status}` : "";
     line.className = `agent-tool ${status}`;
@@ -433,6 +435,7 @@ export class AgentChatPanel {
       updatedAt: now,
       transcript: [],
       harnessMessages: null,
+      overlayOps: [],
     };
     this.sessions.unshift(session);
     if (activate) this.activeSessionId = session.id;
@@ -512,6 +515,44 @@ export class AgentChatPanel {
     this._setBadge("idle");
     this._toggleHistory(false);
     this._renderHistory();
+    // Reconstruct this session's globe overlays (pins, highlights, routes,
+    // labels, choropleths) from its recorded tool calls; runs in the
+    // background so switching sessions doesn't block on it.
+    this._restoreGlobeOverlays(session).catch(() => { /* best-effort replay */ });
+  }
+
+  // Wipes current agent overlays and replays a session's recorded
+  // overlay-mutating tool calls in order, so each chat's globe state is
+  // reproduced when the user switches back to it.
+  async _restoreGlobeOverlays(session) {
+    this.tools.clearAgentOverlays();
+    for (const op of session?.overlayOps ?? []) {
+      if (!op || !OVERLAY_TOOL_NAMES.has(op.name) || op.name === "clear_agent_overlays") continue;
+      try {
+        await this.tools.execute(op.name, op.args ?? {});
+      } catch { /* best-effort replay; one bad op shouldn't block the rest */ }
+    }
+  }
+
+  // Appends a successful overlay-mutating tool call to the active session's
+  // replay log, or resets the log on a successful clear. Called from
+  // _logTool for every completed (non-"running") tool invocation.
+  _recordOverlayOp(entry) {
+    if (entry.result?.status !== "ok") return;
+    const session = this._activeSession();
+    if (!session) return;
+    if (entry.name === "clear_agent_overlays") {
+      session.overlayOps = [];
+      this._touchSession(session);
+      return;
+    }
+    if (!OVERLAY_TOOL_NAMES.has(entry.name)) return;
+    session.overlayOps ??= [];
+    session.overlayOps.push({ name: entry.name, args: entry.args ?? {} });
+    if (session.overlayOps.length > MAX_OVERLAY_OPS_PER_SESSION) {
+      session.overlayOps = session.overlayOps.slice(-MAX_OVERLAY_OPS_PER_SESSION);
+    }
+    this._touchSession(session);
   }
 
   _deleteSession(sessionId) {
@@ -522,6 +563,7 @@ export class AgentChatPanel {
     this.sessions = this.sessions.filter((entry) => entry.id !== session.id);
     if (wasActive) {
       this.harness.reset();
+      this.tools.clearAgentOverlays();
       this.activeSessionId = this._createSession({ activate: true }).id;
       this.currentSessionTitle = null;
       this.inputEl.value = "";
@@ -538,6 +580,7 @@ export class AgentChatPanel {
     if (!confirmClearHistory()) return;
     this.sessions = [];
     this.harness.reset();
+    this.tools.clearAgentOverlays();
     this.activeSessionId = this._createSession({ activate: true }).id;
     this.currentSessionTitle = null;
     this.inputEl.value = "";
@@ -609,6 +652,7 @@ export class AgentChatPanel {
             .slice(-MAX_PERSISTED_MESSAGES_PER_SESSION)
             .map(persistTranscriptItem)
             .filter(Boolean),
+          overlayOps: (session.overlayOps ?? []).slice(-MAX_OVERLAY_OPS_PER_SESSION),
         }));
       localStorage.setItem(CHAT_HISTORY_STORAGE_KEY, JSON.stringify(sessions));
     } catch { /* private mode or quota */ }
@@ -626,6 +670,7 @@ export class AgentChatPanel {
   _newSession() {
     if (this.abort) return;
     this.harness.reset();
+    this.tools.clearAgentOverlays();
     this._resolveCheckpoint("terminate");
     const current = this._activeSession();
     if (current && this._sessionHasTranscript(current)) {
@@ -634,6 +679,7 @@ export class AgentChatPanel {
       current.title = null;
       current.transcript = [];
       current.harnessMessages = null;
+      current.overlayOps = [];
       this._touchSession(current);
     }
     this.inputEl.value = "";
@@ -967,7 +1013,16 @@ function normalizeStoredSession(session) {
     updatedAt: Number(session.updatedAt) || Number(session.createdAt) || now,
     transcript,
     harnessMessages: null,
+    overlayOps: normalizeOverlayOps(session.overlayOps),
   };
+}
+
+function normalizeOverlayOps(overlayOps) {
+  if (!Array.isArray(overlayOps)) return [];
+  return overlayOps
+    .filter((op) => op && typeof op === "object" && OVERLAY_TOOL_NAMES.has(op.name) && op.name !== "clear_agent_overlays")
+    .map((op) => ({ name: String(op.name), args: op.args && typeof op.args === "object" ? op.args : {} }))
+    .slice(-MAX_OVERLAY_OPS_PER_SESSION);
 }
 
 function normalizeTranscriptItem(item) {

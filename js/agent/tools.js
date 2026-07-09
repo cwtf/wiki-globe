@@ -79,6 +79,18 @@ export function isErrorResult(result) {
   return result?.status === ERROR_STATUS;
 }
 
+// Tools that mutate the globe's visible agent overlays (as opposed to
+// knowledge/data tools like wiki_search). A chat session's "globe state" is
+// fully reconstructable by replaying this subset of its tool calls in order.
+export const OVERLAY_TOOL_NAMES = new Set([
+  "add_pin",
+  "highlight_country",
+  "draw_route",
+  "label_countries",
+  "color_countries",
+  "clear_agent_overlays",
+]);
+
 export class AgentToolRegistry {
   constructor(viewer) {
     this.viewer = viewer;
