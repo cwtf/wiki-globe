@@ -1014,6 +1014,10 @@ html, body {
 #agent-close {
   font-size: 23px;
 }
+#agent-new-session {
+  font-size: 20px;
+  font-weight: 650;
+}
 
 .agent-settings {
   position: absolute;

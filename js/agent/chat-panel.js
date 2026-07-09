@@ -34,6 +34,7 @@ export class AgentChatPanel {
     this.badgeEl = document.getElementById("agent-badge");
     this.settingsEl = document.getElementById("agent-settings");
     this.settingsToggleEl = document.getElementById("agent-settings-toggle");
+    this.newSessionEl = document.getElementById("agent-new-session");
     this.noteEl = document.getElementById("agent-provider-note");
     this.ollamaHintEl = document.getElementById("agent-ollama-hint");
     this.statusEl = document.getElementById("agent-status");
@@ -90,6 +91,7 @@ export class AgentChatPanel {
   _bind() {
     document.getElementById("agent-close")?.addEventListener("click", () => this._setCollapsed(true));
     this.settingsToggleEl?.addEventListener("click", () => this._toggleSettings());
+    this.newSessionEl?.addEventListener("click", () => this._newSession());
     this.cancelEl?.addEventListener("click", () => this._cancel());
     this.continueEl?.addEventListener("click", () => this._resolveCheckpoint(this.continueEl.dataset.decision || "continue", { record: true }));
     this.terminateEl?.addEventListener("click", () => this._resolveCheckpoint(this.terminateEl.dataset.decision || "terminate", { record: true }));
@@ -275,6 +277,7 @@ export class AgentChatPanel {
     this.modelEl.disabled = running;
     this.modelOverrideEl.disabled = running;
     this.inputEl.disabled = running;
+    if (this.newSessionEl) this.newSessionEl.disabled = running;
   }
 
   _setStatus(status) {
@@ -300,6 +303,29 @@ export class AgentChatPanel {
     const open = force ?? this.settingsEl.hidden;
     this.settingsEl.hidden = !open;
     this.settingsToggleEl.setAttribute("aria-expanded", String(open));
+  }
+
+  _newSession() {
+    if (this.abort) return;
+    this.harness.reset();
+    this._resolveCheckpoint("terminate");
+    this.pendingToolEls.clear();
+    this.activeAssistantEl = null;
+    this.outputEl.textContent = "";
+    this.toolLogEl.textContent = "";
+    this.usageEl.textContent = "Tokens: input 0, output 0";
+    this.inputEl.value = "";
+    this._setStatus("New session");
+    this._setBadge("idle");
+    this._toggleSettings(false);
+    this.transcriptEl.replaceChildren();
+    this.emptyEl = document.createElement("div");
+    this.emptyEl.className = "agent-empty";
+    this.emptyEl.textContent = "Ask the globe agent to search, reason, and draw on the map.";
+    this.transcriptEl.append(
+      ...[this.emptyEl, this.checkpointEl, this.outputEl, this.toolLogEl].filter(Boolean),
+    );
+    if (this.checkpointEl) this.checkpointEl.hidden = true;
   }
 
   _appendMessage(role, content, opts = {}) {
