@@ -26,10 +26,14 @@ export class AgentChatPanel {
     this.modelEl = document.getElementById("agent-model");
     this.modelOverrideEl = document.getElementById("agent-model-override");
     this.inputEl = document.getElementById("agent-input");
+    this.transcriptEl = document.getElementById("agent-transcript");
+    this.emptyEl = this.transcriptEl?.querySelector(".agent-empty");
     this.outputEl = document.getElementById("agent-output");
     this.toolLogEl = document.getElementById("agent-tool-log");
     this.usageEl = document.getElementById("agent-usage");
     this.badgeEl = document.getElementById("agent-badge");
+    this.settingsEl = document.getElementById("agent-settings");
+    this.settingsToggleEl = document.getElementById("agent-settings-toggle");
     this.noteEl = document.getElementById("agent-provider-note");
     this.ollamaHintEl = document.getElementById("agent-ollama-hint");
     this.statusEl = document.getElementById("agent-status");
@@ -42,6 +46,8 @@ export class AgentChatPanel {
     this.abort = null;
     this.checkpointResolve = null;
     this.modelLoadSeq = 0;
+    this.activeAssistantEl = null;
+    this.pendingToolEls = new Map();
 
     this.tools = opts.tools ?? new AgentToolRegistry(viewer);
     this.harness = opts.harness ?? new AgentHarness(this.tools);
@@ -83,9 +89,10 @@ export class AgentChatPanel {
 
   _bind() {
     document.getElementById("agent-close")?.addEventListener("click", () => this._setCollapsed(true));
+    this.settingsToggleEl?.addEventListener("click", () => this._toggleSettings());
     this.cancelEl?.addEventListener("click", () => this._cancel());
-    this.continueEl?.addEventListener("click", () => this._resolveCheckpoint(this.continueEl.dataset.decision || "continue"));
-    this.terminateEl?.addEventListener("click", () => this._resolveCheckpoint(this.terminateEl.dataset.decision || "terminate"));
+    this.continueEl?.addEventListener("click", () => this._resolveCheckpoint(this.continueEl.dataset.decision || "continue", { record: true }));
+    this.terminateEl?.addEventListener("click", () => this._resolveCheckpoint(this.terminateEl.dataset.decision || "terminate", { record: true }));
     this.providerEl.addEventListener("change", () => this._syncProvider());
     this.keyEl.addEventListener("change", () => setProviderKey(this.providerEl.value, this.keyEl.value.trim()));
     this.baseEl.addEventListener("change", () => {
@@ -126,6 +133,8 @@ export class AgentChatPanel {
     this._setRunning(true);
     this._setBadge("loading");
     this._setStatus(`Thinking with ${provider.label} / ${model}`);
+    this._appendMessage("user", text);
+    this.activeAssistantEl = this._appendMessage("assistant", "Thinking...", { state: "thinking" });
     this.outputEl.textContent = "";
     this.toolLogEl.textContent = "";
     this.usageEl.textContent = "Tokens: input 0, output 0";
@@ -144,7 +153,7 @@ export class AgentChatPanel {
           onTool: (entry) => this._logTool(entry),
           onUsage: (usage) => this._renderUsage(usage),
           onMessage: (content, meta) => {
-            this.outputEl.textContent = content;
+            this._updateAssistantMessage(content, meta);
             this._setBadge(meta.status === UNVERIFIED_STATUS ? "unverified" : meta.status === ERROR_STATUS ? "error" : meta.status === NO_DATA_STATUS ? "nodata" : "live");
           },
         },
@@ -154,14 +163,14 @@ export class AgentChatPanel {
       this.inputEl.value = "";
     } catch (e) {
       if (e.name === "AbortError") {
-        this.outputEl.textContent = "Request cancelled.";
+        this._updateAssistantMessage("Request cancelled.", { status: "stopped" });
         this._setStatus("Cancelled");
         this._setBadge("idle");
         return;
       }
-      this.outputEl.textContent = e.message;
+      this._updateAssistantMessage(e.message, { status: ERROR_STATUS });
       this._setStatus("Error");
-      this._setBadge("nodata");
+      this._setBadge("error");
     } finally {
       this._resolveCheckpoint("terminate");
       this.abort = null;
@@ -213,11 +222,13 @@ export class AgentChatPanel {
       this.terminateEl.dataset.decision = secondaryDecision;
       this.checkpointMsgEl.textContent = message;
       this.checkpointEl.hidden = false;
+      this.transcriptEl?.appendChild(this.checkpointEl);
       this._setStatus(status);
+      this._scrollTranscript();
     });
   }
 
-  _resolveCheckpoint(decision) {
+  _resolveCheckpoint(decision, opts = {}) {
     if (!this.checkpointResolve) return;
     const resolve = this.checkpointResolve;
     this.checkpointResolve = null;
@@ -230,17 +241,25 @@ export class AgentChatPanel {
       this.terminateEl.textContent = "Terminate";
       delete this.terminateEl.dataset.decision;
     }
+    if (opts.record) this._appendNotice(`Decision: ${decision}`);
     resolve(decision);
   }
 
   _logTool(entry) {
-    const line = document.createElement("div");
-    line.className = `agent-tool ${entry.status ?? "running"}`;
+    const status = entry.status ?? "running";
+    const line = status === "running" ? this._createToolLine(entry) : this._takePendingToolLine(entry.name);
     const result = entry.result?.status ? ` -> ${entry.result.status}` : "";
-    line.textContent = `${entry.status ?? "running"}: ${entry.name}${result}`;
+    line.className = `agent-tool ${status}`;
+    line.textContent = `${status}: ${entry.name}${result}`;
     line.title = JSON.stringify({ args: entry.args ?? {}, result: entry.result ?? null });
-    this.toolLogEl.appendChild(line);
+    if (!line.parentElement) this.transcriptEl.appendChild(line);
+    const mirror = document.createElement("div");
+    mirror.className = line.className;
+    mirror.textContent = line.textContent;
+    mirror.title = line.title;
+    this.toolLogEl.appendChild(mirror);
     this.toolLogEl.scrollTop = this.toolLogEl.scrollHeight;
+    this._scrollTranscript();
   }
 
   _renderUsage(usage) {
@@ -276,8 +295,81 @@ export class AgentChatPanel {
     this.badgeEl.className = `badge ${cls}`;
   }
 
+  _toggleSettings(force) {
+    if (!this.settingsEl || !this.settingsToggleEl) return;
+    const open = force ?? this.settingsEl.hidden;
+    this.settingsEl.hidden = !open;
+    this.settingsToggleEl.setAttribute("aria-expanded", String(open));
+  }
+
+  _appendMessage(role, content, opts = {}) {
+    this._hideEmpty();
+    const row = document.createElement("div");
+    row.className = `agent-message ${role}`;
+    if (opts.state) row.dataset.state = opts.state;
+
+    const meta = document.createElement("div");
+    meta.className = "agent-message-meta";
+    meta.textContent = role === "user" ? "You" : "Agent";
+
+    const bubble = document.createElement("div");
+    bubble.className = "agent-bubble";
+    bubble.textContent = content;
+
+    row.append(meta, bubble);
+    this.transcriptEl.appendChild(row);
+    this._scrollTranscript();
+    return row;
+  }
+
+  _updateAssistantMessage(content, meta = {}) {
+    const row = this.activeAssistantEl ?? this._appendMessage("assistant", "");
+    delete row.dataset.state;
+    row.dataset.status = meta.status ?? "ok";
+    const bubble = row.querySelector(".agent-bubble");
+    if (bubble) bubble.textContent = content;
+    this.outputEl.textContent = content;
+    this.activeAssistantEl = row;
+    this._scrollTranscript();
+  }
+
+  _appendNotice(text) {
+    this._hideEmpty();
+    const notice = document.createElement("div");
+    notice.className = "agent-notice";
+    notice.textContent = text;
+    this.transcriptEl.appendChild(notice);
+    this._scrollTranscript();
+  }
+
+  _createToolLine(entry) {
+    this._hideEmpty();
+    const line = document.createElement("div");
+    const list = this.pendingToolEls.get(entry.name) ?? [];
+    list.push(line);
+    this.pendingToolEls.set(entry.name, list);
+    return line;
+  }
+
+  _takePendingToolLine(name) {
+    const list = this.pendingToolEls.get(name) ?? [];
+    const line = list.shift() ?? document.createElement("div");
+    if (list.length) this.pendingToolEls.set(name, list);
+    else this.pendingToolEls.delete(name);
+    return line;
+  }
+
+  _hideEmpty() {
+    if (this.emptyEl) this.emptyEl.hidden = true;
+  }
+
+  _scrollTranscript() {
+    if (this.transcriptEl) this.transcriptEl.scrollTop = this.transcriptEl.scrollHeight;
+  }
+
   _setCollapsed(collapsed) {
     this.el.classList.toggle("collapsed", collapsed);
+    if (collapsed) this._toggleSettings(false);
     const toggle = document.getElementById("agent-toggle");
     const label = collapsed ? "Expand agent panel" : "Collapse agent panel";
     toggle?.setAttribute("aria-expanded", String(!collapsed));
@@ -288,9 +380,9 @@ export class AgentChatPanel {
 
 function statusLabel(status) {
   if (status === "ok") return "Complete";
-  if (status === ERROR_STATUS) return "Tool error — retryable";
+  if (status === ERROR_STATUS) return "Tool error - retryable";
   if (status === NO_DATA_STATUS) return "No data available";
-  if (status === UNVERIFIED_STATUS) return "Unverified — from model memory";
+  if (status === UNVERIFIED_STATUS) return "Unverified - from model memory";
   if (status === "stopped") return "Stopped";
   return "Done";
 }

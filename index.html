@@ -412,12 +412,20 @@
     <div class="agent-head">
       <div>
         <div class="agent-title">Globe agent</div>
-        <div class="agent-subtitle">BYOK tool-calling harness</div>
+        <div class="agent-subtitle" id="agent-status">Idle</div>
       </div>
       <span class="badge static" id="agent-badge">-</span>
+      <button
+        id="agent-settings-toggle"
+        class="agent-icon-button"
+        type="button"
+        aria-controls="agent-settings"
+        aria-expanded="false"
+        title="Agent settings"
+      >&#9881;</button>
       <button id="agent-close" title="Close agent panel">&times;</button>
     </div>
-    <form id="agent-form" class="agent-form">
+    <div id="agent-settings" class="agent-settings" hidden>
       <label>
         <span>Provider</span>
         <select id="agent-provider"></select>
@@ -440,32 +448,31 @@
       </label>
       <div class="agent-provider-note" id="agent-provider-note"></div>
       <div class="agent-ollama-hint" id="agent-ollama-hint" hidden></div>
-      <label>
-        <span>Ask</span>
-        <textarea id="agent-input" rows="4" placeholder="Drop a pin on Singapore, or highlight Canada."></textarea>
-      </label>
-      <div class="agent-actions">
-        <button class="agent-submit" id="agent-submit" type="submit">Run agent</button>
-        <button class="agent-cancel" id="agent-cancel" type="button" hidden>Cancel</button>
-      </div>
+    </div>
+    <div id="agent-transcript" class="agent-transcript" aria-live="polite">
+      <div class="agent-empty">Ask the globe agent to search, reason, and draw on the map.</div>
       <div class="agent-checkpoint" id="agent-checkpoint" hidden>
+        <div class="agent-message-meta">Confirmation</div>
         <div class="agent-checkpoint-msg" id="agent-checkpoint-msg"></div>
         <div class="agent-actions">
           <button class="agent-submit" id="agent-continue" type="button">Continue</button>
           <button class="agent-cancel" id="agent-terminate" type="button">Terminate</button>
         </div>
       </div>
+      <div id="agent-output" class="agent-output" hidden></div>
+      <div id="agent-tool-log" class="agent-tool-log" hidden></div>
+    </div>
+    <div id="agent-usage" class="agent-usage">Tokens: input 0, output 0</div>
+    <form id="agent-form" class="agent-form agent-composer">
+      <label>
+        <span class="sr-only">Ask the globe agent</span>
+        <textarea id="agent-input" rows="3" placeholder="Ask about the globe, then let the agent call tools..."></textarea>
+      </label>
+      <div class="agent-actions">
+        <button class="agent-submit" id="agent-submit" type="submit">Send</button>
+        <button class="agent-cancel" id="agent-cancel" type="button" hidden>Cancel</button>
+      </div>
     </form>
-    <div class="agent-section">
-      <div class="agent-section-title">Response</div>
-      <div id="agent-status" class="agent-status">Idle</div>
-      <div id="agent-output" class="agent-output" aria-live="polite"></div>
-      <div id="agent-usage" class="agent-usage">Tokens: input 0, output 0</div>
-    </div>
-    <div class="agent-section">
-      <div class="agent-section-title">Tool log</div>
-      <div id="agent-tool-log" class="agent-tool-log"></div>
-    </div>
   </div>
 
   <div id="hint">Drag to rotate &nbsp;·&nbsp; Scroll to zoom into the map &nbsp;·&nbsp; Click anywhere to explore Wikipedia</div>
