@@ -110,6 +110,20 @@ html, body {
   border-left: 0;
   border-radius: 0 10px 10px 0;
 }
+.panel-about-toggle {
+  top: 96px;
+  right: -39px;
+  border-left: 0;
+  border-radius: 0 10px 10px 0;
+}
+.panel-toggle[aria-expanded="true"],
+.panel-about-toggle[aria-expanded="true"] {
+  color: var(--cyan);
+  border-color: rgba(110, 243, 255, 0.45);
+}
+.panel-pane[hidden] {
+  display: none;
+}
 
 .panel-title {
   font-size: 14px;
@@ -541,6 +555,90 @@ html, body {
   text-decoration: none;
 }
 .attrib a:hover { text-decoration: underline; }
+.github-logo-link,
+.linkedin-logo-link {
+  display: inline-flex;
+  align-items: center;
+  color: #9ec2ff;
+  line-height: 1;
+  vertical-align: -2px;
+}
+.github-logo,
+.linkedin-logo {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+.linkedin-logo-mark {
+  fill: #081019;
+}
+.github-logo-link:hover,
+.github-logo-link:focus-visible,
+.linkedin-logo-link:hover,
+.linkedin-logo-link:focus-visible {
+  color: var(--cyan);
+  text-decoration: none;
+  outline: none;
+}
+.github-logo-link:focus-visible,
+.linkedin-logo-link:focus-visible {
+  filter: drop-shadow(0 0 5px rgba(110, 243, 255, 0.5));
+}
+
+.panel-about {
+  color: var(--text-dim);
+  font-size: 12px;
+  line-height: 1.55;
+}
+.panel-about p {
+  margin: 0 0 12px;
+}
+.about-section {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--stroke);
+}
+.about-heading {
+  margin-bottom: 6px;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+.panel-about ul {
+  margin: 0;
+  padding-left: 18px;
+}
+.panel-about li {
+  margin-bottom: 6px;
+}
+.about-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--stroke);
+}
+.about-links a {
+  color: #9ec2ff;
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: 650;
+}
+.about-links .github-logo,
+.about-links .linkedin-logo {
+  width: 22px;
+  height: 22px;
+}
+.about-links a:hover {
+  text-decoration: underline;
+}
+.about-links .github-logo-link:hover,
+.about-links .linkedin-logo-link:hover {
+  text-decoration: none;
+}
 
 /* ---------- country search ---------- */
 

@@ -803,6 +803,9 @@ function setupResponsiveSideMenus() {
       id: "controls",
       el: document.getElementById("panel"),
       toggle: document.getElementById("panel-toggle"),
+      menuPane: document.getElementById("panel-menu"),
+      aboutToggle: document.getElementById("about-toggle"),
+      aboutPane: document.getElementById("panel-about"),
       collapseLabel: "Collapse controls panel",
       expandLabel: "Expand controls panel",
     },
@@ -865,12 +868,63 @@ function setupResponsiveSideMenus() {
   for (const panel of panels) {
     if (!panel.el || !panel.toggle) continue;
     let userChanged = false;
+    let activeLeftPane = "menu";
+    const leftTabs = !panel.rightPanel && panel.aboutToggle && panel.menuPane && panel.aboutPane
+      ? [
+          {
+            id: "menu",
+            toggle: panel.toggle,
+            pane: panel.menuPane,
+            collapseLabel: panel.collapseLabel,
+            expandLabel: panel.expandLabel,
+            switchLabel: "Switch to controls panel",
+          },
+          {
+            id: "about",
+            toggle: panel.aboutToggle,
+            pane: panel.aboutPane,
+            collapseLabel: "Collapse about panel",
+            expandLabel: "Expand about panel",
+            switchLabel: "Switch to about panel",
+          },
+        ]
+      : null;
 
     function setCollapsed(collapsed, opts = {}) {
       panel.el.classList.toggle("collapsed", collapsed);
+      if (leftTabs) {
+        syncLeftTabs(collapsed);
+        return;
+      }
       panel.toggle.setAttribute("aria-expanded", String(!collapsed));
       panel.toggle.setAttribute("aria-label", collapsed ? panel.expandLabel : panel.collapseLabel);
       panel.toggle.title = collapsed ? panel.expandLabel : panel.collapseLabel;
+    }
+
+    function setLeftPane(paneId) {
+      if (!leftTabs) return;
+      activeLeftPane = paneId;
+      for (const tab of leftTabs) {
+        const active = tab.id === activeLeftPane;
+        tab.pane.hidden = !active;
+        tab.pane.classList.toggle("panel-pane-active", active);
+      }
+      syncLeftTabs(panel.el.classList.contains("collapsed"));
+    }
+
+    function syncLeftTabs(collapsed) {
+      if (!leftTabs) return;
+      for (const tab of leftTabs) {
+        const active = tab.id === activeLeftPane;
+        tab.toggle.setAttribute("aria-expanded", String(active && !collapsed));
+        tab.toggle.setAttribute(
+          "aria-label",
+          active
+            ? (collapsed ? tab.expandLabel : tab.collapseLabel)
+            : (collapsed ? tab.expandLabel : tab.switchLabel)
+        );
+        tab.toggle.title = tab.toggle.getAttribute("aria-label");
+      }
     }
 
     controls.set(panel.id, { panel, setCollapsed });
@@ -880,9 +934,10 @@ function setupResponsiveSideMenus() {
       panel.toggle.setAttribute("aria-label", panel.expandLabel);
       panel.toggle.title = panel.expandLabel;
     } else {
+      if (leftTabs) setLeftPane(activeLeftPane);
       setCollapsed(panel.defaultCollapsed || compact.matches);
     }
-    panel.toggle.addEventListener("click", () => {
+    const bindPanelToggle = (toggle, paneId = null) => toggle.addEventListener("click", () => {
       if (panel.rightPanel) {
         rightPanelUserChanged = true;
         const active = !rightPanelCollapsed && activeRightPanel === panel.id;
@@ -891,8 +946,20 @@ function setupResponsiveSideMenus() {
         return;
       }
       userChanged = true;
+      if (leftTabs && paneId) {
+        const collapsed = panel.el.classList.contains("collapsed");
+        if (activeLeftPane === paneId && !collapsed) {
+          setCollapsed(true);
+        } else {
+          setLeftPane(paneId);
+          setCollapsed(false);
+        }
+        return;
+      }
       setCollapsed(!panel.el.classList.contains("collapsed"));
     });
+    bindPanelToggle(panel.toggle, leftTabs ? "menu" : null);
+    if (leftTabs) bindPanelToggle(panel.aboutToggle, "about");
 
     const onCompactChanged = (event) => {
       if (panel.rightPanel) {
