@@ -1260,21 +1260,78 @@ body.right-panel-resizing {
   display: grid;
   gap: 6px;
 }
+.agent-history-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+.agent-history-clear {
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 7px;
+  color: var(--text-dim);
+  cursor: pointer;
+  font: 700 10.5px "Segoe UI", system-ui, sans-serif;
+  padding: 6px 8px;
+}
+.agent-history-clear:hover:not(:disabled),
+.agent-history-clear:focus-visible:not(:disabled) {
+  border-color: rgba(255, 179, 71, 0.36);
+  color: #f0c98d;
+  outline: none;
+}
+.agent-history-clear:disabled {
+  cursor: default;
+  opacity: 0.48;
+}
 .agent-history-item {
   display: grid;
-  gap: 3px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px;
+  align-items: stretch;
   width: 100%;
+}
+.agent-history-open {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
   background: rgba(255, 255, 255, 0.055);
   border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: 8px;
   color: var(--text);
+  cursor: pointer;
   font-family: inherit;
   padding: 8px 9px;
   text-align: left;
 }
-.agent-history-item:disabled {
+.agent-history-open:hover:not(:disabled),
+.agent-history-open:focus-visible:not(:disabled) {
+  border-color: rgba(110, 243, 255, 0.30);
+  outline: none;
+}
+.agent-history-open:disabled {
   cursor: default;
   opacity: 1;
+}
+.agent-history-delete {
+  align-self: stretch;
+  background: rgba(255, 84, 112, 0.08);
+  border: 1px solid rgba(255, 84, 112, 0.18);
+  border-radius: 8px;
+  color: #ff9bb4;
+  cursor: pointer;
+  font: 700 10.5px "Segoe UI", system-ui, sans-serif;
+  padding: 0 8px;
+}
+.agent-history-delete:hover:not(:disabled),
+.agent-history-delete:focus-visible:not(:disabled) {
+  background: rgba(255, 84, 112, 0.15);
+  border-color: rgba(255, 122, 162, 0.42);
+  color: #ffd0da;
+  outline: none;
+}
+.agent-history-delete:disabled {
+  cursor: default;
+  opacity: 0.42;
 }
 .agent-history-item-title {
   overflow: hidden;

@@ -423,6 +423,10 @@ export class AgentChatPanel {
     return active ? [active, ...saved] : saved;
   }
 
+  _hasSavedHistory() {
+    return this.sessions.some((session) => this._sessionHasTranscript(session));
+  }
+
   _sessionHasTranscript(session) {
     return (session?.transcript ?? []).some((item) => item.type === "message" || item.type === "notice");
   }
@@ -478,6 +482,40 @@ export class AgentChatPanel {
     this._setStatus(session.title ? "Loaded previous session" : "Loaded session");
     this._setBadge("idle");
     this._toggleHistory(false);
+    this._renderHistory();
+  }
+
+  _deleteSession(sessionId) {
+    if (this.abort) return;
+    const session = this.sessions.find((entry) => entry.id === sessionId);
+    if (!session || !confirmHistoryDelete(session)) return;
+    const wasActive = session.id === this.activeSessionId;
+    this.sessions = this.sessions.filter((entry) => entry.id !== session.id);
+    if (wasActive) {
+      this.harness.reset();
+      this.activeSessionId = this._createSession({ activate: true }).id;
+      this.currentSessionTitle = null;
+      this.inputEl.value = "";
+      this._resetTranscriptView();
+      this._setStatus("Deleted chat");
+      this._setBadge("idle");
+    }
+    this._saveHistory();
+    this._renderHistory();
+  }
+
+  _clearHistory() {
+    if (this.abort || !this._hasSavedHistory()) return;
+    if (!confirmClearHistory()) return;
+    this.sessions = [];
+    this.harness.reset();
+    this.activeSessionId = this._createSession({ activate: true }).id;
+    this.currentSessionTitle = null;
+    this.inputEl.value = "";
+    this._resetTranscriptView();
+    this._saveHistory();
+    this._setStatus("Cleared chat history");
+    this._setBadge("idle");
     this._renderHistory();
   }
 
@@ -583,13 +621,29 @@ export class AgentChatPanel {
   _renderHistory() {
     if (!this.historyListEl) return;
     this.historyListEl.replaceChildren();
+    const actions = document.createElement("div");
+    actions.className = "agent-history-actions";
+
+    const clear = document.createElement("button");
+    clear.className = "agent-history-clear";
+    clear.type = "button";
+    clear.textContent = "Clear all history";
+    clear.disabled = this.abort || !this._hasSavedHistory();
+    clear.addEventListener("click", () => this._clearHistory());
+
+    actions.append(clear);
+    this.historyListEl.append(actions);
+
     const sessions = this._historySessions();
     for (const session of sessions) {
-      const item = document.createElement("button");
+      const item = document.createElement("div");
       item.className = "agent-history-item";
-      item.type = "button";
       item.dataset.sessionId = session.id;
-      item.disabled = session.id === this.activeSessionId;
+
+      const open = document.createElement("button");
+      open.className = "agent-history-open";
+      open.type = "button";
+      open.disabled = session.id === this.activeSessionId;
 
       const title = document.createElement("span");
       title.className = "agent-history-item-title";
@@ -601,8 +655,18 @@ export class AgentChatPanel {
         ? (this._sessionHasTranscript(session) ? "Open now" : "No messages yet")
         : sessionMeta(session);
 
-      item.append(title, meta);
-      item.addEventListener("click", () => this._loadSession(session.id));
+      const remove = document.createElement("button");
+      remove.className = "agent-history-delete";
+      remove.type = "button";
+      remove.textContent = "Delete";
+      remove.title = "Delete this chat";
+      remove.setAttribute("aria-label", `Delete ${session.title || "this chat"}`);
+      remove.disabled = this.abort || !this._sessionHasTranscript(session);
+      remove.addEventListener("click", () => this._deleteSession(session.id));
+
+      open.append(title, meta);
+      open.addEventListener("click", () => this._loadSession(session.id));
+      item.append(open, remove);
       this.historyListEl.append(item);
     }
   }
@@ -869,6 +933,15 @@ function clampStoredContent(value) {
   return text.length > MAX_PERSISTED_MESSAGE_CHARS
     ? `${text.slice(0, MAX_PERSISTED_MESSAGE_CHARS - 3)}...`
     : text;
+}
+
+function confirmHistoryDelete(session) {
+  const title = session?.title ? `"${truncate(session.title, 52)}"` : "this chat";
+  return globalThis.confirm?.(`Delete ${title} from chat history?`) ?? true;
+}
+
+function confirmClearHistory() {
+  return globalThis.confirm?.("Clear all chat history? This cannot be undone.") ?? true;
 }
 
 function truncate(text, max) {
