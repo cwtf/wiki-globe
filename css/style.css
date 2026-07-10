@@ -160,6 +160,30 @@ html, body {
 }
 
 .layer { margin-bottom: 8px; }
+.layer-group { margin-bottom: 8px; }
+.layer-group > summary {
+  min-height: 25px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--stroke);
+  border-radius: 6px;
+  list-style: none;
+  padding: 3px 6px;
+}
+.layer-group > summary::-webkit-details-marker { display: none; }
+.layer-group > summary::marker { content: ""; }
+.layer-group > summary:focus-visible {
+  outline: 1px solid #4aa3ff;
+  outline-offset: 1px;
+}
+.layer-group-content { padding-top: 6px; }
+.layer-group-chevron {
+  margin-left: auto;
+  color: #cbd5e1;
+  font-size: 12px;
+  line-height: 1;
+  transition: transform 150ms ease;
+}
+.layer-group[open] .layer-group-chevron { transform: rotate(180deg); }
 
 .row {
   display: flex;
@@ -193,6 +217,7 @@ html, body {
 .dot-sat    { background: var(--cyan);  box-shadow: 0 0 6px var(--cyan); }
 .dot-flight { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
 .dot-ship   { background: var(--teal);  box-shadow: 0 0 6px var(--teal); }
+.dot-layers { background: #8b9bb4; box-shadow: 0 0 6px #8b9bb4; }
 .dot-heat {
   background: linear-gradient(135deg, #4fc3f7, #facc15, #ef4444);
   box-shadow: 0 0 6px #fb923c;

@@ -164,129 +164,138 @@
     <div id="panel-menu" class="panel-pane panel-pane-active">
     <h1 class="panel-title">WIKI GLOBE<span>satellites · flights · shipping</span></h1>
 
-    <div class="layer" data-scope="earth">
-      <label class="row main">
-        <input type="checkbox" id="chk-sats" />
-        <span class="dot dot-sat"></span>
-        <span class="name">Satellites</span>
-        <span class="badge loading" id="badge-sats">…</span>
-        <span class="count" id="count-sats">0</span>
-      </label>
-      <label class="row sub">
-        <input type="checkbox" id="chk-sat-paths" />
-        <span class="name">Orbit paths ahead</span>
-      </label>
-    </div>
+    <details class="layer-group" data-scope="earth">
+      <summary class="row main">
+        <span class="dot dot-layers"></span>
+        <span class="name">Map layers</span>
+        <span class="layer-group-chevron" aria-hidden="true">▾</span>
+      </summary>
+      <div class="layer-group-content">
+        <div class="layer">
+          <label class="row main">
+            <input type="checkbox" id="chk-sats" />
+            <span class="dot dot-sat"></span>
+            <span class="name">Satellites</span>
+            <span class="badge loading" id="badge-sats">…</span>
+            <span class="count" id="count-sats">0</span>
+          </label>
+          <label class="row sub">
+            <input type="checkbox" id="chk-sat-paths" />
+            <span class="name">Orbit paths ahead</span>
+          </label>
+        </div>
 
-    <div class="layer" data-scope="earth">
-      <label class="row main">
-        <input type="checkbox" id="chk-flights" />
-        <span class="dot dot-flight"></span>
-        <span class="name">Flights</span>
-        <span class="badge loading" id="badge-flights">…</span>
-        <span class="count" id="count-flights">0</span>
-      </label>
-      <label class="row sub">
-        <input type="checkbox" id="chk-flight-routes" />
-        <span class="name">Flight routes</span>
-      </label>
-    </div>
+        <div class="layer">
+          <label class="row main">
+            <input type="checkbox" id="chk-flights" />
+            <span class="dot dot-flight"></span>
+            <span class="name">Flights</span>
+            <span class="badge loading" id="badge-flights">…</span>
+            <span class="count" id="count-flights">0</span>
+          </label>
+          <label class="row sub">
+            <input type="checkbox" id="chk-flight-routes" />
+            <span class="name">Flight routes</span>
+          </label>
+        </div>
 
-    <div class="layer" data-scope="earth">
-      <label class="row main">
-        <input type="checkbox" id="chk-ships" />
-        <span class="dot dot-ship"></span>
-        <span class="name">Shipping</span>
-        <span class="badge loading" id="badge-ships">…</span>
-        <span class="count" id="count-ships">0</span>
-      </label>
-      <label class="row sub">
-        <input type="checkbox" id="chk-vessel-routes" />
-        <span class="name">Destination routes</span>
-      </label>
-    </div>
+        <div class="layer">
+          <label class="row main">
+            <input type="checkbox" id="chk-ships" />
+            <span class="dot dot-ship"></span>
+            <span class="name">Shipping</span>
+            <span class="badge loading" id="badge-ships">…</span>
+            <span class="count" id="count-ships">0</span>
+          </label>
+          <label class="row sub">
+            <input type="checkbox" id="chk-vessel-routes" />
+            <span class="name">Destination routes</span>
+          </label>
+        </div>
 
-    <div class="layer" data-scope="earth">
-      <label class="row main">
-        <input type="checkbox" id="chk-cables" />
-        <span class="dot dot-cable"></span>
-        <span class="name">Submarine cables</span>
-        <span class="badge loading" id="badge-cables">…</span>
-        <span class="count" id="count-cables">0</span>
-      </label>
-    </div>
+        <div class="layer">
+          <label class="row main">
+            <input type="checkbox" id="chk-cables" />
+            <span class="dot dot-cable"></span>
+            <span class="name">Submarine cables</span>
+            <span class="badge loading" id="badge-cables">…</span>
+            <span class="count" id="count-cables">0</span>
+          </label>
+        </div>
 
-    <div class="layer" data-scope="earth">
-      <label class="row main">
-        <input type="checkbox" id="chk-plants" />
-        <span class="dot dot-plant"></span>
-        <span class="name">Power plants</span>
-        <span class="badge loading" id="badge-plants">…</span>
-        <span class="count" id="count-plants">0</span>
-      </label>
-    </div>
+        <div class="layer">
+          <label class="row main">
+            <input type="checkbox" id="chk-plants" />
+            <span class="dot dot-plant"></span>
+            <span class="name">Power plants</span>
+            <span class="badge loading" id="badge-plants">…</span>
+            <span class="count" id="count-plants">0</span>
+          </label>
+        </div>
 
-    <div class="layer" data-scope="earth">
-      <label class="row main">
-        <input type="checkbox" id="chk-timezones" />
-        <span class="dot dot-timezone"></span>
-        <span class="name">Time zones</span>
-        <span class="badge loading" id="badge-timezones">…</span>
-        <span class="count" id="count-timezones">0</span>
-      </label>
-    </div>
+        <div class="layer">
+          <label class="row main">
+            <input type="checkbox" id="chk-timezones" />
+            <span class="dot dot-timezone"></span>
+            <span class="name">Time zones</span>
+            <span class="badge loading" id="badge-timezones">…</span>
+            <span class="count" id="count-timezones">0</span>
+          </label>
+        </div>
 
-    <div class="layer" data-scope="earth">
-      <label class="row main">
-        <input type="checkbox" id="chk-quakes" />
-        <span class="dot dot-quake"></span>
-        <span class="name">Earthquakes</span>
-        <span class="badge loading" id="badge-quakes">…</span>
-        <span class="count" id="count-quakes">0</span>
-      </label>
-      <label class="row sub" for="sel-quake-feed">
-        <span class="name">Time window</span>
-      </label>
-      <select id="sel-quake-feed" class="heat-select" aria-label="Select earthquake feed time window">
-        <option value="hour">Past hour</option>
-        <option value="day" selected>Past day</option>
-        <option value="week">Past week</option>
-      </select>
-    </div>
+        <div class="layer">
+          <label class="row main">
+            <input type="checkbox" id="chk-quakes" />
+            <span class="dot dot-quake"></span>
+            <span class="name">Earthquakes</span>
+            <span class="badge loading" id="badge-quakes">…</span>
+            <span class="count" id="count-quakes">0</span>
+          </label>
+          <label class="row sub" for="sel-quake-feed">
+            <span class="name">Time window</span>
+          </label>
+          <select id="sel-quake-feed" class="heat-select" aria-label="Select earthquake feed time window">
+            <option value="hour">Past hour</option>
+            <option value="day" selected>Past day</option>
+            <option value="week">Past week</option>
+          </select>
+        </div>
 
-    <div class="layer" data-scope="earth">
-      <label class="row main">
-        <input type="checkbox" id="chk-events" />
-        <span class="dot dot-event"></span>
-        <span class="name">Natural events</span>
-        <span class="badge loading" id="badge-events">…</span>
-        <span class="count" id="count-events">0</span>
-      </label>
-      <div class="row sub cat-filters" id="event-cat-filters">
-        <label><input type="checkbox" class="chk-event-cat" data-cat="wildfires" checked /><span>Wildfires</span></label>
-        <label><input type="checkbox" class="chk-event-cat" data-cat="volcanoes" checked /><span>Volcanoes</span></label>
-        <label><input type="checkbox" class="chk-event-cat" data-cat="severeStorms" checked /><span>Storms</span></label>
-        <label><input type="checkbox" class="chk-event-cat" data-cat="seaLakeIce" checked /><span>Ice</span></label>
-        <label><input type="checkbox" class="chk-event-cat" data-cat="floods" checked /><span>Floods</span></label>
-        <label><input type="checkbox" class="chk-event-cat" data-cat="drought" /><span>Drought</span></label>
-        <label><input type="checkbox" class="chk-event-cat" data-cat="temperatureExt" /><span>Temp</span></label>
-        <label><input type="checkbox" class="chk-event-cat" data-cat="dustHaze" /><span>Dust</span></label>
-        <label><input type="checkbox" class="chk-event-cat" data-cat="landslides" /><span>Landslides</span></label>
-        <label><input type="checkbox" class="chk-event-cat" data-cat="manmade" /><span>Manmade</span></label>
-        <label><input type="checkbox" class="chk-event-cat" data-cat="waterColor" /><span>Water</span></label>
-        <label><input type="checkbox" class="chk-event-cat" data-cat="snow" /><span>Snow</span></label>
+        <div class="layer">
+          <label class="row main">
+            <input type="checkbox" id="chk-events" />
+            <span class="dot dot-event"></span>
+            <span class="name">Natural events</span>
+            <span class="badge loading" id="badge-events">…</span>
+            <span class="count" id="count-events">0</span>
+          </label>
+          <div class="row sub cat-filters" id="event-cat-filters">
+            <label><input type="checkbox" class="chk-event-cat" data-cat="wildfires" checked /><span>Wildfires</span></label>
+            <label><input type="checkbox" class="chk-event-cat" data-cat="volcanoes" checked /><span>Volcanoes</span></label>
+            <label><input type="checkbox" class="chk-event-cat" data-cat="severeStorms" checked /><span>Storms</span></label>
+            <label><input type="checkbox" class="chk-event-cat" data-cat="seaLakeIce" checked /><span>Ice</span></label>
+            <label><input type="checkbox" class="chk-event-cat" data-cat="floods" checked /><span>Floods</span></label>
+            <label><input type="checkbox" class="chk-event-cat" data-cat="drought" /><span>Drought</span></label>
+            <label><input type="checkbox" class="chk-event-cat" data-cat="temperatureExt" /><span>Temp</span></label>
+            <label><input type="checkbox" class="chk-event-cat" data-cat="dustHaze" /><span>Dust</span></label>
+            <label><input type="checkbox" class="chk-event-cat" data-cat="landslides" /><span>Landslides</span></label>
+            <label><input type="checkbox" class="chk-event-cat" data-cat="manmade" /><span>Manmade</span></label>
+            <label><input type="checkbox" class="chk-event-cat" data-cat="waterColor" /><span>Water</span></label>
+            <label><input type="checkbox" class="chk-event-cat" data-cat="snow" /><span>Snow</span></label>
+          </div>
+        </div>
+
+        <div class="layer">
+          <label class="row main">
+            <input type="checkbox" id="chk-launches" />
+            <span class="dot dot-launch"></span>
+            <span class="name">Launches</span>
+            <span class="badge loading" id="badge-launches">…</span>
+            <span class="count" id="count-launches">0</span>
+          </label>
+        </div>
       </div>
-    </div>
-
-    <div class="layer" data-scope="earth">
-      <label class="row main">
-        <input type="checkbox" id="chk-launches" />
-        <span class="dot dot-launch"></span>
-        <span class="name">Launches</span>
-        <span class="badge loading" id="badge-launches">…</span>
-        <span class="count" id="count-launches">0</span>
-      </label>
-    </div>
+    </details>
 
     <div class="layer" data-scope="earth">
       <label class="row main" for="sel-heatmap">
