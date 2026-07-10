@@ -102,6 +102,24 @@ const WORLD_BANK_INDICATORS = [
 const HDR_DOWNLOADS = "https://hdr.undp.org/data-center/documentation-and-downloads";
 const OWID_CO2_PER_CAPITA_CSV = "https://ourworldindata.org/grapher/co-emissions-per-capita.csv";
 
+const IMF_INDICATORS = [
+  { key: "imfGdpGrowth", code: "NGDP_RPCH", label: "Real GDP growth (IMF WEO, %)" },
+  { key: "imfInflation", code: "PCPIPCH", label: "Inflation (IMF WEO, %)" },
+  { key: "imfUnemployment", code: "LUR", label: "Unemployment (IMF WEO, %)" },
+  { key: "imfDebtGdp", code: "GGXWDG_NGDP", label: "Gov gross debt % of GDP (IMF WEO)" },
+];
+
+const OWID_SLUGS = [
+  { key: "owidLifeExpectancy", slug: "life-expectancy", label: "Life expectancy (OWID)", col: "life expectancy" },
+  { key: "owidInternet", slug: "share-of-individuals-using-the-internet", label: "Internet users (OWID)", col: "individuals using the internet" },
+  { key: "owidRenewableShare", slug: "renewable-share-energy", label: "Renewable energy share (OWID)", col: "renewables" },
+  { key: "owidHumanRights", slug: "human-rights-index-vdem", label: "Human rights index (V-Dem, OWID)", col: "human rights index" },
+];
+
+const WHO_INDICATORS = [
+  { key: "whoLifeExpectancy", code: "WHOSIS_000001", label: "Life expectancy at birth (WHO, years)", filter: "Dim1 eq 'SEX_BTSX' and SpatialDimType eq 'COUNTRY'" },
+];
+
 async function main() {
   const legacy = await readLegacyCountryStats();
   const countries = legacyCountryRows(legacy);
@@ -136,6 +154,51 @@ async function main() {
     sources.push(hdr.source);
   } catch (e) {
     warnings.push(`UNDP HDR merge skipped: ${e.message}`);
+  }
+
+  // IMF DataMapper indicators (includes projections)
+  for (const spec of IMF_INDICATORS) {
+    try {
+      const vals = await fetchImfIndicator(spec);
+      mergeIndicator(countries, vals, spec.key);
+      sources.push({
+        name: "IMF DataMapper",
+        url: `https://www.imf.org/external/datamapper/api/v1/${spec.code}`,
+        indicators: [spec.code],
+      });
+    } catch (e) {
+      warnings.push(`IMF ${spec.code} failed: ${e.message}`);
+    }
+  }
+
+  // OWID grapher CSVs
+  for (const spec of OWID_SLUGS) {
+    try {
+      const vals = await fetchOwidCsv(spec);
+      mergeIndicator(countries, vals, spec.key);
+      sources.push({
+        name: "Our World in Data",
+        url: `https://ourworldindata.org/grapher/${spec.slug}.csv`,
+        fields: [spec.key],
+      });
+    } catch (e) {
+      warnings.push(`OWID ${spec.slug} failed: ${e.message}`);
+    }
+  }
+
+  // WHO GHO indicators
+  for (const spec of WHO_INDICATORS) {
+    try {
+      const vals = await fetchWhoIndicator(spec);
+      mergeIndicator(countries, vals, spec.key);
+      sources.push({
+        name: "WHO Global Health Observatory",
+        url: `https://ghoapi.azureedge.net/api/${spec.code}`,
+        indicators: [spec.code],
+      });
+    } catch (e) {
+      warnings.push(`WHO ${spec.code} failed: ${e.message}`);
+    }
   }
 
   const generatedAt = new Date().toISOString();
@@ -254,6 +317,42 @@ async function main() {
         unit: "millimetres per year",
         defaultSource: "World Bank",
         indicator: "AG.LND.PRCP.MM",
+      },
+      imfGdpGrowth: {
+        unit: "annual percent (latest available or IMF projection)",
+        defaultSource: "IMF",
+      },
+      imfInflation: {
+        unit: "annual percent (latest available or IMF projection)",
+        defaultSource: "IMF",
+      },
+      imfUnemployment: {
+        unit: "annual percent (latest available or IMF projection)",
+        defaultSource: "IMF",
+      },
+      imfDebtGdp: {
+        unit: "percent of GDP (latest available or IMF projection)",
+        defaultSource: "IMF",
+      },
+      owidLifeExpectancy: {
+        unit: "years",
+        defaultSource: "Our World in Data",
+      },
+      owidInternet: {
+        unit: "percent of individuals",
+        defaultSource: "Our World in Data",
+      },
+      owidRenewableShare: {
+        unit: "percent of energy",
+        defaultSource: "Our World in Data",
+      },
+      owidHumanRights: {
+        unit: "index (0-1)",
+        defaultSource: "Our World in Data (V-Dem)",
+      },
+      whoLifeExpectancy: {
+        unit: "years at birth",
+        defaultSource: "WHO",
       },
     },
     countries,
@@ -478,6 +577,98 @@ function sourceLabel(sources) {
   const names = [...new Set(sources.map((s) => s.name))];
   if (names.length === 0) return "bundled legacy country statistics";
   return names.join(" + ");
+}
+
+// --- IMF DataMapper -----------------------------------------------------------
+
+async function fetchImfIndicator(spec) {
+  const url = `https://www.imf.org/external/datamapper/api/v1/${spec.code}`;
+  const data = await fetchJson(url);
+  const codeValues = data?.values?.[spec.code];
+  if (!codeValues || typeof codeValues !== "object") {
+    throw new Error(`IMF ${spec.code}: no values in response`);
+  }
+  const latest = new Map();
+  for (const [iso3, years] of Object.entries(codeValues)) {
+    if (!/^[A-Z]{3}$/.test(iso3)) continue; // skip aggregates
+    let bestYear = null, bestVal = null;
+    for (const [yr, val] of Object.entries(years)) {
+      const year = Number(yr);
+      if (!Number.isFinite(year) || val == null) continue;
+      // Pick the latest year with a value (includes projections)
+      if (bestYear === null || year > bestYear) {
+        bestYear = year;
+        bestVal = round(val);
+      }
+    }
+    if (bestYear !== null) {
+      latest.set(iso3, {
+        countryName: iso3,
+        value: bestVal,
+        year: bestYear,
+        source: "IMF",
+        label: spec.label,
+      });
+    }
+  }
+  if (latest.size < 100) throw new Error(`only ${latest.size} countries`);
+  return latest;
+}
+
+// --- OWID grapher CSVs --------------------------------------------------------
+
+async function fetchOwidCsv(spec) {
+  const url = `https://ourworldindata.org/grapher/${spec.slug}.csv`;
+  const text = await fetchText(url);
+  const rows = parseCsv(text);
+  const values = new Map();
+  for (const row of rows) {
+    const iso3 = pick(row, ["code"])?.toUpperCase();
+    const year = Number(pick(row, ["year"]));
+    const value = Number(pick(row, [spec.col]));
+    if (!/^[A-Z]{3}$/.test(iso3 ?? "") || !Number.isFinite(year) || !Number.isFinite(value)) continue;
+    const prev = values.get(iso3);
+    if (!prev || year > prev.year) {
+      values.set(iso3, {
+        countryName: pick(row, ["entity"]),
+        value: round(value),
+        year,
+        source: "Our World in Data",
+        label: spec.label,
+      });
+    }
+  }
+  if (values.size < 50) throw new Error(`only ${values.size} countries`);
+  return values;
+}
+
+// --- WHO GHO ------------------------------------------------------------------
+
+async function fetchWhoIndicator(spec) {
+  const base = `https://ghoapi.azureedge.net/api/${spec.code}`;
+  const url = spec.filter ? `${base}?$filter=${encodeURIComponent(spec.filter)}` : base;
+  const data = await fetchJson(url);
+  const rows = data?.value;
+  if (!Array.isArray(rows)) throw new Error(`WHO ${spec.code}: no value array`);
+  const latest = new Map();
+  for (const row of rows) {
+    const iso3 = row.SpatialDim;
+    const year = Number(row.TimeDim);
+    const value = Number(row.NumericValue);
+    if (!/^[A-Z]{3}$/.test(iso3 ?? "") || !Number.isFinite(year) || !Number.isFinite(value)) continue;
+    const prev = latest.get(iso3);
+    if (!prev || year > prev.year) {
+      latest.set(iso3, {
+        countryName: iso3,
+        value: round(value),
+        year,
+        source: "WHO",
+        label: spec.label,
+      });
+    }
+  }
+  if (latest.size < 80) throw new Error(`only ${latest.size} countries`);
+  return latest;
 }
 
 main().catch((e) => {

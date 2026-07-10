@@ -234,6 +234,114 @@ export const METRICS = {
       ["$22k", "#a8dd4e"], ["$50k", "#3fd98f"], ["$100k+", "#4fc3f7"],
     ],
   },
+  imfGdpGrowth: {
+    label: "GDP growth (IMF)", kind: "country",
+    statKey: "imfGdpGrowth", fmt: percent1,
+    stops: [
+      [-10, [217, 70, 239]], [-3, [239, 68, 68]], [0, [251, 146, 60]],
+      [3, [250, 204, 21]], [6, [168, 221, 78]], [10, [63, 217, 143]], [20, [79, 195, 247]],
+    ],
+    legend: [
+      ["-10%", "#d946ef"], ["-3%", "#ef4444"], ["0%", "#fb923c"],
+      ["3%", "#facc15"], ["6%", "#a8dd4e"], ["10%+", "#3fd98f"],
+    ],
+  },
+  imfInflation: {
+    label: "Inflation (IMF)", kind: "country",
+    statKey: "imfInflation", fmt: percent1,
+    stops: [
+      [0, [79, 195, 247]], [3, [63, 217, 143]], [6, [168, 221, 78]],
+      [10, [250, 204, 21]], [20, [251, 146, 60]], [50, [239, 68, 68]], [200, [217, 70, 239]],
+    ],
+    legend: [
+      ["0%", "#4fc3f7"], ["3%", "#3fd98f"], ["6%", "#a8dd4e"],
+      ["10%", "#facc15"], ["20%", "#fb923c"], ["50%+", "#ef4444"],
+    ],
+  },
+  imfUnemployment: {
+    label: "Unemployment (IMF)", kind: "country",
+    statKey: "imfUnemployment", fmt: percent1,
+    stops: [
+      [2, [63, 217, 143]], [5, [168, 221, 78]], [8, [250, 204, 21]],
+      [12, [251, 146, 60]], [20, [239, 68, 68]], [40, [217, 70, 239]],
+    ],
+    legend: [
+      ["2%", "#3fd98f"], ["5%", "#a8dd4e"], ["8%", "#facc15"],
+      ["12%", "#fb923c"], ["20%", "#ef4444"], ["40%+", "#d946ef"],
+    ],
+  },
+  imfDebtGdp: {
+    label: "Gov debt % GDP (IMF)", kind: "country",
+    statKey: "imfDebtGdp", fmt: percent,
+    stops: [
+      [20, [63, 217, 143]], [50, [168, 221, 78]], [80, [250, 204, 21]],
+      [120, [251, 146, 60]], [200, [239, 68, 68]], [300, [217, 70, 239]],
+    ],
+    legend: [
+      ["20%", "#3fd98f"], ["50%", "#a8dd4e"], ["80%", "#facc15"],
+      ["120%", "#fb923c"], ["200%", "#ef4444"], ["300%+", "#d946ef"],
+    ],
+  },
+  owidLifeExpectancy: {
+    label: "Life expectancy (OWID)", kind: "country",
+    statKey: "owidLifeExpectancy", fmt: years,
+    stops: [
+      [50, [239, 68, 68]], [60, [251, 146, 60]], [70, [250, 204, 21]],
+      [76, [168, 221, 78]], [82, [63, 217, 143]], [86, [79, 195, 247]],
+    ],
+    legend: [
+      ["50", "#ef4444"], ["60", "#fb923c"], ["70", "#facc15"],
+      ["76", "#a8dd4e"], ["82", "#3fd98f"], ["86+", "#4fc3f7"],
+    ],
+  },
+  owidInternet: {
+    label: "Internet users (OWID)", kind: "country",
+    statKey: "owidInternet", fmt: percent,
+    stops: [
+      [5, [239, 68, 68]], [20, [251, 146, 60]], [40, [250, 204, 21]],
+      [60, [168, 221, 78]], [80, [63, 217, 143]], [95, [79, 195, 247]],
+    ],
+    legend: [
+      ["5%", "#ef4444"], ["20%", "#fb923c"], ["40%", "#facc15"],
+      ["60%", "#a8dd4e"], ["80%", "#3fd98f"], ["95%+", "#4fc3f7"],
+    ],
+  },
+  owidRenewableShare: {
+    label: "Renewable energy (OWID)", kind: "country",
+    statKey: "owidRenewableShare", fmt: percent,
+    stops: [
+      [0, [239, 68, 68]], [10, [251, 146, 60]], [25, [250, 204, 21]],
+      [50, [168, 221, 78]], [75, [63, 217, 143]], [100, [79, 195, 247]],
+    ],
+    legend: [
+      ["0%", "#ef4444"], ["10%", "#fb923c"], ["25%", "#facc15"],
+      ["50%", "#a8dd4e"], ["75%", "#3fd98f"], ["100%", "#4fc3f7"],
+    ],
+  },
+  owidHumanRights: {
+    label: "Human rights (V-Dem)", kind: "country",
+    statKey: "owidHumanRights", fmt: fixed3,
+    stops: [
+      [0.1, [239, 68, 68]], [0.3, [251, 146, 60]], [0.5, [250, 204, 21]],
+      [0.7, [168, 221, 78]], [0.85, [63, 217, 143]], [0.95, [79, 195, 247]],
+    ],
+    legend: [
+      ["0.1", "#ef4444"], ["0.3", "#fb923c"], ["0.5", "#facc15"],
+      ["0.7", "#a8dd4e"], ["0.85", "#3fd98f"], ["0.95+", "#4fc3f7"],
+    ],
+  },
+  whoLifeExpectancy: {
+    label: "Life expectancy (WHO)", kind: "country",
+    statKey: "whoLifeExpectancy", fmt: years,
+    stops: [
+      [50, [239, 68, 68]], [60, [251, 146, 60]], [70, [250, 204, 21]],
+      [76, [168, 221, 78]], [82, [63, 217, 143]], [86, [79, 195, 247]],
+    ],
+    legend: [
+      ["50", "#ef4444"], ["60", "#fb923c"], ["70", "#facc15"],
+      ["76", "#a8dd4e"], ["82", "#3fd98f"], ["86+", "#4fc3f7"],
+    ],
+  },
   popDensity: {
     label: "Population density", kind: "region",
     statKey: "popDensity", regionKey: "density", regionYearKey: "popYear", fmt: perKm2,

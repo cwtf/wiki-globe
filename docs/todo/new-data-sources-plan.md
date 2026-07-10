@@ -1,7 +1,7 @@
 # Implementation plan: new keyless data sources
 
-Status: **Phases 1–2 + 3.1–3.4 complete** (2026-07-10). Phases 1.1–1.3, 2.1–2.3,
-3.1, 3.2, 3.3, and 3.4 are implemented and bootable. Phase 3.5–4 remain proposed.
+Status: **Phases 1–3 complete** (2026-07-10). Phases 1.1–1.3, 2.1–2.3,
+3.1, 3.2, 3.3, 3.4, and 3.5 are implemented and bootable. Phase 4 remains proposed.
 
 This is a self-contained work plan for adding new data layers/overlays to Wiki
 Globe. Every source below requires **no API key**. Read this whole file, then
@@ -270,7 +270,7 @@ steady state; there is no live fetch at runtime).
 
 ---
 
-## Phase 3.5 — global statistical indicators (new country choropleth modes)
+## Phase 3.5 — global statistical indicators (new country choropleth modes) — ✅ DONE
 
 All of these land the same way: fetch in the Node pipeline (CORS is
 irrelevant there), merge into `data/country-stats.latest.json` (or a sibling
