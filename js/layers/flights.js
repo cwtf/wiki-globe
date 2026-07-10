@@ -4,6 +4,7 @@
 // up on adsbdb by callsign (with a projected-track fallback).
 
 import { makeDemoFlights } from "../demo-data.js";
+import { loadAirportsData, lookupAirport } from "../airports-data.js";
 
 const DEFAULT_OPENSKY_URL = "https://opensky-network.org/api/states/all";
 const OPENSKY_URL = configuredOpenSkyUrl();
@@ -39,6 +40,7 @@ export class FlightLayer {
   }
 
   async init() {
+    loadAirportsData(); // fire-and-forget; lookupAirport returns null until loaded
     const result = await this._fetchLive();
     if (result.data) {
       this.source = "live";
@@ -405,11 +407,14 @@ async function lookupRoute(callsign) {
     const data = await res.json();
     const fr = data?.response?.flightroute;
     if (!fr?.origin || !fr?.destination) return null;
+    // Enrich names with OurAirports municipality data when available
+    const oAp = lookupAirport(fr.origin.icao_code || fr.origin.name);
+    const dAp = lookupAirport(fr.destination.icao_code || fr.destination.name);
     return {
       olat: fr.origin.latitude, olon: fr.origin.longitude,
-      oname: fr.origin.iata_code || fr.origin.name,
+      oname: oAp?.municipality ? `${fr.origin.iata_code || oAp.name} (${oAp.municipality})` : (fr.origin.iata_code || fr.origin.name),
       dlat: fr.destination.latitude, dlon: fr.destination.longitude,
-      dname: fr.destination.iata_code || fr.destination.name,
+      dname: dAp?.municipality ? `${fr.destination.iata_code || dAp.name} (${dAp.municipality})` : (fr.destination.iata_code || fr.destination.name),
     };
   } catch {
     return null;

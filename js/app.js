@@ -8,6 +8,9 @@ import { ShippingLayer } from "./layers/shipping.js";
 import { EarthquakesLayer } from "./layers/earthquakes.js";
 import { EventsLayer } from "./layers/events.js";
 import { LaunchesLayer, formatCountdown } from "./layers/launches.js";
+import { CablesLayer } from "./layers/cables.js";
+import { PowerPlantsLayer } from "./layers/power-plants.js";
+import { TimeZonesLayer } from "./layers/timezones.js";
 import { HeatmapLayer, METRICS, heatStressLabel, RES_STEPS, loadHeatmapMetrics } from "./layers/heatmap.js";
 import { TrueSizeLayer } from "./layers/truesize.js";
 import { BODY_CHOICE_GROUPS } from "./bodies.js";
@@ -101,6 +104,9 @@ async function boot() {
   const quakes = new EarthquakesLayer(viewer);
   const events = new EventsLayer(viewer);
   const launches = new LaunchesLayer(viewer);
+  const cables = new CablesLayer(viewer);
+  const plants = new PowerPlantsLayer(viewer);
+  const timezones = new TimeZonesLayer(viewer);
   const heat = new HeatmapLayer(viewer); // lazy: fetches when a mode is selected
   const truesize = new TrueSizeLayer(viewer);
   const sun = new SunLayer(viewer);
@@ -122,6 +128,9 @@ async function boot() {
     quakes: document.getElementById("chk-quakes"),
     events: document.getElementById("chk-events"),
     launches: document.getElementById("chk-launches"),
+    cables: document.getElementById("chk-cables"),
+    plants: document.getElementById("chk-plants"),
+    timezones: document.getElementById("chk-timezones"),
   };
   sats.setVisible(layerToggles.sats.checked);
   flights.setVisible(layerToggles.flights.checked);
@@ -129,6 +138,9 @@ async function boot() {
   quakes.setVisible(layerToggles.quakes.checked);
   events.setVisible(layerToggles.events.checked);
   launches.setVisible(layerToggles.launches.checked);
+  cables.setVisible(layerToggles.cables.checked);
+  plants.setVisible(layerToggles.plants.checked);
+  timezones.setVisible(layerToggles.timezones.checked);
 
   ships.init();
   sats.init();
@@ -136,6 +148,9 @@ async function boot() {
   quakes.init();
   events.init();
   launches.init();
+  cables.init();
+  plants.init();
+  timezones.init();
   sun.init();
   moon.init();
   mars.init();
@@ -346,6 +361,9 @@ async function boot() {
         quakes.setVisible(false);
         events.setVisible(false);
         launches.setVisible(false);
+        cables.setVisible(false);
+        plants.setVisible(false);
+        timezones.setVisible(false);
         if (heatModeSuspended == null) heatModeSuspended = heat.mode;
         if (heatModeSuspended) heat.setMode(null);
       }
@@ -364,6 +382,9 @@ async function boot() {
     quakes.setVisible(layerToggles.quakes.checked);
     events.setVisible(layerToggles.events.checked);
     launches.setVisible(layerToggles.launches.checked);
+    cables.setVisible(layerToggles.cables.checked);
+    plants.setVisible(layerToggles.plants.checked);
+    timezones.setVisible(layerToggles.timezones.checked);
     if (heatModeSuspended) heat.setMode(heatModeSuspended);
     heatModeSuspended = null;
   }
@@ -614,6 +635,9 @@ async function boot() {
   bind("chk-quakes", (v) => quakes.setVisible(v));
   bind("chk-events", (v) => events.setVisible(v));
   bind("chk-launches", (v) => launches.setVisible(v));
+  bind("chk-cables", (v) => cables.setVisible(v));
+  bind("chk-plants", (v) => plants.setVisible(v));
+  bind("chk-timezones", (v) => timezones.setVisible(v));
   document.getElementById("sel-quake-feed").addEventListener("change", (e) => quakes.setFeed(e.target.value));
   document.querySelectorAll(".chk-event-cat").forEach((cb) => {
     cb.addEventListener("change", () => events.setCategory(cb.dataset.cat, cb.checked));
@@ -765,6 +789,9 @@ async function boot() {
     quakes: document.getElementById("badge-quakes"),
     events: document.getElementById("badge-events"),
     launches: document.getElementById("badge-launches"),
+    cables: document.getElementById("badge-cables"),
+    plants: document.getElementById("badge-plants"),
+    timezones: document.getElementById("badge-timezones"),
     heat: document.getElementById("badge-heat"),
     moon: document.getElementById("badge-moon"),
     mars: document.getElementById("badge-mars"),
@@ -777,6 +804,9 @@ async function boot() {
     quakes: document.getElementById("count-quakes"),
     events: document.getElementById("count-events"),
     launches: document.getElementById("count-launches"),
+    cables: document.getElementById("count-cables"),
+    plants: document.getElementById("count-plants"),
+    timezones: document.getElementById("count-timezones"),
     heat: document.getElementById("count-heat"),
     moon: document.getElementById("count-moon"),
     mars: document.getElementById("count-mars"),
@@ -846,7 +876,7 @@ async function boot() {
   setTimeout(() => document.getElementById("hint").classList.add("faded"), 15000);
 
   // handy for debugging from the console
-  window.__globe = { viewer, sats, flights, ships, quakes, events, launches, heat, wiki, truesize, search, agent, sun, moon, mars, planets, childMoons, bodyLayers };
+  window.__globe = { viewer, sats, flights, ships, quakes, events, launches, cables, plants, timezones, heat, wiki, truesize, search, agent, sun, moon, mars, planets, childMoons, bodyLayers };
 }
 
 function setupResponsiveSideMenus() {
@@ -1475,6 +1505,26 @@ function tooltipHtml(id) {
     return `<div class="tt-title">${esc(l.padName || l.location)}</div>
       ${lines.join("")}${extra}
       <div class="tt-note">The Space Devs LL2 · click for nearby articles</div>`;
+  }
+  if (id.kind === "cable") {
+    const c = id.cable;
+    return `<div class="tt-title">${esc(c.name || "Submarine cable")}</div>
+      <div class="tt-note">TeleGeography Submarine Cable Map</div>`;
+  }
+  if (id.kind === "plant") {
+    const p = id.plant;
+    return `<div class="tt-title">${esc(p.name || "Power plant")}</div>
+      <div class="tt-line">${esc(p.fuel)} · ${p.mw} MW</div>
+      <div class="tt-note">${esc(p.country)} · WRI GPPD</div>`;
+  }
+  if (id.kind === "timezone") {
+    const utc = id.utcFormat || `UTC${id.zone >= 0 ? "+" : ""}${id.zone}`;
+    const now = new Date();
+    const localMs = now.getTime() + id.zone * 3600000;
+    const localTime = new Date(localMs).toLocaleTimeString("en", { hour: "2-digit", minute: "2-digit", timeZone: "UTC" });
+    return `<div class="tt-title">${esc(utc)}</div>
+      <div class="tt-line">${localTime} local time</div>
+      <div class="tt-note">Natural Earth time zones</div>`;
   }
   if (id.kind === "lane") {
     const tier = id.lane.type === "middle" ? "Secondary" : "Major";

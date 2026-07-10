@@ -1,7 +1,7 @@
 # Implementation plan: new keyless data sources
 
-Status: **Phases 1 + 2 complete** (2026-07-10). Phases 1.1–1.3 and 2.1–2.3
-are implemented and bootable. Phases 3–4 remain proposed.
+Status: **Phases 1–2 + 3.1–3.4 complete** (2026-07-10). Phases 1.1–1.3, 2.1–2.3,
+3.1, 3.2, 3.3, and 3.4 are implemented and bootable. Phase 3.5–4 remain proposed.
 
 This is a self-contained work plan for adding new data layers/overlays to Wiki
 Globe. Every source below requires **no API key**. Read this whole file, then
@@ -210,7 +210,7 @@ npm scripts + committed `.latest` file. They are static-ish datasets, so the
 runtime path reads the committed file directly (badge `DATA` is the honest
 steady state; there is no live fetch at runtime).
 
-### 3.1 Submarine cables
+### 3.1 Submarine cables — ✅ DONE
 
 - **Source:** GeoJSON from the TeleGeography submarine cable map repo:
   `https://raw.githubusercontent.com/telegeography/www.submarinecablemap.com/master/web/public/api/v3/cable/cable-geo.json`
@@ -227,7 +227,7 @@ steady state; there is no live fetch at runtime).
   `js/layers/shipping.js` corridors (thin glowing lines, per-cable color from
   the dataset). Sidebar row next to Shipping.
 
-### 3.2 Global Power Plant Database (WRI)
+### 3.2 Global Power Plant Database (WRI) — ✅ DONE
 
 - **Source:** `https://datasets.wri.org/dataset/globalpowerplantdatabase` —
   CSV (~35k rows: name, capacity_mw, primary_fuel, lat/lon). CC-BY 4.0. The
@@ -241,7 +241,7 @@ steady state; there is no live fetch at runtime).
   size, or a new heatmap country/cell mode. Point layer is the better visual;
   size cap needed so China/India don't wash out.
 
-### 3.3 OurAirports (reference data for flights layer)
+### 3.3 OurAirports (reference data for flights layer) — ✅ DONE
 
 - **Source:** `https://davidmegginson.github.io/ourairports-data/airports.csv`
   — public domain, all world airports (ident, type, name, lat, lon,
@@ -254,7 +254,7 @@ steady state; there is no live fetch at runtime).
   great-circle from origin when a flight is hovered. This is an enhancement
   to an existing layer, so keep the diff scoped to tooltip/hover code.
 
-### 3.4 Natural Earth time zones
+### 3.4 Natural Earth time zones — ✅ DONE
 
 - **Source:** `https://naciscdn.org/naturalearth/10m/cultural/ne_10m_time_zones.zip`
   (shapefile; convert via `mapshaper` in the update script — it can run via

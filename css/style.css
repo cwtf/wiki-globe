@@ -448,6 +448,9 @@ html, body {
 .dot-quake { background: #ef4444; box-shadow: 0 0 6px #ef4444; }
 .dot-event { background: #fb923c; box-shadow: 0 0 6px #fb923c; }
 .dot-launch { background: #a855f7; box-shadow: 0 0 6px #a855f7; }
+.dot-cable { background: #64b4ff; box-shadow: 0 0 6px #64b4ff; }
+.dot-plant { background: #fbbf24; box-shadow: 0 0 6px #fbbf24; }
+.dot-timezone { background: #818cf8; box-shadow: 0 0 6px #818cf8; }
 .dot-size { background: #ff5470; box-shadow: 0 0 6px #ff5470; }
 .dot-moon { background: #cfd6e4; box-shadow: 0 0 6px #cfd6e4; }
 .dot-mars { background: #c1583c; box-shadow: 0 0 6px #c1583c; }
