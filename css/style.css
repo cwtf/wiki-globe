@@ -446,9 +446,29 @@ html, body {
 }
 
 .dot-quake { background: #ef4444; box-shadow: 0 0 6px #ef4444; }
+.dot-event { background: #fb923c; box-shadow: 0 0 6px #fb923c; }
+.dot-launch { background: #a855f7; box-shadow: 0 0 6px #a855f7; }
 .dot-size { background: #ff5470; box-shadow: 0 0 6px #ff5470; }
 .dot-moon { background: #cfd6e4; box-shadow: 0 0 6px #cfd6e4; }
 .dot-mars { background: #c1583c; box-shadow: 0 0 6px #c1583c; }
+
+.cat-filters {
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  font-size: 10px;
+  color: var(--text-dim);
+}
+.cat-filters label {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+}
+.cat-filters input[type="checkbox"] {
+  width: 11px;
+  height: 11px;
+  margin: 0;
+}
 
 /* focus scoping: app.js toggles [hidden] on data-scoped controls to match
    body[data-focus]. Rows without data-scope stay universal. */

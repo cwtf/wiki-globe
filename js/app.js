@@ -6,6 +6,8 @@ import { SatelliteLayer } from "./layers/satellites.js";
 import { FlightLayer } from "./layers/flights.js";
 import { ShippingLayer } from "./layers/shipping.js";
 import { EarthquakesLayer } from "./layers/earthquakes.js";
+import { EventsLayer } from "./layers/events.js";
+import { LaunchesLayer, formatCountdown } from "./layers/launches.js";
 import { HeatmapLayer, METRICS, heatStressLabel, RES_STEPS, loadHeatmapMetrics } from "./layers/heatmap.js";
 import { TrueSizeLayer } from "./layers/truesize.js";
 import { BODY_CHOICE_GROUPS } from "./bodies.js";
@@ -97,6 +99,8 @@ async function boot() {
   const flights = new FlightLayer(viewer);
   const ships = new ShippingLayer(viewer);
   const quakes = new EarthquakesLayer(viewer);
+  const events = new EventsLayer(viewer);
+  const launches = new LaunchesLayer(viewer);
   const heat = new HeatmapLayer(viewer); // lazy: fetches when a mode is selected
   const truesize = new TrueSizeLayer(viewer);
   const sun = new SunLayer(viewer);
@@ -116,16 +120,22 @@ async function boot() {
     flights: document.getElementById("chk-flights"),
     ships: document.getElementById("chk-ships"),
     quakes: document.getElementById("chk-quakes"),
+    events: document.getElementById("chk-events"),
+    launches: document.getElementById("chk-launches"),
   };
   sats.setVisible(layerToggles.sats.checked);
   flights.setVisible(layerToggles.flights.checked);
   ships.setVisible(layerToggles.ships.checked);
   quakes.setVisible(layerToggles.quakes.checked);
+  events.setVisible(layerToggles.events.checked);
+  launches.setVisible(layerToggles.launches.checked);
 
   ships.init();
   sats.init();
   flights.init();
   quakes.init();
+  events.init();
+  launches.init();
   sun.init();
   moon.init();
   mars.init();
@@ -334,6 +344,8 @@ async function boot() {
         flights.setVisible(false);
         ships.setVisible(false);
         quakes.setVisible(false);
+        events.setVisible(false);
+        launches.setVisible(false);
         if (heatModeSuspended == null) heatModeSuspended = heat.mode;
         if (heatModeSuspended) heat.setMode(null);
       }
@@ -350,6 +362,8 @@ async function boot() {
     flights.setVisible(layerToggles.flights.checked);
     ships.setVisible(layerToggles.ships.checked);
     quakes.setVisible(layerToggles.quakes.checked);
+    events.setVisible(layerToggles.events.checked);
+    launches.setVisible(layerToggles.launches.checked);
     if (heatModeSuspended) heat.setMode(heatModeSuspended);
     heatModeSuspended = null;
   }
@@ -388,6 +402,8 @@ async function boot() {
     flights.tick(now);
     ships.tick(now);
     quakes.tick(now);
+    events.tick(now);
+    launches.tick(now);
     for (const layer of Object.values(bodyLayers)) layer.tick();
 
     const height = viewer.camera.positionCartographic.height;
@@ -494,6 +510,16 @@ async function boot() {
       wiki.open(q.lat, q.lon);
       return;
     }
+    if (id?.kind === "event") {
+      const e = id.event;
+      wiki.open(e.lat, e.lon);
+      return;
+    }
+    if (id?.kind === "launch") {
+      const l = id.launch;
+      wiki.open(l.lat, l.lon);
+      return;
+    }
     if (id?.kind === "wiki") {
       wiki.focusArticle(id.article, { openPopup: true }); // highlight row + open article
       return;
@@ -586,7 +612,12 @@ async function boot() {
   bind("chk-ships", (v) => ships.setVisible(v));
   bind("chk-vessel-routes", (v) => ships.setRoutesVisible(v));
   bind("chk-quakes", (v) => quakes.setVisible(v));
+  bind("chk-events", (v) => events.setVisible(v));
+  bind("chk-launches", (v) => launches.setVisible(v));
   document.getElementById("sel-quake-feed").addEventListener("change", (e) => quakes.setFeed(e.target.value));
+  document.querySelectorAll(".chk-event-cat").forEach((cb) => {
+    cb.addEventListener("change", () => events.setCategory(cb.dataset.cat, cb.checked));
+  });
   // heat-map mode dropdown: weather modes show the resolution/timeline rows,
   // country modes only the legend
   const selHeat = document.getElementById("sel-heatmap");
@@ -732,6 +763,8 @@ async function boot() {
     flights: document.getElementById("badge-flights"),
     ships: document.getElementById("badge-ships"),
     quakes: document.getElementById("badge-quakes"),
+    events: document.getElementById("badge-events"),
+    launches: document.getElementById("badge-launches"),
     heat: document.getElementById("badge-heat"),
     moon: document.getElementById("badge-moon"),
     mars: document.getElementById("badge-mars"),
@@ -742,6 +775,8 @@ async function boot() {
     flights: document.getElementById("count-flights"),
     ships: document.getElementById("count-ships"),
     quakes: document.getElementById("count-quakes"),
+    events: document.getElementById("count-events"),
+    launches: document.getElementById("count-launches"),
     heat: document.getElementById("count-heat"),
     moon: document.getElementById("count-moon"),
     mars: document.getElementById("count-mars"),
@@ -811,7 +846,7 @@ async function boot() {
   setTimeout(() => document.getElementById("hint").classList.add("faded"), 15000);
 
   // handy for debugging from the console
-  window.__globe = { viewer, sats, flights, ships, quakes, heat, wiki, truesize, search, agent, sun, moon, mars, planets, childMoons, bodyLayers };
+  window.__globe = { viewer, sats, flights, ships, quakes, events, launches, heat, wiki, truesize, search, agent, sun, moon, mars, planets, childMoons, bodyLayers };
 }
 
 function setupResponsiveSideMenus() {
@@ -1393,6 +1428,9 @@ function tooltipHtml(id) {
       humidity: `Air ${s.t.toFixed(1)} °C · wet-bulb ${s.tw.toFixed(1)} °C`,
       pm25: s.aqi != null ? `US AQI ${Math.round(s.aqi)}` : null,
       aqi: s.pm25 != null ? `PM2.5 ${s.pm25.toFixed(s.pm25 >= 10 ? 0 : 1)} µg/m³` : null,
+      riverDischarge: null,
+      temp2050: `CMIP6 projection (MRI-AGCM3-2-S) · daily max`,
+      aurora: `NOAA SWPC ovation forecast`,
     }[s.metric] ?? "";
     const stress = s.metric === "wetbulb" ? `${esc(heatStressLabel(s.tw))} · ` : "";
     return `<div class="tt-title">${esc(m.label)} ${esc(m.fmt(m.value(s)))}</div>
@@ -1417,6 +1455,26 @@ function tooltipHtml(id) {
     return `<div class="tt-title">M${q.mag.toFixed(1)} · ${q.depth.toFixed(0)} km deep</div>
       <div class="tt-line">${esc(q.place || "—")}</div>
       <div class="tt-note">${ago}${tsunami} · USGS · click for nearby articles</div>`;
+  }
+  if (id.kind === "event") {
+    const e = id.event;
+    const date = e.date ? new Date(e.date).toLocaleDateString("en", { month: "short", day: "numeric", year: "numeric" }) : "";
+    return `<div class="tt-title">${esc(e.title)}</div>
+      <div class="tt-line">${esc(e.catLabel)}${date ? ` · ${date}` : ""}</div>
+      <div class="tt-note">NASA EONET · click for nearby articles</div>`;
+  }
+  if (id.kind === "launch") {
+    const l = id.launch;
+    const lines = l.launches.slice(0, 3).map((lz) => {
+      const cd = formatCountdown(lz.net);
+      const name = esc(lz.rocket || lz.name);
+      const mission = lz.mission ? ` · ${esc(lz.mission)}` : "";
+      return `<div class="tt-line">${name}${mission} · ${cd}</div>`;
+    });
+    const extra = l.launches.length > 3 ? `<div class="tt-line">+${l.launches.length - 3} more</div>` : "";
+    return `<div class="tt-title">${esc(l.padName || l.location)}</div>
+      ${lines.join("")}${extra}
+      <div class="tt-note">The Space Devs LL2 · click for nearby articles</div>`;
   }
   if (id.kind === "lane") {
     const tier = id.lane.type === "middle" ? "Secondary" : "Major";

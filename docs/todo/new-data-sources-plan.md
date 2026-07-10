@@ -1,7 +1,7 @@
 # Implementation plan: new keyless data sources
 
-Status: **proposed, not started** (2026-07-10). Nothing in this document is
-implemented yet.
+Status: **Phases 1 + 2 complete** (2026-07-10). Phases 1.1–1.3 and 2.1–2.3
+are implemented and bootable. Phases 3–4 remain proposed.
 
 This is a self-contained work plan for adding new data layers/overlays to Wiki
 Globe. Every source below requires **no API key**. Read this whole file, then
@@ -74,7 +74,7 @@ Run the app (`python -m http.server 8080` or `preview_start` with the
 
 ## Phase 1 — highest payoff, lowest risk
 
-### 1.1 USGS Earthquakes (live point layer)
+### 1.1 USGS Earthquakes (live point layer) — ✅ DONE
 
 - **Endpoint:** `https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson`
   (variants: `all_hour`, `all_week`, `2.5_week`, `4.5_month`). Plain GeoJSON,
@@ -105,7 +105,7 @@ Run the app (`python -m http.server 8080` or `preview_start` with the
 - **Verify:** toggle on, `window.__globe.earthquakes` count > 0, badge LIVE,
   hover a dot, click opens panel, focus Moon → layer hides, back → restores.
 
-### 1.2 Open-Meteo Air Quality (new heatmap weather modes)
+### 1.2 Open-Meteo Air Quality (new heatmap weather modes) — ✅ DONE
 
 - **Endpoint:** `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=…&longitude=…&hourly=pm2_5,us_aqi&…`
   — same provider, request/response shape, and multi-point batching as the
@@ -128,7 +128,7 @@ Run the app (`python -m http.server 8080` or `preview_start` with the
 - **Verify:** select AQI mode, badge → `…` → `LIVE`, hover shows formatted
   value, tooltip fmt correct, mode switching back to temperature still works.
 
-### 1.3 More Open-Meteo grid modes (same plumbing as 1.2)
+### 1.3 More Open-Meteo grid modes (same plumbing as 1.2) — ✅ DONE
 
 Once 1.2 lands the endpoint-per-metric branching, each of these is one more
 `METRICS` entry plus a URL/param builder. Both keyless, CORS ok, same
@@ -147,7 +147,7 @@ provider attribution.
 
 ## Phase 2 — strong visuals, moderate effort
 
-### 2.1 NASA EONET natural events (live point/category layer)
+### 2.1 NASA EONET natural events (live point/category layer) — ✅ DONE
 
 - **Endpoint:** `https://eonet.gsfc.nasa.gov/api/v3/events?status=open` —
   wildfires, volcanoes, severe storms, sea/lake ice. No key, CORS ok, NASA
@@ -166,7 +166,7 @@ provider attribution.
 - **Overlap note:** deliberately chosen over GDACS (similar coverage, EONET
   has the cleaner API). Do not add both.
 
-### 2.2 NOAA SWPC aurora oval (live polar overlay)
+### 2.2 NOAA SWPC aurora oval (live polar overlay) — ✅ DONE
 
 - **Endpoint:** `https://services.swpc.noaa.gov/json/ovation_aurora_latest.json`
   — `coordinates: [[lon 0–359, lat -90–90, probability 0–100], …]` full-globe
@@ -184,7 +184,7 @@ provider attribution.
   Canada; probability tooltip matches raw JSON spot-checks; equator fully
   transparent.
 
-### 2.3 Launch Library 2 — upcoming rocket launches (live markers)
+### 2.3 Launch Library 2 — upcoming rocket launches (live markers) — ✅ DONE
 
 - **Endpoint:** `https://ll.thespacedevs.com/2.2.0/launch/upcoming/?limit=30&mode=list`
   — unauthenticated quota ~15 req/hr, so fetch once on toggle-on and refresh

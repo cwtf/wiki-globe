@@ -33,6 +33,8 @@ const QUOTA_COOLDOWN_MS = 15 * 60 * 1000; // back-off after hourly/daily 429
 const CHUNK = 60;                     // locations per batched API request
 const CACHE_KEY = "wetbulb-cache-v1"; // last good dataset, for rate-limited sessions
 const AQ_CACHE_KEY = "aq-cache-v1";   // separate cache for air-quality data
+const FLOOD_CACHE_KEY = "flood-cache-v1"; // separate cache for flood data
+const CLIMATE_CACHE_KEY = "climate-cache-v1"; // separate cache for climate projection data
 const CACHE_MAX_AGE_MS = 24 * 3600 * 1000;
 const CANVAS_W = 720;                 // 0.5°/px weather overlay
 const CANVAS_H = 360;
@@ -133,6 +135,43 @@ export const METRICS = {
     legend: [
       ["0", "#3fd98f"], ["50", "#facc15"], ["100", "#fb923c"],
       ["150", "#ef4444"], ["200", "#a855f7"], ["300+", "#881337"],
+    ],
+  },
+  riverDischarge: {
+    label: "River discharge", kind: "weather", dataSource: "flood",
+    value: (v) => v.discharge, fmt: (x) => `${x.toFixed(x >= 100 ? 0 : 1)} m³/s`,
+    stops: [
+      [0, [63, 217, 143]], [10, [79, 195, 247]], [100, [74, 125, 255]],
+      [500, [168, 85, 247]], [2000, [239, 68, 68]], [10000, [136, 19, 55]],
+    ],
+    legend: [
+      ["0", "#3fd98f"], ["10", "#4fc3f7"], ["100", "#4a7dff"],
+      ["500", "#a855f7"], ["2k", "#ef4444"], ["10k+", "#881337"],
+    ],
+  },
+  temp2050: {
+    label: "Temp 2050 (projection)", kind: "weather", dataSource: "climate",
+    value: (v) => v.tempMax, fmt: degC,
+    stops: [
+      [-40, [110, 90, 220]], [-20, [122, 165, 255]], [0, [79, 195, 247]],
+      [12, [63, 217, 143]], [22, [250, 204, 21]], [32, [251, 146, 60]],
+      [40, [239, 68, 68]], [48, [217, 70, 239]],
+    ],
+    legend: [
+      ["-40°", "#6e5adc"], ["-20°", "#7aa5ff"], ["0°", "#4fc3f7"],
+      ["12°", "#3fd98f"], ["22°", "#facc15"], ["32°", "#fb923c"], ["48°C", "#ef4444"],
+    ],
+  },
+  aurora: {
+    label: "Aurora oval", kind: "aurora",
+    value: (v) => v.probability, fmt: (x) => `${Math.round(x)}% chance`,
+    stops: [
+      [0, [63, 255, 143]], [10, [63, 255, 143]], [25, [100, 255, 180]],
+      [50, [130, 255, 220]], [75, [180, 255, 240]], [100, [220, 255, 250]],
+    ],
+    legend: [
+      ["0%", "#3fff8f"], ["25%", "#64ffb4"], ["50%", "#82ffdc"],
+      ["75%", "#b4fff0"], ["100%", "#dcfffa"],
     ],
   },
   gdpNominal: {
@@ -366,6 +405,8 @@ export class HeatmapLayer {
     this._gen = 0;                    // overlay rebuild generation (latest wins)
     this._loadedSources = new Set();  // which data sources have been fetched
     this._sourceLastFetch = {};       // per-source last fetch timestamp
+    this.aurora = null;               // NOAA SWPC aurora grid (lazy)
+    this._auroraLoading = false;
   }
 
   get metric() {
@@ -391,8 +432,13 @@ export class HeatmapLayer {
           lat, lon: -180 + c * this.step,
           tw: null, t: null, rh: null,   // values at the displayed hour
           pm25: null, aqi: null,         // air quality at the displayed hour
+          discharge: null,               // river discharge at the displayed day
+          tempMax: null,                 // climate projection max temp
           tArr: null, rhArr: null,        // full hourly history (weather)
           pm25Arr: null, aqiArr: null,    // full hourly history (air quality)
+          dischargeArr: null,             // full daily history (flood)
+          tempMaxArr: null,               // full daily history (climate)
+          probability: null,              // aurora probability at this cell
         });
       }
     }
@@ -423,6 +469,9 @@ export class HeatmapLayer {
     } else if (this.metric.kind === "skyscraper") {
       if (this.skyscrapers) this._scheduleRebuild();
       else this._loadSkyscrapers();
+    } else if (this.metric.kind === "aurora") {
+      if (this.aurora) this._scheduleRebuild();
+      else this._loadAurora();
     } else {
       // country/region choropleths; region modes also need admin-1 polygons
       const needCountry = !this.geo || this.countryStatsMeta.fallback;
@@ -478,6 +527,10 @@ export class HeatmapLayer {
       const aq = s.aqiArr?.[i];
       s.pm25 = pm ?? null;
       s.aqi = aq ?? null;
+      const dc = s.dischargeArr?.[i];
+      s.discharge = dc ?? null;
+      const tm = s.tempMaxArr?.[i];
+      s.tempMax = tm ?? null;
     }
   }
 
@@ -529,7 +582,7 @@ export class HeatmapLayer {
           }
         }
       }
-      const okField = src === "airquality" ? "pm25Arr" : "tArr";
+      const okField = { airquality: "pm25Arr", flood: "dischargeArr", climate: "tempMaxArr" }[src] ?? "tArr";
       this.okCount = this.samples.filter((s) => s[okField]).length;
       if (this.okCount > 0 && this._rawTimes) {
         this._finalize();
@@ -564,9 +617,10 @@ export class HeatmapLayer {
   // times/timeline bookkeeping shared by live loads and cache restores
   _finalize() {
     const now = Date.now();
+    const isDaily = this._dataSource === "flood" || this._dataSource === "climate";
     this.times = this._rawTimes
-      .map((t) => Date.parse(`${t}:00Z`))
-      .filter((t) => t <= now);
+      .map((t) => isDaily ? Date.parse(`${t}T00:00Z`) : Date.parse(`${t}:00Z`))
+      .filter((t) => this._dataSource === "climate" || t <= now);
     this.timeIdx = this.selTime == null
       ? this.times.length - 1
       : nearestIndex(this.times, this.selTime);
@@ -576,7 +630,7 @@ export class HeatmapLayer {
   }
 
   _saveCache(src = "weather") {
-    const key = src === "airquality" ? AQ_CACHE_KEY : CACHE_KEY;
+    const key = { airquality: AQ_CACHE_KEY, flood: FLOOD_CACHE_KEY, climate: CLIMATE_CACHE_KEY }[src] ?? CACHE_KEY;
     const payload = {
       v: 1,
       step: this.step,
@@ -586,6 +640,10 @@ export class HeatmapLayer {
     if (src === "airquality") {
       payload.pm25 = this.samples.map((s) => s.pm25Arr?.map(round1) ?? []);
       payload.aqi = this.samples.map((s) => s.aqiArr?.map(round1) ?? []);
+    } else if (src === "flood") {
+      payload.discharge = this.samples.map((s) => s.dischargeArr?.map(round1) ?? []);
+    } else if (src === "climate") {
+      payload.tempMax = this.samples.map((s) => s.tempMaxArr?.map(round1) ?? []);
     } else {
       payload.t = this.samples.map((s) => s.tArr?.map(round1) ?? []);
       payload.rh = this.samples.map((s) => s.rhArr?.map(round1) ?? []);
@@ -595,7 +653,7 @@ export class HeatmapLayer {
   }
 
   _restoreCache(src = "weather") {
-    const key = src === "airquality" ? AQ_CACHE_KEY : CACHE_KEY;
+    const key = { airquality: AQ_CACHE_KEY, flood: FLOOD_CACHE_KEY, climate: CLIMATE_CACHE_KEY }[src] ?? CACHE_KEY;
     try {
       const c = JSON.parse(localStorage.getItem(key) ?? "null");
       if (c?.v !== 1 || c.step !== this.step) return false;
@@ -603,6 +661,12 @@ export class HeatmapLayer {
       if (src === "airquality") {
         if (c.pm25?.length !== this.samples.length) return false;
         this.samples.forEach((s, i) => { s.pm25Arr = c.pm25[i]; s.aqiArr = c.aqi[i]; });
+      } else if (src === "flood") {
+        if (c.discharge?.length !== this.samples.length) return false;
+        this.samples.forEach((s, i) => { s.dischargeArr = c.discharge[i]; });
+      } else if (src === "climate") {
+        if (c.tempMax?.length !== this.samples.length) return false;
+        this.samples.forEach((s, i) => { s.tempMaxArr = c.tempMax[i]; });
       } else {
         if (c.t?.length !== this.samples.length || !c.rawTimes?.length) return false;
         this.samples.forEach((s, i) => { s.tArr = c.t[i]; s.rhArr = c.rh[i]; });
@@ -617,15 +681,29 @@ export class HeatmapLayer {
   async _fetchChunk(chunk, src = "weather") {
     const lats = chunk.map((s) => s.lat).join(",");
     const lons = chunk.map((s) => s.lon).join(",");
-    const base = src === "airquality"
-      ? "https://air-quality-api.open-meteo.com/v1/air-quality"
-      : "https://api.open-meteo.com/v1/forecast";
-    const hourly = src === "airquality"
-      ? "pm2_5,us_aqi"
-      : "temperature_2m,relative_humidity_2m";
-    const url = `${base}?latitude=${lats}&longitude=${lons}` +
-      `&hourly=${hourly}` +
-      `&past_days=${PAST_DAYS}&forecast_days=1&timezone=UTC`;
+    let url;
+    if (src === "airquality") {
+      url = "https://air-quality-api.open-meteo.com/v1/air-quality" +
+        `?latitude=${lats}&longitude=${lons}` +
+        "&hourly=pm2_5,us_aqi" +
+        `&past_days=${PAST_DAYS}&forecast_days=1&timezone=UTC`;
+    } else if (src === "flood") {
+      url = "https://flood-api.open-meteo.com/v1/flood" +
+        `?latitude=${lats}&longitude=${lons}` +
+        "&daily=river_discharge" +
+        `&past_days=${PAST_DAYS}&forecast_days=7&timezone=UTC`;
+    } else if (src === "climate") {
+      url = "https://climate-api.open-meteo.com/v1/climate" +
+        `?latitude=${lats}&longitude=${lons}` +
+        "&daily=temperature_2m_max" +
+        "&start_date=2050-01-01&end_date=2050-12-31" +
+        "&models=MRI_AGCM3_2_S";
+    } else {
+      url = "https://api.open-meteo.com/v1/forecast" +
+        `?latitude=${lats}&longitude=${lons}` +
+        "&hourly=temperature_2m,relative_humidity_2m" +
+        `&past_days=${PAST_DAYS}&forecast_days=1&timezone=UTC`;
+    }
     const resp = await fetch(url);
     if (!resp.ok) {
       let reason = "";
@@ -638,18 +716,30 @@ export class HeatmapLayer {
     const data = await resp.json();
     const list = Array.isArray(data) ? data : [data];
     for (let i = 0; i < chunk.length && i < list.length; i++) {
-      const hh = list[i]?.hourly;
-      if (!hh?.time) continue;
       const s = chunk[i];
       if (src === "airquality") {
+        const hh = list[i]?.hourly;
+        if (!hh?.time) continue;
         if (hh.pm2_5) s.pm25Arr = hh.pm2_5;
         if (hh.us_aqi) s.aqiArr = hh.us_aqi;
+        this._rawTimes ??= hh.time;
+      } else if (src === "flood") {
+        const dd = list[i]?.daily;
+        if (!dd?.time) continue;
+        if (dd.river_discharge) s.dischargeArr = dd.river_discharge;
+        this._rawTimes ??= dd.time;
+      } else if (src === "climate") {
+        const dd = list[i]?.daily;
+        if (!dd?.time) continue;
+        if (dd.temperature_2m_max) s.tempMaxArr = dd.temperature_2m_max;
+        this._rawTimes ??= dd.time;
       } else {
-        if (!hh.temperature_2m || !hh.relative_humidity_2m) continue;
+        const hh = list[i]?.hourly;
+        if (!hh?.time || !hh.temperature_2m || !hh.relative_humidity_2m) continue;
         s.tArr = hh.temperature_2m;
         s.rhArr = hh.relative_humidity_2m;
+        this._rawTimes ??= hh.time;
       }
-      this._rawTimes ??= hh.time; // identical range for every location
     }
   }
 
@@ -902,6 +992,47 @@ export class HeatmapLayer {
     }
   }
 
+  // --- aurora data ---------------------------------------------------------------
+
+  // NOAA SWPC ovation aurora forecast: a full-globe grid of aurora
+  // probability (0–100) at ~1° resolution. We map it onto the existing
+  // sample grid for bilinear interpolation and canvas rendering.
+  async _loadAurora() {
+    if (this._auroraLoading || this.aurora) return;
+    this._auroraLoading = true;
+    this.source = "loading";
+    try {
+      const resp = await fetch(
+        "https://services.swpc.noaa.gov/json/ovation_aurora_latest.json"
+      );
+      if (!resp.ok) throw new Error(`NOAA SWPC ${resp.status}`);
+      const data = await resp.json();
+      if (!Array.isArray(data?.coordinates)) throw new Error("aurora payload missing coordinates");
+      // Build a Map keyed by rounded lat,lon for fast lookup
+      const grid = new Map();
+      for (const [lon, lat, prob] of data.coordinates) {
+        // NOAA uses lon 0–359 east; convert to -180…180
+        const adjLon = lon > 180 ? lon - 360 : lon;
+        grid.set(`${Math.round(lat)},${Math.round(adjLon)}`, prob);
+      }
+      // Populate sample grid by finding nearest NOAA point
+      for (const s of this.samples) {
+        const key = `${Math.round(s.lat)},${Math.round(s.lon)}`;
+        s.probability = grid.get(key) ?? null;
+      }
+      this.aurora = { grid, totalPoints: data.coordinates.length };
+      this.source = "live";
+      this.okCount = this.samples.filter((s) => s.probability != null).length;
+      this._scheduleRebuild();
+      this.onDataChanged?.();
+    } catch (e) {
+      console.warn("[heatmap] aurora data unavailable:", e.message);
+      this.source = "idle";
+    } finally {
+      this._auroraLoading = false;
+    }
+  }
+
   _skyscraperCellAt(lat, lon) {
     if (!this.skyscrapers) return null;
     const { cellDeg, cols, cells } = this.skyscrapers;
@@ -997,13 +1128,28 @@ export class HeatmapLayer {
       [this.samples[r1 * this.cols + c0], tr * (1 - tc)],
       [this.samples[r1 * this.cols + c1], tr * tc],
     ];
-    let tw = 0, t = 0, rh = 0, pm25 = 0, aqi = 0, w = 0;
-    const isAQ = this._dataSource === "airquality";
-    const checkField = isAQ ? "pm25" : "tw";
+    if (m.kind === "aurora") {
+      let prob = 0, w = 0;
+      for (const [s, wt] of corners) {
+        if (s.probability == null || wt === 0) continue;
+        prob += s.probability * wt; w += wt;
+      }
+      if (w < 0.25) return null;
+      return {
+        kind: "weather", metric: this.mode,
+        probability: prob / w,
+        when: this.timeLabel(),
+      };
+    }
+    let tw = 0, t = 0, rh = 0, pm25 = 0, aqi = 0, discharge = 0, tempMax = 0, w = 0;
+    const src = this._dataSource;
+    const checkField = { airquality: "pm25", flood: "discharge", climate: "tempMax" }[src] ?? "tw";
     for (const [s, wt] of corners) {
       if (s[checkField] == null || wt === 0) continue;
       if (s.tw != null) { tw += s.tw * wt; t += s.t * wt; rh += s.rh * wt; }
       if (s.pm25 != null) { pm25 += s.pm25 * wt; aqi += (s.aqi ?? 0) * wt; }
+      if (s.discharge != null) discharge += s.discharge * wt;
+      if (s.tempMax != null) tempMax += s.tempMax * wt;
       w += wt;
     }
     if (w < 0.25) return null; // mostly missing data around this point
@@ -1011,6 +1157,7 @@ export class HeatmapLayer {
       kind: "weather", metric: this.mode,
       tw: tw / w, t: t / w, rh: rh / w,
       pm25: pm25 / w, aqi: aqi / w,
+      discharge: discharge / w, tempMax: tempMax / w,
       when: this.timeLabel(),
     };
   }
@@ -1019,6 +1166,7 @@ export class HeatmapLayer {
     const kind = this.metric?.kind;
     if (kind === "conflict") return this._renderConflictCanvas();
     if (kind === "skyscraper") return this._renderSkyscraperCanvas();
+    if (kind === "aurora") return this._renderWeatherCanvas();
     return kind === "country" || kind === "region"
       ? this._renderCountryCanvas()
       : this._renderWeatherCanvas();
@@ -1184,11 +1332,21 @@ export class HeatmapLayer {
       const count = this.geo.filter((f) => statValue(this.countryStats[f.id]?.[m.statKey]) != null).length;
       return { count, detail: `${count} countries · ${this.countryStatsMeta.sourceLabel}`, source: "data" };
     }
+    if (m.kind === "aurora") {
+      if (!this.aurora) {
+        return { count: 0, detail: "loading aurora forecast…", source: "loading" };
+      }
+      return {
+        count: this.okCount,
+        detail: `${this.okCount} grid points · ${this.step}° grid · NOAA SWPC`,
+        source: this.source,
+      };
+    }
     const note = {
       limited: " · API rate-limited, retrying later",
       cache: " · cached data (API rate-limited)",
     }[this.source] ?? "";
-    const api = this._dataSource === "airquality" ? "Open-Meteo Air Quality" : "Open-Meteo";
+    const api = { airquality: "Open-Meteo Air Quality", flood: "Open-Meteo Flood", climate: "Open-Meteo Climate (MRI-AGCM3-2-S 2050)" }[this._dataSource] ?? "Open-Meteo";
     return {
       count: this.okCount,
       detail: `${this.okCount} grid points · ${this.step}° grid · ${api}${note}`,

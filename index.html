@@ -225,6 +225,40 @@
     </div>
 
     <div class="layer" data-scope="earth">
+      <label class="row main">
+        <input type="checkbox" id="chk-events" />
+        <span class="dot dot-event"></span>
+        <span class="name">Natural events</span>
+        <span class="badge loading" id="badge-events">…</span>
+        <span class="count" id="count-events">0</span>
+      </label>
+      <div class="row sub cat-filters" id="event-cat-filters">
+        <label><input type="checkbox" class="chk-event-cat" data-cat="wildfires" checked /><span>Wildfires</span></label>
+        <label><input type="checkbox" class="chk-event-cat" data-cat="volcanoes" checked /><span>Volcanoes</span></label>
+        <label><input type="checkbox" class="chk-event-cat" data-cat="severeStorms" checked /><span>Storms</span></label>
+        <label><input type="checkbox" class="chk-event-cat" data-cat="seaLakeIce" checked /><span>Ice</span></label>
+        <label><input type="checkbox" class="chk-event-cat" data-cat="floods" checked /><span>Floods</span></label>
+        <label><input type="checkbox" class="chk-event-cat" data-cat="drought" /><span>Drought</span></label>
+        <label><input type="checkbox" class="chk-event-cat" data-cat="temperatureExt" /><span>Temp</span></label>
+        <label><input type="checkbox" class="chk-event-cat" data-cat="dustHaze" /><span>Dust</span></label>
+        <label><input type="checkbox" class="chk-event-cat" data-cat="landslides" /><span>Landslides</span></label>
+        <label><input type="checkbox" class="chk-event-cat" data-cat="manmade" /><span>Manmade</span></label>
+        <label><input type="checkbox" class="chk-event-cat" data-cat="waterColor" /><span>Water</span></label>
+        <label><input type="checkbox" class="chk-event-cat" data-cat="snow" /><span>Snow</span></label>
+      </div>
+    </div>
+
+    <div class="layer" data-scope="earth">
+      <label class="row main">
+        <input type="checkbox" id="chk-launches" />
+        <span class="dot dot-launch"></span>
+        <span class="name">Launches</span>
+        <span class="badge loading" id="badge-launches">…</span>
+        <span class="count" id="count-launches">0</span>
+      </label>
+    </div>
+
+    <div class="layer" data-scope="earth">
       <label class="row main" for="sel-heatmap">
         <span class="dot dot-heat"></span>
         <span class="name">Data overlay</span>
@@ -241,6 +275,15 @@
           <optgroup label="Air quality — live">
             <option value="pm25">PM2.5</option>
             <option value="aqi">Air quality (US AQI)</option>
+          </optgroup>
+          <optgroup label="Hydrology — live">
+            <option value="riverDischarge">River discharge</option>
+          </optgroup>
+          <optgroup label="Climate projection — live">
+            <option value="temp2050">Temp 2050 (projection)</option>
+          </optgroup>
+          <optgroup label="Space weather — live">
+            <option value="aurora">Aurora oval</option>
           </optgroup>
           <optgroup label="Country statistics">
             <option value="gdpNominal">GDP per capita (nominal)</option>
@@ -419,7 +462,7 @@
 
     <div class="attrib">
       Major moon imagery: NASA/JPL/USGS, NASA/JPL-Caltech, NASA New Horizons, and Bjorn Jonsson / J N Squire<br />
-      CelesTrak · OpenSky · adsbdb · Open-Meteo (Weather + Air Quality) · World Bank / OWID / UNDP · Wikidata · NASA LRO · Solar System Scope · NASA New Horizons · AIS: aisstream / Digitraffic · USGS Earthquakes
+      CelesTrak · OpenSky · adsbdb · Open-Meteo (Weather + Air Quality + Flood + Climate) · World Bank / OWID / UNDP · Wikidata · NASA LRO · Solar System Scope · NASA New Horizons · AIS: aisstream / Digitraffic · USGS Earthquakes · NASA EONET · NOAA SWPC · The Space Devs (LL2)
       (<a href="#" id="ais-key-link" title="Set an aisstream.io API key for global live ship coverage">key</a>)<br />
       <a class="github-logo-link" href="https://github.com/cwtf/" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
         <svg class="github-logo" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
