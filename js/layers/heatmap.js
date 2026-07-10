@@ -57,7 +57,9 @@ const TIME_FMT = new Intl.DateTimeFormat("en", {
 
 const money = (x) => `$${Math.round(x).toLocaleString("en-US")}`;
 const degC = (x) => `${x.toFixed(1)} °C`;
+const percent = (x) => `${Math.round(x)}%`;
 const percent1 = (x) => `${x.toFixed(Math.abs(x) >= 10 ? 0 : 1)}%`;
+const fixed3 = (x) => x.toFixed(3);
 const years = (x) => `${x.toFixed(1)} years`;
 const per1000 = (x) => `${x.toFixed(x >= 10 ? 0 : 1)}/1k`;
 const tonnes = (x) => `${x.toFixed(x >= 10 ? 0 : 1)} t`;
