@@ -1051,6 +1051,8 @@ function setupResponsiveSideMenus() {
     const onCompactChanged = (event) => {
       if (panel.rightPanel) {
         if (!rightPanelUserChanged && event.matches) setRightPanelCollapsed(true);
+        else if (!rightPanelUserChanged && !event.matches && !panel.defaultCollapsed)
+          setRightPanelActive(panel.id, { forceOpen: panel.id === "wiki" });
       } else if (!userChanged) {
         setCollapsed(panel.defaultCollapsed || event.matches);
       }
@@ -1074,6 +1076,11 @@ function setupResponsiveSideMenus() {
       setRightPanelCollapsed(true);
     }
   });
+  if (!compact.matches && !rightPanelUserChanged) {
+    const defaultRightPanel = rightPanels.find((p) => !p.defaultCollapsed);
+    if (defaultRightPanel)
+      setRightPanelActive(defaultRightPanel.id, { forceOpen: defaultRightPanel.id === "wiki" });
+  }
   syncRightPanels();
   setupRightPanelResize();
 }
