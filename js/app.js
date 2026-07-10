@@ -5,6 +5,7 @@
 import { SatelliteLayer } from "./layers/satellites.js";
 import { FlightLayer } from "./layers/flights.js";
 import { ShippingLayer } from "./layers/shipping.js";
+import { EarthquakesLayer } from "./layers/earthquakes.js";
 import { HeatmapLayer, METRICS, heatStressLabel, RES_STEPS, loadHeatmapMetrics } from "./layers/heatmap.js";
 import { TrueSizeLayer } from "./layers/truesize.js";
 import { BODY_CHOICE_GROUPS } from "./bodies.js";
@@ -95,6 +96,7 @@ async function boot() {
   const sats = new SatelliteLayer(viewer);
   const flights = new FlightLayer(viewer);
   const ships = new ShippingLayer(viewer);
+  const quakes = new EarthquakesLayer(viewer);
   const heat = new HeatmapLayer(viewer); // lazy: fetches when a mode is selected
   const truesize = new TrueSizeLayer(viewer);
   const sun = new SunLayer(viewer);
@@ -113,14 +115,17 @@ async function boot() {
     sats: document.getElementById("chk-sats"),
     flights: document.getElementById("chk-flights"),
     ships: document.getElementById("chk-ships"),
+    quakes: document.getElementById("chk-quakes"),
   };
   sats.setVisible(layerToggles.sats.checked);
   flights.setVisible(layerToggles.flights.checked);
   ships.setVisible(layerToggles.ships.checked);
+  quakes.setVisible(layerToggles.quakes.checked);
 
   ships.init();
   sats.init();
   flights.init();
+  quakes.init();
   sun.init();
   moon.init();
   mars.init();
@@ -328,6 +333,7 @@ async function boot() {
         sats.setVisible(false);
         flights.setVisible(false);
         ships.setVisible(false);
+        quakes.setVisible(false);
         if (heatModeSuspended == null) heatModeSuspended = heat.mode;
         if (heatModeSuspended) heat.setMode(null);
       }
@@ -343,6 +349,7 @@ async function boot() {
     sats.setVisible(layerToggles.sats.checked);
     flights.setVisible(layerToggles.flights.checked);
     ships.setVisible(layerToggles.ships.checked);
+    quakes.setVisible(layerToggles.quakes.checked);
     if (heatModeSuspended) heat.setMode(heatModeSuspended);
     heatModeSuspended = null;
   }
@@ -380,6 +387,7 @@ async function boot() {
     sats.tick(now);
     flights.tick(now);
     ships.tick(now);
+    quakes.tick(now);
     for (const layer of Object.values(bodyLayers)) layer.tick();
 
     const height = viewer.camera.positionCartographic.height;
@@ -481,6 +489,11 @@ async function boot() {
     }
     if (id?.kind === "vessel") return; // details are in the hover tooltip
     if (id?.kind === "truesize") return; // drag / right-click handled by the layer
+    if (id?.kind === "quake") {
+      const q = id.quake;
+      wiki.open(q.lat, q.lon);
+      return;
+    }
     if (id?.kind === "wiki") {
       wiki.focusArticle(id.article, { openPopup: true }); // highlight row + open article
       return;
@@ -572,6 +585,8 @@ async function boot() {
   bind("chk-flight-routes", (v) => flights.setRoutesVisible(v));
   bind("chk-ships", (v) => ships.setVisible(v));
   bind("chk-vessel-routes", (v) => ships.setRoutesVisible(v));
+  bind("chk-quakes", (v) => quakes.setVisible(v));
+  document.getElementById("sel-quake-feed").addEventListener("change", (e) => quakes.setFeed(e.target.value));
   // heat-map mode dropdown: weather modes show the resolution/timeline rows,
   // country modes only the legend
   const selHeat = document.getElementById("sel-heatmap");
@@ -716,6 +731,7 @@ async function boot() {
     sats: document.getElementById("badge-sats"),
     flights: document.getElementById("badge-flights"),
     ships: document.getElementById("badge-ships"),
+    quakes: document.getElementById("badge-quakes"),
     heat: document.getElementById("badge-heat"),
     moon: document.getElementById("badge-moon"),
     mars: document.getElementById("badge-mars"),
@@ -725,6 +741,7 @@ async function boot() {
     sats: document.getElementById("count-sats"),
     flights: document.getElementById("count-flights"),
     ships: document.getElementById("count-ships"),
+    quakes: document.getElementById("count-quakes"),
     heat: document.getElementById("count-heat"),
     moon: document.getElementById("count-moon"),
     mars: document.getElementById("count-mars"),
@@ -767,6 +784,11 @@ async function boot() {
     countEls.ships.textContent = shc.count;
     countEls.ships.title = shc.detail;
 
+    const qc = quakes.counts();
+    setBadge(badgeEls.quakes, qc.source);
+    badgeEls.quakes.title = qc.detail ?? "";
+    countEls.quakes.textContent = qc.count;
+
     const hc = heat.counts();
     setBadge(badgeEls.heat, hc.source);
     countEls.heat.textContent = hc.count;
@@ -789,7 +811,7 @@ async function boot() {
   setTimeout(() => document.getElementById("hint").classList.add("faded"), 15000);
 
   // handy for debugging from the console
-  window.__globe = { viewer, sats, flights, ships, heat, wiki, truesize, search, agent, sun, moon, mars, planets, childMoons, bodyLayers };
+  window.__globe = { viewer, sats, flights, ships, quakes, heat, wiki, truesize, search, agent, sun, moon, mars, planets, childMoons, bodyLayers };
 }
 
 function setupResponsiveSideMenus() {
@@ -1369,7 +1391,9 @@ function tooltipHtml(id) {
       wetbulb: `Air ${s.t.toFixed(1)} °C · humidity ${Math.round(s.rh)}%`,
       temp: `Wet-bulb ${s.tw.toFixed(1)} °C · humidity ${Math.round(s.rh)}%`,
       humidity: `Air ${s.t.toFixed(1)} °C · wet-bulb ${s.tw.toFixed(1)} °C`,
-    }[s.metric];
+      pm25: s.aqi != null ? `US AQI ${Math.round(s.aqi)}` : null,
+      aqi: s.pm25 != null ? `PM2.5 ${s.pm25.toFixed(s.pm25 >= 10 ? 0 : 1)} µg/m³` : null,
+    }[s.metric] ?? "";
     const stress = s.metric === "wetbulb" ? `${esc(heatStressLabel(s.tw))} · ` : "";
     return `<div class="tt-title">${esc(m.label)} ${esc(m.fmt(m.value(s)))}</div>
       <div class="tt-line">${others}</div>
@@ -1385,6 +1409,14 @@ function tooltipHtml(id) {
     return `<div class="tt-title">${esc(c.name)}</div>
       <div class="tt-line">${esc(c.areaLabel)} · true-size outline</div>
       <div class="tt-guide">${guide}</div>`;
+  }
+  if (id.kind === "quake") {
+    const q = id.quake;
+    const ago = timeAgo(q.time);
+    const tsunami = q.tsunami ? " · tsunami flag" : "";
+    return `<div class="tt-title">M${q.mag.toFixed(1)} · ${q.depth.toFixed(0)} km deep</div>
+      <div class="tt-line">${esc(q.place || "—")}</div>
+      <div class="tt-note">${ago}${tsunami} · USGS · click for nearby articles</div>`;
   }
   if (id.kind === "lane") {
     const tier = id.lane.type === "middle" ? "Secondary" : "Major";
@@ -1453,6 +1485,18 @@ function tooltipHtml(id) {
 function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function timeAgo(epochMs) {
+  const diff = Date.now() - epochMs;
+  if (diff < 0) return "just now";
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return "just now";
+  if (min < 60) return `${min} min ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr} h ago`;
+  const days = Math.floor(hr / 24);
+  return `${days} d ago`;
 }
 
 boot().catch((e) => {

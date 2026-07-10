@@ -32,6 +32,7 @@ const RETRY_MS = 90 * 1000;           // re-attempt after failed/partial loads
 const QUOTA_COOLDOWN_MS = 15 * 60 * 1000; // back-off after hourly/daily 429
 const CHUNK = 60;                     // locations per batched API request
 const CACHE_KEY = "wetbulb-cache-v1"; // last good dataset, for rate-limited sessions
+const AQ_CACHE_KEY = "aq-cache-v1";   // separate cache for air-quality data
 const CACHE_MAX_AGE_MS = 24 * 3600 * 1000;
 const CANVAS_W = 720;                 // 0.5°/px weather overlay
 const CANVAS_H = 360;
@@ -108,6 +109,30 @@ export const METRICS = {
     legend: [
       ["0%", "#d97706"], ["25%", "#facc15"], ["50%", "#3fd98f"],
       ["75%", "#4fc3f7"], ["100%", "#4a7dff"],
+    ],
+  },
+  pm25: {
+    label: "PM2.5", kind: "weather", dataSource: "airquality",
+    value: (v) => v.pm25, fmt: micrograms,
+    stops: [
+      [0, [63, 217, 143]], [12, [250, 204, 21]], [35, [251, 146, 60]],
+      [55, [239, 68, 68]], [150, [168, 85, 247]], [250, [136, 19, 55]],
+    ],
+    legend: [
+      ["0", "#3fd98f"], ["12", "#facc15"], ["35", "#fb923c"],
+      ["55", "#ef4444"], ["150", "#a855f7"], ["250+", "#881337"],
+    ],
+  },
+  aqi: {
+    label: "Air quality (US AQI)", kind: "weather", dataSource: "airquality",
+    value: (v) => v.aqi, fmt: (x) => `${Math.round(x)} AQI`,
+    stops: [
+      [0, [63, 217, 143]], [50, [250, 204, 21]], [100, [251, 146, 60]],
+      [150, [239, 68, 68]], [200, [168, 85, 247]], [300, [136, 19, 55]],
+    ],
+    legend: [
+      ["0", "#3fd98f"], ["50", "#facc15"], ["100", "#fb923c"],
+      ["150", "#ef4444"], ["200", "#a855f7"], ["300+", "#881337"],
     ],
   },
   gdpNominal: {
@@ -339,6 +364,8 @@ export class HeatmapLayer {
     this._retryTimer = null;
     this._rebuildTimer = null;
     this._gen = 0;                    // overlay rebuild generation (latest wins)
+    this._loadedSources = new Set();  // which data sources have been fetched
+    this._sourceLastFetch = {};       // per-source last fetch timestamp
   }
 
   get metric() {
@@ -347,6 +374,10 @@ export class HeatmapLayer {
 
   get _weatherActive() {
     return this.metric?.kind === "weather";
+  }
+
+  get _dataSource() {
+    return this.metric?.dataSource ?? "weather";
   }
 
   _buildGrid() {
@@ -359,7 +390,9 @@ export class HeatmapLayer {
         this.samples.push({
           lat, lon: -180 + c * this.step,
           tw: null, t: null, rh: null,   // values at the displayed hour
-          tArr: null, rhArr: null,        // full hourly history
+          pm25: null, aqi: null,         // air quality at the displayed hour
+          tArr: null, rhArr: null,        // full hourly history (weather)
+          pm25Arr: null, aqiArr: null,    // full hourly history (air quality)
         });
       }
     }
@@ -377,7 +410,11 @@ export class HeatmapLayer {
     }
     if (!this.mode) return;
     if (this._weatherActive) {
-      if (Date.now() - this.lastFetch > REFRESH_MS) this._load();
+      const src = this._dataSource;
+      const srcFresh = this._loadedSources.has(src) &&
+        Date.now() - (this._sourceLastFetch[src] ?? 0) < REFRESH_MS;
+      if (!srcFresh && (Date.now() - this.lastFetch > REFRESH_MS || !this._loadedSources.has(src)))
+        this._load();
       this.timer ??= setInterval(() => this._load(), REFRESH_MS);
       if (this.okCount > 0) this._scheduleRebuild();
     } else if (this.metric.kind === "conflict") {
@@ -407,6 +444,8 @@ export class HeatmapLayer {
     this.timeIdx = -1;
     this.lastFetch = 0;
     this.source = "loading";
+    this._loadedSources = new Set();
+    this._sourceLastFetch = {};
     if (this._weatherActive) this._load();
   }
 
@@ -433,10 +472,12 @@ export class HeatmapLayer {
     for (const s of this.samples) {
       const t = s.tArr?.[i];
       const rh = s.rhArr?.[i];
-      if (t == null || rh == null) { s.t = s.rh = s.tw = null; continue; }
-      s.t = t;
-      s.rh = rh;
-      s.tw = stullWetBulb(t, rh);
+      if (t == null || rh == null) { s.t = s.rh = s.tw = null; }
+      else { s.t = t; s.rh = rh; s.tw = stullWetBulb(t, rh); }
+      const pm = s.pm25Arr?.[i];
+      const aq = s.aqiArr?.[i];
+      s.pm25 = pm ?? null;
+      s.aqi = aq ?? null;
     }
   }
 
@@ -451,6 +492,15 @@ export class HeatmapLayer {
   async _load() {
     if (!this._weatherActive) return;
     if (this.loading || Date.now() < (this.cooldownUntil ?? 0)) return;
+
+    const src = this._dataSource;
+    if (this._loadedSources.has(src) &&
+        Date.now() - (this._sourceLastFetch[src] ?? 0) < REFRESH_MS) {
+      this._applyTimeIdx();
+      this._scheduleRebuild();
+      return;
+    }
+
     this.loading = true;
     clearTimeout(this._retryTimer);
     try {
@@ -458,18 +508,20 @@ export class HeatmapLayer {
       for (let i = 0; i < this.samples.length; i += CHUNK) {
         chunks.push(this.samples.slice(i, i + CHUNK));
       }
-      this._rawTimes = null;
+      // Reset _rawTimes only when fetching a source for the first time;
+      // if both sources share the same grid, times are identical.
+      if (!this._loadedSources.has(src)) this._rawTimes = null;
       let failures = 0;
       let quotaHit = false;
       for (const chunk of chunks) {
         try {
-          await this._fetchChunk(chunk);
+          await this._fetchChunk(chunk, src);
         } catch (e) {
           if (isQuotaError(e)) { quotaHit = true; break; } // rest would 429 too
           // transient failure (or the per-minute limit) — retry once
           await sleep(1500);
           try {
-            await this._fetchChunk(chunk);
+            await this._fetchChunk(chunk, src);
           } catch (e2) {
             if (isQuotaError(e2)) { quotaHit = true; break; }
             failures++;
@@ -477,16 +529,19 @@ export class HeatmapLayer {
           }
         }
       }
-      this.okCount = this.samples.filter((s) => s.tArr).length;
+      const okField = src === "airquality" ? "pm25Arr" : "tArr";
+      this.okCount = this.samples.filter((s) => s[okField]).length;
       if (this.okCount > 0 && this._rawTimes) {
         this._finalize();
         this.source = quotaHit ? "limited" : "live";
         this.lastFetch = Date.now();
+        this._loadedSources.add(src);
+        this._sourceLastFetch[src] = this.lastFetch;
         if (!quotaHit && failures === 0 && this.okCount === this.samples.length) {
-          this._saveCache();
+          this._saveCache(src);
         }
-      } else if (this._restoreCache()) {
-        this.okCount = this.samples.filter((s) => s.tArr).length;
+      } else if (this._restoreCache(src)) {
+        this.okCount = this.samples.filter((s) => s[okField]).length;
         this._finalize();
         this.source = "cache";
       } else if (quotaHit) {
@@ -520,39 +575,56 @@ export class HeatmapLayer {
     this.onDataChanged?.();
   }
 
-  _saveCache() {
-    try {
-      localStorage.setItem(CACHE_KEY, JSON.stringify({
-        v: 1,
-        step: this.step,
-        savedAt: Date.now(),
-        rawTimes: this._rawTimes,
-        t: this.samples.map((s) => s.tArr.map(round1)),
-        rh: this.samples.map((s) => s.rhArr.map(round1)),
-      }));
-    } catch { /* storage full or unavailable — the cache is best-effort */ }
+  _saveCache(src = "weather") {
+    const key = src === "airquality" ? AQ_CACHE_KEY : CACHE_KEY;
+    const payload = {
+      v: 1,
+      step: this.step,
+      savedAt: Date.now(),
+      rawTimes: this._rawTimes,
+    };
+    if (src === "airquality") {
+      payload.pm25 = this.samples.map((s) => s.pm25Arr?.map(round1) ?? []);
+      payload.aqi = this.samples.map((s) => s.aqiArr?.map(round1) ?? []);
+    } else {
+      payload.t = this.samples.map((s) => s.tArr?.map(round1) ?? []);
+      payload.rh = this.samples.map((s) => s.rhArr?.map(round1) ?? []);
+    }
+    try { localStorage.setItem(key, JSON.stringify(payload)); }
+    catch { /* storage full or unavailable — the cache is best-effort */ }
   }
 
-  _restoreCache() {
+  _restoreCache(src = "weather") {
+    const key = src === "airquality" ? AQ_CACHE_KEY : CACHE_KEY;
     try {
-      const c = JSON.parse(localStorage.getItem(CACHE_KEY) ?? "null");
+      const c = JSON.parse(localStorage.getItem(key) ?? "null");
       if (c?.v !== 1 || c.step !== this.step) return false;
       if (Date.now() - c.savedAt > CACHE_MAX_AGE_MS) return false;
-      if (c.t?.length !== this.samples.length || !c.rawTimes?.length) return false;
-      this.samples.forEach((s, i) => { s.tArr = c.t[i]; s.rhArr = c.rh[i]; });
-      this._rawTimes = c.rawTimes;
+      if (src === "airquality") {
+        if (c.pm25?.length !== this.samples.length) return false;
+        this.samples.forEach((s, i) => { s.pm25Arr = c.pm25[i]; s.aqiArr = c.aqi[i]; });
+      } else {
+        if (c.t?.length !== this.samples.length || !c.rawTimes?.length) return false;
+        this.samples.forEach((s, i) => { s.tArr = c.t[i]; s.rhArr = c.rh[i]; });
+      }
+      if (!this._rawTimes && c.rawTimes) this._rawTimes = c.rawTimes;
       return true;
     } catch {
       return false;
     }
   }
 
-  async _fetchChunk(chunk) {
+  async _fetchChunk(chunk, src = "weather") {
     const lats = chunk.map((s) => s.lat).join(",");
     const lons = chunk.map((s) => s.lon).join(",");
-    const url = "https://api.open-meteo.com/v1/forecast" +
-      `?latitude=${lats}&longitude=${lons}` +
-      "&hourly=temperature_2m,relative_humidity_2m" +
+    const base = src === "airquality"
+      ? "https://air-quality-api.open-meteo.com/v1/air-quality"
+      : "https://api.open-meteo.com/v1/forecast";
+    const hourly = src === "airquality"
+      ? "pm2_5,us_aqi"
+      : "temperature_2m,relative_humidity_2m";
+    const url = `${base}?latitude=${lats}&longitude=${lons}` +
+      `&hourly=${hourly}` +
       `&past_days=${PAST_DAYS}&forecast_days=1&timezone=UTC`;
     const resp = await fetch(url);
     if (!resp.ok) {
@@ -567,10 +639,16 @@ export class HeatmapLayer {
     const list = Array.isArray(data) ? data : [data];
     for (let i = 0; i < chunk.length && i < list.length; i++) {
       const hh = list[i]?.hourly;
-      if (!hh?.time || !hh.temperature_2m || !hh.relative_humidity_2m) continue;
+      if (!hh?.time) continue;
       const s = chunk[i];
-      s.tArr = hh.temperature_2m;
-      s.rhArr = hh.relative_humidity_2m;
+      if (src === "airquality") {
+        if (hh.pm2_5) s.pm25Arr = hh.pm2_5;
+        if (hh.us_aqi) s.aqiArr = hh.us_aqi;
+      } else {
+        if (!hh.temperature_2m || !hh.relative_humidity_2m) continue;
+        s.tArr = hh.temperature_2m;
+        s.rhArr = hh.relative_humidity_2m;
+      }
       this._rawTimes ??= hh.time; // identical range for every location
     }
   }
@@ -919,15 +997,21 @@ export class HeatmapLayer {
       [this.samples[r1 * this.cols + c0], tr * (1 - tc)],
       [this.samples[r1 * this.cols + c1], tr * tc],
     ];
-    let tw = 0, t = 0, rh = 0, w = 0;
+    let tw = 0, t = 0, rh = 0, pm25 = 0, aqi = 0, w = 0;
+    const isAQ = this._dataSource === "airquality";
+    const checkField = isAQ ? "pm25" : "tw";
     for (const [s, wt] of corners) {
-      if (s.tw == null || wt === 0) continue;
-      tw += s.tw * wt; t += s.t * wt; rh += s.rh * wt; w += wt;
+      if (s[checkField] == null || wt === 0) continue;
+      if (s.tw != null) { tw += s.tw * wt; t += s.t * wt; rh += s.rh * wt; }
+      if (s.pm25 != null) { pm25 += s.pm25 * wt; aqi += (s.aqi ?? 0) * wt; }
+      w += wt;
     }
     if (w < 0.25) return null; // mostly missing data around this point
     return {
       kind: "weather", metric: this.mode,
-      tw: tw / w, t: t / w, rh: rh / w, when: this.timeLabel(),
+      tw: tw / w, t: t / w, rh: rh / w,
+      pm25: pm25 / w, aqi: aqi / w,
+      when: this.timeLabel(),
     };
   }
 
@@ -1104,9 +1188,10 @@ export class HeatmapLayer {
       limited: " · API rate-limited, retrying later",
       cache: " · cached data (API rate-limited)",
     }[this.source] ?? "";
+    const api = this._dataSource === "airquality" ? "Open-Meteo Air Quality" : "Open-Meteo";
     return {
       count: this.okCount,
-      detail: `${this.okCount} grid points · ${this.step}° grid · Open-Meteo${note}`,
+      detail: `${this.okCount} grid points · ${this.step}° grid · ${api}${note}`,
       source: this.loading && this.okCount === 0 ? "loading" : this.source,
     };
   }

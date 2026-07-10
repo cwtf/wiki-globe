@@ -445,6 +445,7 @@ html, body {
   color: var(--text);
 }
 
+.dot-quake { background: #ef4444; box-shadow: 0 0 6px #ef4444; }
 .dot-size { background: #ff5470; box-shadow: 0 0 6px #ff5470; }
 .dot-moon { background: #cfd6e4; box-shadow: 0 0 6px #cfd6e4; }
 .dot-mars { background: #c1583c; box-shadow: 0 0 6px #c1583c; }
