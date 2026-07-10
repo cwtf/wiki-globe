@@ -902,6 +902,7 @@ function setupResponsiveSideMenus() {
       toggle: document.getElementById("wp-toggle"),
       collapseLabel: "Collapse Wikipedia panel",
       expandLabel: "Expand Wikipedia panel",
+      defaultCollapsed: true,
       rightPanel: true,
     },
     {
@@ -910,7 +911,6 @@ function setupResponsiveSideMenus() {
       toggle: document.getElementById("agent-toggle"),
       collapseLabel: "Collapse agent panel",
       expandLabel: "Expand agent panel",
-      defaultCollapsed: true,
       rightPanel: true,
     },
   ];
