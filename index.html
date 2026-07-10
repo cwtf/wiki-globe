@@ -1,6 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wiki Globe | Interactive 3D Earth, Satellites, Flights &amp; Ships</title>
+  <meta
+    name="description"
+    content="Explore Wiki Globe, a free real-time 3D Earth atlas with live satellites, flights, ships, country data overlays, OpenStreetMap detail, and nearby Wikipedia articles."
+  />
+  <meta
+    name="keywords"
+    content="interactive globe, 3D earth, satellite tracker, flight tracker, shipping routes, Wikipedia map, CesiumJS, OpenStreetMap"
+  />
+  <meta name="author" content="Wiki Globe" />
+  <meta name="application-name" content="Wiki Globe" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="theme-color" content="#05070c" />
+  <link rel="canonical" href="https://cwtf.github.io/wiki-globe/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:site_name" content="Wiki Globe" />
+  <meta property="og:url" content="https://cwtf.github.io/wiki-globe/" />
+  <meta property="og:title" content="Wiki Globe | Live Satellites, Flights, Ships &amp; Wikipedia" />
+  <meta
+    property="og:description"
+    content="Explore a real-time 3D Earth and space atlas with live global movement layers, country data overlays, OpenStreetMap detail, and nearby Wikipedia articles."
+  />
+  <meta property="og:image" content="https://cwtf.github.io/wiki-globe/assets/earth-day.jpg" />
+  <meta property="og:image:type" content="image/jpeg" />
+  <meta property="og:image:width" content="4096" />
+  <meta property="og:image:height" content="2048" />
+  <meta property="og:image:alt" content="A daylit Earth texture used by the Wiki Globe interactive map." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Wiki Globe | Interactive 3D Earth Explorer" />
+  <meta
+    name="twitter:description"
+    content="Track satellites, flights, ships, and data overlays on a 3D globe, then click anywhere to discover nearby Wikipedia articles."
+  />
+  <meta name="twitter:image" content="https://cwtf.github.io/wiki-globe/assets/earth-day.jpg" />
+  <meta name="twitter:image:alt" content="A daylit Earth texture used by the Wiki Globe interactive map." />
   <!-- Microsoft Clarity -->
   <script type="text/javascript">
     (function(c,l,a,r,i,t,y){
@@ -17,36 +55,6 @@
     gtag('js', new Date());
     gtag('config', 'G-HG9KY83GR5');
   </script>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Wiki Globe | 3D Earth: Satellites, Flights &amp; Ships</title>
-  <meta
-    name="description"
-    content="Explore a real-time 3D globe with live satellite orbits, flight tracking, shipping routes, OpenStreetMap detail, and nearby Wikipedia articles for any point on Earth."
-  />
-  <meta
-    name="keywords"
-    content="interactive globe, 3D earth, satellite tracker, flight tracker, shipping routes, Wikipedia map, CesiumJS, OpenStreetMap"
-  />
-  <meta name="author" content="Wiki Globe" />
-  <meta name="robots" content="index, follow, max-image-preview:large" />
-  <meta name="theme-color" content="#05070c" />
-  <meta property="og:type" content="website" />
-  <meta property="og:site_name" content="Wiki Globe" />
-  <meta property="og:title" content="Wiki Globe | Live Satellites, Flights, Ships &amp; Wikipedia" />
-  <meta
-    property="og:description"
-    content="An interactive 3D Earth for exploring live global movement and discovering nearby Wikipedia articles from any point on the globe."
-  />
-  <meta property="og:image" content="assets/earth-day.jpg" />
-  <meta property="og:image:alt" content="A daylit Earth texture used by the Wiki Globe interactive map." />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Wiki Globe | Interactive 3D Earth Explorer" />
-  <meta
-    name="twitter:description"
-    content="Track satellites, flights, and shipping routes on a 3D globe, then click anywhere to discover nearby Wikipedia articles."
-  />
-  <meta name="twitter:image" content="assets/earth-day.jpg" />
   <link rel="preconnect" href="https://cesium.com" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
   <link rel="dns-prefetch" href="https://tile.openstreetmap.org" />
@@ -62,10 +70,24 @@
       "@context": "https://schema.org",
       "@type": "WebApplication",
       "name": "Wiki Globe",
+      "alternateName": "Wiki Globe 3D Earth Explorer",
+      "url": "https://cwtf.github.io/wiki-globe/",
+      "image": "https://cwtf.github.io/wiki-globe/assets/earth-day.jpg",
       "applicationCategory": "EducationalApplication",
       "operatingSystem": "Any modern web browser",
-      "description": "A real-time interactive 3D globe for visualising satellite orbits, flights, shipping routes, OpenStreetMap detail, and nearby Wikipedia articles.",
+      "inLanguage": "en",
+      "description": "A free real-time interactive 3D Earth and space atlas for visualising satellite orbits, flights, shipping routes, country data overlays, OpenStreetMap detail, and nearby Wikipedia articles.",
       "isAccessibleForFree": true,
+      "browserRequirements": "Requires JavaScript and WebGL.",
+      "creator": {
+        "@type": "Person",
+        "name": "cwtf",
+        "url": "https://github.com/cwtf/",
+        "sameAs": [
+          "https://github.com/cwtf/",
+          "https://www.linkedin.com/in/cwtf/"
+        ]
+      },
       "offers": {
         "@type": "Offer",
         "price": "0",
@@ -93,9 +115,10 @@
 <body data-focus="earth">
   <main id="app" aria-label="Wiki Globe interactive 3D Earth explorer">
     <p class="sr-only">
-      Wiki Globe is an interactive map for exploring satellite orbits, flight
-      paths, shipping routes, OpenStreetMap detail, and Wikipedia articles near
-      any selected location on Earth.
+      Wiki Globe is a free real-time interactive 3D Earth and space atlas for
+      exploring satellite orbits, flight paths, shipping routes, country data
+      overlays, OpenStreetMap detail, and Wikipedia articles near any selected
+      location on Earth, the Moon, Mars, planets, and major moons.
     </p>
 
   <div id="cesiumContainer"></div>
@@ -646,9 +669,10 @@
     <section class="noscript-summary">
       <h2>Wiki Globe needs JavaScript</h2>
       <p>
-        Wiki Globe is a CesiumJS-powered 3D Earth explorer for live satellite
-        orbits, flight tracking, shipping routes, OpenStreetMap detail, and
-        nearby Wikipedia article discovery.
+        Wiki Globe is a CesiumJS-powered 3D Earth and space atlas for live
+        satellite orbits, flight tracking, shipping routes, country data
+        overlays, OpenStreetMap detail, and nearby Wikipedia article discovery
+        across Earth, the Moon, Mars, planets, and major moons.
       </p>
     </section>
   </noscript>
