@@ -1772,8 +1772,11 @@ body.right-panel-resizing {
 }
 .agent-actions {
   display: flex;
+  justify-content: flex-end;
   gap: 8px;
 }
+.agent-actions .agent-submit { order: 2; }
+.agent-actions .agent-cancel { order: 1; }
 .agent-submit,
 .agent-cancel {
   background: rgba(110, 243, 255, 0.14);
