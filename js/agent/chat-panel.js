@@ -159,6 +159,11 @@ export class AgentChatPanel {
       event.preventDefault();
       this._submit();
     });
+    this.inputEl.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
+      event.preventDefault();
+      this.form.requestSubmit(this.submitEl);
+    });
     this.transcriptEl?.addEventListener("click", (event) => {
       const target = event.target.closest?.("[data-agent-example-prompt]");
       if (target) {
