@@ -12,7 +12,7 @@ support the questions you want to ask instead of defining the whole thing.
 Built on [CesiumJS](https://cesium.com/platform/cesiumjs/) with no build step:
 plain HTML/CSS/ES modules served statically.
 
-Live demo: [https://cwtf.github.io/wiki-globe/](https://cwtf.github.io/wiki-globe/)
+Live demo: [https://wikiglo.be/](https://wikiglo.be/)
 
 GitHub: [https://github.com/cwtf/](https://github.com/cwtf/)
 

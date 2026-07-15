@@ -1,3 +1,3 @@
 User-agent: *
 Allow: /
-Sitemap: https://cwtf.github.io/wiki-globe/sitemap.xml
+Sitemap: https://wikiglo.be/sitemap.xml

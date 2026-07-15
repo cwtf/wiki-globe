@@ -1,0 +1,28 @@
+# WikiGlobe
+
+> WikiGlobe is a free interactive 3D Earth and space atlas at https://wikiglo.be/. It combines an AI map agent, true-size geographic comparisons, live and reference data layers, and nearby Wikipedia discovery.
+
+## What it does
+
+- Answers natural-language geography questions with an AI agent that can research, reason, highlight countries, add labels, and draw routes or regions on the globe.
+- Lets people compare the real sizes of countries, continents, and regions by dragging their outlines around a 3D Earth without map-projection distortion.
+- Provides explorable layers for satellites, flights, shipping, weather, air quality, hydrology, climate projections, space weather, earthquakes, natural events, launches, power plants, time zones, submarine cables, and country indicators.
+- Extends exploration beyond Earth to the Moon, Sun, planets, and major moons with live astronomical positions and surface article markers where available.
+
+## Key facts
+
+- Product type: educational web application and interactive world atlas.
+- Access: free; runs in a modern JavaScript- and WebGL-capable browser.
+- Technology: static HTML, CSS, and ES modules built with CesiumJS; no build step.
+- Primary URL: https://wikiglo.be/
+- Source repository: https://github.com/cwtf/wiki-globe
+
+## Important qualifiers
+
+- Some layers use live third-party data and can be rate-limited or unavailable; the app labels live, data, and demo states and provides fallbacks where possible.
+- Climate projections are projections, not measurements. Live positions and data should be checked against their cited source when precision matters.
+- The true-size comparison tool preserves geographic area and shape on the globe; it is designed to avoid the visual distortions of flat map projections.
+
+## Primary sources and attribution
+
+WikiGlobe uses sources including CesiumJS, Wikipedia/Wikidata, OpenStreetMap, CelesTrak, OpenSky Network, Open-Meteo, World Bank, Our World in Data, NASA, NOAA, USGS, Natural Earth, and other sources listed in the application and repository README.
