@@ -1,8 +1,13 @@
 # Wiki Globe
 
-A real-time interactive 3D globe that visualises three layers of global movement —
-satellites, flights, and shipping lanes — and turns into a detailed OpenStreetMap
-view as you zoom in. Click anywhere to browse Wikipedia articles near that point.
+An interactive 3D Earth and space atlas built around an AI globe agent that can
+research, reason, highlight countries, and draw answers directly on the map,
+plus a true-size comparison tool for dragging country and continent outlines
+around the planet without projection distortion.
+
+Live tracking, global data overlays, OpenStreetMap detail, nearby Wikipedia
+discovery, and explorable Solar System bodies remain part of the atlas — they
+support the questions you want to ask instead of defining the whole thing.
 
 Built on [CesiumJS](https://cesium.com/platform/cesiumjs/) with no build step:
 plain HTML/CSS/ES modules served statically.
@@ -10,6 +15,19 @@ plain HTML/CSS/ES modules served statically.
 Live demo: [https://cwtf.github.io/wiki-globe/](https://cwtf.github.io/wiki-globe/)
 
 GitHub: [https://github.com/cwtf/](https://github.com/cwtf/)
+
+## Core tools
+
+- **Globe agent** — ask a natural-language question and let the agent research
+  with its map and knowledge tools, reason through the results, highlight
+  countries, add labels, and draw routes or regions on the globe.
+- **True-size compare** — enable comparison mode and click a country, or search
+  for a country, continent, or region and choose `+ compare`. Drag the resulting
+  outline anywhere on Earth, rotate it, and compare real sizes without the usual
+  map-projection tricks.
+- **Explore and verify** — combine country-statistics overlays, live and
+  reference layers, place search, and nearby Wikipedia articles to inspect what
+  the agent finds or wander off into your own rabbit hole.
 
 ## Run it
 
@@ -24,7 +42,10 @@ npx serve -l 8080
 Then open <http://localhost:8080>. (Opening `index.html` directly via `file://`
 won't work — the texture and module fetches need an HTTP origin.)
 
-## Features
+## Data layers and worlds
+
+These are supporting layers you can switch on when they help answer a question
+or make the globe more interesting:
 
 | Layer | Live source | Fallback |
 |---|---|---|
