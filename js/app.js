@@ -882,6 +882,7 @@ async function boot() {
 function setupResponsiveSideMenus() {
   const compact = window.matchMedia(COMPACT_SIDE_MENU_QUERY);
   const controls = new Map();
+  const agentCta = document.getElementById("agent-cta");
   let activeRightPanel = null;
   let rightPanelCollapsed = true;
   let rightPanelUserChanged = false;
@@ -935,6 +936,10 @@ function setupResponsiveSideMenus() {
         panel.toggle.title = label;
       }
     }
+    agentCta?.setAttribute(
+      "aria-expanded",
+      String(!rightPanelCollapsed && activeRightPanel === "agent"),
+    );
   }
 
   function setRightPanelActive(panelId, opts = {}) {
@@ -1063,6 +1068,12 @@ function setupResponsiveSideMenus() {
       compact.addListener(onCompactChanged);
     }
   }
+
+  agentCta?.addEventListener("click", () => {
+    rightPanelUserChanged = true;
+    if (compact.matches) controls.get("controls")?.setCollapsed(true);
+    setRightPanelActive("agent");
+  });
 
   function activateRightPanel(panelId) {
     setRightPanelActive(panelId, { forceOpen: panelId === "wiki" });
