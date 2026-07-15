@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Wiki Globe | Interactive 3D Earth, Satellites, Flights &amp; Ships</title>
+  <title>Wiki Globe | AI Map Agent &amp; True-Size Country Compare</title>
   <meta
     name="description"
-    content="Explore Wiki Globe, a free real-time 3D Earth atlas with live satellites, flights, ships, country data overlays, OpenStreetMap detail, and nearby Wikipedia articles."
+    content="Ask an AI globe agent to research and map answers, compare countries and continents at true size, and explore live tracking plus global data overlays."
   />
   <meta
     name="keywords"
-    content="interactive globe, 3D earth, satellite tracker, flight tracker, shipping routes, Wikipedia map, CesiumJS, OpenStreetMap"
+    content="AI map agent, true-size country comparison, interactive globe, 3D earth, global data overlays, satellite tracker, flight tracker, Wikipedia map, CesiumJS"
   />
   <meta name="author" content="Wiki Globe" />
   <meta name="application-name" content="Wiki Globe" />
@@ -21,10 +21,10 @@
   <meta property="og:locale" content="en_US" />
   <meta property="og:site_name" content="Wiki Globe" />
   <meta property="og:url" content="https://cwtf.github.io/wiki-globe/" />
-  <meta property="og:title" content="Wiki Globe | Live Satellites, Flights, Ships &amp; Wikipedia" />
+  <meta property="og:title" content="Wiki Globe | AI Map Agent &amp; True-Size Country Compare" />
   <meta
     property="og:description"
-    content="Explore a real-time 3D Earth and space atlas with live global movement layers, country data overlays, OpenStreetMap detail, and nearby Wikipedia articles."
+    content="Ask an AI globe agent to research and map answers, compare countries and continents at true size, and explore live tracking plus global data overlays."
   />
   <meta property="og:image" content="https://cwtf.github.io/wiki-globe/assets/earth-day.jpg" />
   <meta property="og:image:type" content="image/jpeg" />
@@ -32,10 +32,10 @@
   <meta property="og:image:height" content="2048" />
   <meta property="og:image:alt" content="A daylit Earth texture used by the Wiki Globe interactive map." />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Wiki Globe | Interactive 3D Earth Explorer" />
+  <meta name="twitter:title" content="Wiki Globe | AI Map Agent &amp; True-Size Country Compare" />
   <meta
     name="twitter:description"
-    content="Track satellites, flights, ships, and data overlays on a 3D globe, then click anywhere to discover nearby Wikipedia articles."
+    content="Ask an AI globe agent to research and map answers, compare countries and continents at true size, and explore live tracking plus global data overlays."
   />
   <meta name="twitter:image" content="https://cwtf.github.io/wiki-globe/assets/earth-day.jpg" />
   <meta name="twitter:image:alt" content="A daylit Earth texture used by the Wiki Globe interactive map." />
@@ -70,13 +70,13 @@
       "@context": "https://schema.org",
       "@type": "WebApplication",
       "name": "Wiki Globe",
-      "alternateName": "Wiki Globe 3D Earth Explorer",
+      "alternateName": "Wiki Globe AI Map Agent",
       "url": "https://cwtf.github.io/wiki-globe/",
       "image": "https://cwtf.github.io/wiki-globe/assets/earth-day.jpg",
       "applicationCategory": "EducationalApplication",
       "operatingSystem": "Any modern web browser",
       "inLanguage": "en",
-      "description": "A free real-time interactive 3D Earth and space atlas for visualising satellite orbits, flights, shipping routes, country data overlays, OpenStreetMap detail, and nearby Wikipedia articles.",
+      "description": "An interactive 3D Earth and space atlas with an AI map agent, true-size country and continent comparison, global data overlays, live tracking, and nearby Wikipedia discovery.",
       "isAccessibleForFree": true,
       "browserRequirements": "Requires JavaScript and WebGL.",
       "creator": {
@@ -94,12 +94,13 @@
         "priceCurrency": "USD"
       },
       "featureList": [
+        "AI globe agent for research, reasoning, country highlighting, and map drawing",
+        "True-size country and continent comparison with draggable outlines",
         "3D CesiumJS Earth viewer",
         "Satellite orbit visualisation",
         "Flight tracking and route arcs",
         "Shipping lanes and AIS vessel positions",
         "Live wet-bulb temperature heat-stress overlay",
-        "True-size country and continent comparison with draggable outlines",
         "Country and continent search with fly-to zoom",
         "OpenStreetMap zoom transition",
         "Nearby Wikipedia article discovery",
@@ -115,10 +116,11 @@
 <body data-focus="earth">
   <main id="app" aria-label="Wiki Globe interactive 3D Earth explorer">
     <p class="sr-only">
-      Wiki Globe is a free real-time interactive 3D Earth and space atlas for
-      exploring satellite orbits, flight paths, shipping routes, country data
-      overlays, OpenStreetMap detail, and Wikipedia articles near any selected
-      location on Earth, the Moon, Mars, planets, and major moons.
+      Wiki Globe is an interactive 3D Earth and space atlas with an AI agent
+      that can research, reason, highlight countries, and draw answers on the
+      map. Compare countries and continents at true size, explore global data
+      overlays and live tracking, or discover Wikipedia articles near any
+      selected location on Earth, the Moon, Mars, planets, and major moons.
     </p>
 
   <div id="cesiumContainer"></div>
@@ -162,12 +164,47 @@
       About
     </button>
     <div id="panel-menu" class="panel-pane panel-pane-active">
-    <h1 class="panel-title">WIKI GLOBE<span>satellites · flights · shipping</span></h1>
+    <h1 class="panel-title">WIKI GLOBE<span>AI agent · true-size compare · world data</span></h1>
+
+    <section class="primary-features" aria-label="Featured tools">
+      <button
+        id="agent-cta"
+        class="primary-feature primary-feature-agent"
+        type="button"
+        aria-controls="agent-panel"
+      >
+        <span class="primary-feature-icon" aria-hidden="true">AI</span>
+        <span class="primary-feature-copy">
+          <strong>Ask the globe agent</strong>
+          <small>Research, reason, highlight, and draw</small>
+        </span>
+        <span class="primary-feature-action" aria-hidden="true">Open</span>
+      </button>
+
+      <div class="layer primary-feature primary-feature-truesize" data-scope="earth">
+        <label class="row main">
+          <input type="checkbox" id="chk-truesize" />
+          <span class="dot dot-size"></span>
+          <span class="primary-feature-copy">
+            <strong>Compare true sizes</strong>
+            <small>Drag countries and continents around the globe</small>
+          </span>
+          <span class="count" id="count-truesize">0</span>
+        </label>
+        <div class="ts-help" id="ts-help" hidden>
+          Click a country to copy its outline, or search for a country,
+          continent, or region and use + compare. Drag copies anywhere to compare
+          real sizes. Shift+scroll (or scroll while dragging) rotates a copy;
+          right-click removes it.
+          <a href="#" id="ts-clear">Clear all</a>
+        </div>
+      </div>
+    </section>
 
     <details class="layer-group" data-scope="earth">
       <summary class="row main">
         <span class="dot dot-layers"></span>
-        <span class="name">Map layers</span>
+        <span class="name">Data layers</span>
         <span class="layer-group-chevron" aria-hidden="true">▾</span>
       </summary>
       <div class="layer-group-content">
@@ -401,22 +438,6 @@
       </div>
     </div>
 
-    <div class="layer" data-scope="earth">
-      <label class="row main">
-        <input type="checkbox" id="chk-truesize" />
-        <span class="dot dot-size"></span>
-        <span class="name">True-size compare</span>
-        <span class="count" id="count-truesize">0</span>
-      </label>
-      <div class="ts-help" id="ts-help" hidden>
-        Click a country to copy its outline, or search for a country,
-        continent, or region and use + compare. Drag copies anywhere to compare
-        real sizes. Shift+scroll (or scroll while dragging) rotates a copy;
-        right-click removes it.
-        <a href="#" id="ts-clear">Clear all</a>
-      </div>
-    </div>
-
     <div class="layer" data-scope="moon">
       <label class="row main">
         <input type="checkbox" id="chk-moon" checked />
@@ -534,20 +555,21 @@
     </div>
     </div>
     <div id="panel-about" class="panel-pane panel-about" hidden>
-      <h2 class="panel-title">ABOUT WIKI GLOBE<span>live data · open knowledge · deep space</span></h2>
+      <h2 class="panel-title">ABOUT WIKI GLOBE<span>AI maps · true sizes · open knowledge</span></h2>
       <p>
-        Wiki Globe is an interactive 3D atlas for exploring Earth, the Moon,
-        Mars, the Sun, planets, and major moons through live movement layers,
-        map data, and nearby Wikipedia articles.
+        Wiki Globe is an interactive 3D atlas with an agent that can research a
+        question and put the answer straight onto the map. It also lets you drag
+        countries around at their true size, explore world data, follow live
+        movement, and disappear into nearby Wikipedia rabbit holes.
       </p>
       <div class="about-section">
         <div class="about-heading">What you can do</div>
         <ul>
-          <li>Track satellites, flights, ships, and shipping corridors.</li>
-          <li>Compare true-size country and continent outlines.</li>
-          <li>Color the world with weather, population, economy, health, climate, and conflict overlays.</li>
-          <li>Click places and surface markers to discover related Wikipedia articles.</li>
-          <li>Ask the globe agent to research, reason, highlight countries, and draw on the map.</li>
+          <li>Ask the globe agent to research messy questions, reason through sources, highlight countries, and draw the answer on the map.</li>
+          <li>Drag true-size country and continent outlines around the world and see what map projections have been doing to your intuition.</li>
+          <li>Color the world with weather, population, economy, health, climate, and conflict data.</li>
+          <li>Layer on satellites, flights, ships, infrastructure, natural events, and launches when you want the moving picture.</li>
+          <li>Click places and surface markers to tumble into related Wikipedia rabbit holes.</li>
         </ul>
       </div>
       <div class="about-section">
@@ -766,10 +788,10 @@
     <section class="noscript-summary">
       <h2>Wiki Globe needs JavaScript</h2>
       <p>
-        Wiki Globe is a CesiumJS-powered 3D Earth and space atlas for live
-        satellite orbits, flight tracking, shipping routes, country data
-        overlays, OpenStreetMap detail, and nearby Wikipedia article discovery
-        across Earth, the Moon, Mars, planets, and major moons.
+        Wiki Globe is a CesiumJS-powered 3D Earth and space atlas with an AI map
+        agent and true-size country comparison, plus global data overlays, live
+        tracking, OpenStreetMap detail, and nearby Wikipedia discovery across
+        Earth, the Moon, Mars, planets, and major moons.
       </p>
     </section>
   </noscript>
