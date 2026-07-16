@@ -1,5 +1,10 @@
 // Flight layer: live aircraft states from OpenSky, dead-reckoned between
 // refreshes; demo great-circle traffic between major airports when offline.
+// OpenSky's CORS policy blocks direct browser reads from any other origin, so
+// without a configured proxy (see proxy/README.md) the global view shows demo
+// arcs — but when the camera zooms below REGIONAL_ENTER_M, real aircraft
+// around the view are fetched keylessly from airplanes.live (CORS-open,
+// 250 nm point queries) and replace the demo traffic.
 // Route arcs: demo flights know origin/destination; live flights are looked
 // up on adsbdb by callsign (with a projected-track fallback).
 
@@ -15,6 +20,14 @@ const MAX_LIVE = 2500;
 const UPDATE_SLICES = 60;
 const ROUTES_PER_FRAME = 16;
 
+// Keyless regional live mode (airplanes.live) used while OpenSky is unreachable
+const REGIONAL_URL = "https://api.airplanes.live/v2/point";
+const REGIONAL_RADIUS_NM = 250;          // API maximum
+const REGIONAL_REFRESH_MS = 15 * 1000;   // well under the ~1 req/s anonymous limit
+const REGIONAL_ERROR_MS = 60 * 1000;
+const REGIONAL_ENTER_M = 1.8e6;          // camera height to switch demo -> regional live
+const REGIONAL_EXIT_M = 2.2e6;           // hysteresis so the boundary doesn't flicker
+
 const FLIGHT_COLOR = Cesium.Color.fromCssColorString("#ffb347");
 const ROUTE_COLOR = Cesium.Color.fromCssColorString("#ffb347").withAlpha(0.14);
 const ACTIVE_ROUTE_COLOR = Cesium.Color.fromCssColorString("#ffd28a").withAlpha(0.9);
@@ -24,9 +37,14 @@ export class FlightLayer {
   constructor(viewer) {
     this.viewer = viewer;
     this.points = viewer.scene.primitives.add(new Cesium.PointPrimitiveCollection());
+    this.regionalPoints = viewer.scene.primitives.add(new Cesium.PointPrimitiveCollection());
     this.routeLines = viewer.scene.primitives.add(new Cesium.PolylineCollection());
     this.activeRoute = viewer.scene.primitives.add(new Cesium.PolylineCollection());
     this.flights = [];
+    this.regional = [];
+    this.regionalActive = false;
+    this.regionalCursor = 0;
+    this.nextRegionalFetch = 0;
     this.source = "loading";
     this.visible = true;
     this.routesVisible = false;
@@ -54,7 +72,7 @@ export class FlightLayer {
     }
     // one timer both refreshes live states and re-tries OpenSky from demo mode
     this.refreshTimer = setInterval(() => this._refresh(), REFRESH_MS);
-    this.points.show = this.visible;
+    this._syncShow();
   }
 
   async _refresh() {
@@ -94,7 +112,7 @@ export class FlightLayer {
       this.nextLiveAttempt = Date.now() + CORS_RETRY_MS;
       return {
         source: "blocked",
-        detail: "OpenSky does not allow this browser origin to read states/all; using demo flights. Configure an OpenSky proxy URL for live flights.",
+        detail: "OpenSky does not allow this browser origin to read states/all; demo arcs at global zoom, live aircraft via airplanes.live when zoomed in. Configure an OpenSky proxy URL for global live flights.",
       };
     }
 
@@ -219,10 +237,11 @@ export class FlightLayer {
   }
 
   tick(nowMs) {
-    if (!this.visible || this.flights.length === 0) return;
+    if (!this.visible) return;
+    this._regionalTick(nowMs);
 
     const n = this.flights.length;
-    const batch = Math.ceil(n / UPDATE_SLICES);
+    const batch = n === 0 ? 0 : Math.ceil(n / UPDATE_SLICES);
     for (let i = 0; i < batch; i++) {
       const f = this.flights[this.cursor];
       this.cursor = (this.cursor + 1) % n;
@@ -235,6 +254,18 @@ export class FlightLayer {
       } else {
         f.point.position = this._demoPosition(f, nowMs);
       }
+    }
+
+    const rn = this.regional.length;
+    const rbatch = this.regionalActive && rn > 0 ? Math.ceil(rn / UPDATE_SLICES) : 0;
+    for (let i = 0; i < rbatch; i++) {
+      const f = this.regional[this.regionalCursor];
+      this.regionalCursor = (this.regionalCursor + 1) % rn;
+      const dt = (nowMs - f.ts) / 1000;
+      const [lat2, lon2] = deadReckon(f.lat, f.lon, f.velMs * dt, f.track);
+      f.point.position = Cesium.Cartesian3.fromDegrees(lon2, lat2, Math.max(f.altM, 0));
+      f.curLat = lat2;
+      f.curLon = lon2;
     }
 
     // incremental demo-route arc construction
@@ -250,23 +281,116 @@ export class FlightLayer {
     }
   }
 
+  // --- regional live mode (airplanes.live) -----------------------------------
+
+  // Runs every frame while visible: switches between global demo traffic and
+  // real aircraft around the camera, and paces the regional fetches.
+  _regionalTick(nowMs) {
+    if (this.source === "live") {
+      if (this.regionalActive) this._setRegionalActive(false);
+      return;
+    }
+    const carto = this.viewer.camera.positionCartographic;
+    if (!carto) return;
+    if (!this.regionalActive && carto.height < REGIONAL_ENTER_M) this._setRegionalActive(true);
+    else if (this.regionalActive && carto.height > REGIONAL_EXIT_M) this._setRegionalActive(false);
+    if (!this.regionalActive || this._regionalInFlight || nowMs < this.nextRegionalFetch) return;
+    this._fetchRegional(
+      Cesium.Math.toDegrees(carto.latitude),
+      Cesium.Math.toDegrees(carto.longitude)
+    );
+  }
+
+  _setRegionalActive(on) {
+    this.regionalActive = on;
+    if (on) this.nextRegionalFetch = 0; // fetch immediately on entry
+    this._syncShow();
+  }
+
+  async _fetchRegional(lat, lon) {
+    this._regionalInFlight = true;
+    let timeout = null;
+    try {
+      const ctl = new AbortController();
+      timeout = setTimeout(() => ctl.abort(), 10000);
+      const res = await fetch(
+        `${REGIONAL_URL}/${lat.toFixed(3)}/${lon.toFixed(3)}/${REGIONAL_RADIUS_NM}`,
+        { signal: ctl.signal }
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (!Array.isArray(data?.ac)) throw new Error("unexpected response");
+      this._applyRegional(data.ac);
+      this.nextRegionalFetch = Date.now() + REGIONAL_REFRESH_MS;
+    } catch {
+      this.nextRegionalFetch = Date.now() + REGIONAL_ERROR_MS;
+    } finally {
+      if (timeout) clearTimeout(timeout);
+      this._regionalInFlight = false;
+    }
+  }
+
+  _applyRegional(ac) {
+    const now = Date.now();
+    const flights = [];
+    for (const a of ac) {
+      if (a.lat == null || a.lon == null || a.alt_baro === "ground") continue;
+      const altFt = typeof a.alt_geom === "number" ? a.alt_geom
+        : typeof a.alt_baro === "number" ? a.alt_baro : 33000;
+      flights.push({
+        live: true,
+        regional: true,
+        icao24: a.hex,
+        callsign: (a.flight ?? "").trim() || (a.r ?? "").trim() || (a.hex ?? "").toUpperCase(),
+        country: a.desc || a.t || "",
+        lat: a.lat,
+        lon: a.lon,
+        altM: altFt * 0.3048,
+        velMs: (a.gs ?? 450) * 0.51444,
+        track: a.track ?? a.true_heading ?? 0,
+        ts: now - (a.seen_pos ?? 0) * 1000,
+      });
+    }
+    this.regionalPoints.removeAll();
+    for (const f of flights) {
+      f.point = this.regionalPoints.add({
+        position: Cesium.Cartesian3.fromDegrees(f.lon, f.lat, f.altM),
+        pixelSize: 3.6,
+        color: FLIGHT_COLOR,
+        scaleByDistance: new Cesium.NearFarScalar(2.0e5, 2.0, 4.0e7, 0.6),
+        id: { kind: "flight", flight: f },
+      });
+    }
+    this.regional = flights;
+    this.regionalCursor = 0;
+  }
+
+  // ----------------------------------------------------------------------------
+
+  _syncShow() {
+    this.points.show = this.visible && !this.regionalActive;
+    this.regionalPoints.show = this.visible && this.regionalActive;
+    // demo route arcs are global-scale clutter under regional live traffic
+    this.routeLines.show = this.visible && this.routesVisible && !this.regionalActive;
+    this.activeRoute.show = this.visible;
+  }
+
   setVisible(v) {
     this.visible = v;
-    this.points.show = v;
-    this.routeLines.show = v && this.routesVisible;
-    this.activeRoute.show = v;
+    this._syncShow();
   }
 
   setRoutesVisible(v) {
     this.routesVisible = v;
-    this.routeLines.show = v && this.visible;
     if (!v) {
       this.activeRoute.removeAll();
       this.selected = null;
     }
-    if (v && this.source === "demo" && this.routeLines.length === 0 && this.routeQueue.length === 0) {
+    // any non-live source means the demo fleet is flying (incl. CORS-blocked)
+    if (v && this.source !== "live" && this.routeLines.length === 0 && this.routeQueue.length === 0) {
       this.routeQueue = this.flights.slice();
     }
+    this._syncShow();
   }
 
   // Hover/selection drives per-flight route display for live data, where the
@@ -331,9 +455,18 @@ export class FlightLayer {
   }
 
   counts() {
+    if (this.visible && this.regionalActive) {
+      return {
+        count: this.regional.length,
+        source: "live",
+        detail: `airplanes.live aircraft within ${REGIONAL_RADIUS_NM} nm of the view; zoom out for global demo arcs`,
+      };
+    }
     return {
       count: this.visible ? this.flights.length : 0,
-      source: this.source,
+      // "blocked" would auto-hide the layer; demo arcs + zoom-in live is the
+      // intended default experience, so report it as demo
+      source: this.source === "blocked" ? "demo" : this.source,
       detail: this.statusDetail,
     };
   }

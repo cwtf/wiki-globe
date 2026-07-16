@@ -554,7 +554,7 @@
 
     <div class="attrib">
       Major moon imagery: NASA/JPL/USGS, NASA/JPL-Caltech, NASA New Horizons, and Bjorn Jonsson / J N Squire<br />
-      CelesTrak · OpenSky · adsbdb · Open-Meteo (Weather + Air Quality + Flood + Climate) · World Bank / OWID / UNDP / IMF / WHO · Wikidata · NASA LRO · Solar System Scope · NASA New Horizons · AIS: aisstream / Digitraffic · USGS Earthquakes · NASA EONET · NOAA SWPC · The Space Devs (LL2) · TeleGeography · WRI GPPD · OurAirports · Natural Earth
+      CelesTrak · OpenSky · airplanes.live · adsbdb · Open-Meteo (Weather + Air Quality + Flood + Climate) · World Bank / OWID / UNDP / IMF / WHO · Wikidata · NASA LRO · Solar System Scope · NASA New Horizons · AIS: aisstream / Digitraffic · USGS Earthquakes · NASA EONET · NOAA SWPC · The Space Devs (LL2) · TeleGeography · WRI GPPD · OurAirports · Natural Earth
       (<a href="#" id="ais-key-link" title="Set an aisstream.io API key for global live ship coverage">key</a>)<br />
       <a class="github-logo-link" href="https://github.com/cwtf/" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
         <svg class="github-logo" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -626,7 +626,7 @@
       <div class="about-section">
         <div class="about-heading">Data sources</div>
         <p>
-          Built with CesiumJS, OpenStreetMap, CelesTrak, OpenSky, adsbdb,
+          Built with CesiumJS, OpenStreetMap, CelesTrak, OpenSky, airplanes.live, adsbdb,
           Open-Meteo, World Bank, OWID, UNDP, Wikidata, Wikipedia, NASA imagery,
           Solar System Scope textures, and AIS feeds from aisstream and Digitraffic.
         </p>
@@ -813,6 +813,13 @@
     </section>
   </noscript>
 
+  <script>
+    // Optional live-data proxy (see proxy/README.md). Deploy the Cloudflare
+    // Worker there, then uncomment with your worker hostname for global live
+    // flights (OpenSky) and keyless global AIS shipping:
+    // window.WIKI_GLOBE_OPENSKY_URL = "https://YOUR-WORKER.workers.dev/opensky/states/all";
+    // window.WIKI_GLOBE_AISSTREAM_WS = "wss://YOUR-WORKER.workers.dev/ais";
+  </script>
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

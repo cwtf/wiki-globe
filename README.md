@@ -50,7 +50,7 @@ or make the globe more interesting:
 | Layer | Live source | Fallback |
 |---|---|---|
 | Satellites | [CelesTrak](https://celestrak.org) TLEs ("visual" group), propagated client-side with SGP4 via satellite.js | Synthetic orbits (LEO constellation, sun-sync, MEO nav, GEO) |
-| Flights | [OpenSky Network](https://opensky-network.org) anonymous state vectors, refreshed every 2 min and dead-reckoned in between; routes per callsign via [adsbdb](https://www.adsbdb.com), enriched with municipality names from [OurAirports](https://ourairports.com) data | ~200 great-circle flights between major world airports |
+| Flights | [OpenSky Network](https://opensky-network.org) state vectors via a proxy (see `proxy/`), refreshed every 2 min and dead-reckoned in between; without a proxy, zooming below ~1,800 km fetches real aircraft within 250 nm of the view from [airplanes.live](https://airplanes.live) (keyless, CORS-open), refreshed every 15 s; routes per callsign via [adsbdb](https://www.adsbdb.com), enriched with municipality names from [OurAirports](https://ourairports.com) data | ~200 great-circle demo flights between major world airports at global zoom |
 | Data overlay | A dropdown of overlay modes, off by default. **Weather** (live): wet-bulb temperature (Stull 2011 approximation; ~35 °C is the theoretical human survivability limit), air temperature, or relative humidity — [Open-Meteo](https://open-meteo.com) hourly data on a global grid (resolution slider: 20° down to 7.5°) with the past 3 days scrubbable via day + hour sliders (a "Viewing …" readout shows the selected UTC time), bilinearly interpolated and draped over the globe; hover anywhere for the local reading. **Air quality** (live): PM2.5 and US AQI from the [Open-Meteo Air Quality API](https://open-meteo.com/en/docs/air-quality-api) on the same grid and timeline. **Hydrology** (live): river discharge (m³/s) from the [Open-Meteo Flood API](https://open-meteo.com/en/docs/flood-api) (GloFAS), log-scale color ramp. **Climate projection** (live): daily max temperature for 2050 from the [Open-Meteo Climate API](https://open-meteo.com/en/docs/climate-api) (CMIP6, MRI-AGCM3-2-S model) — labeled as a projection, not a measurement. **Space weather** (live): aurora oval probability from [NOAA SWPC](https://www.swpc.noaa.gov) ovation forecast, green-glow color ramp over high latitudes. **Country and regional indicators**: economy, development, demographics, health/access, inequality, climate/air, and energy metrics from World Bank, OWID, UNDP, IMF (including WEO projections), and WHO; hover a country or region for its value. **Built environment**: city skyscraper-count cells from Wikidata Q1575895 / Wikipedia, supplemented by grouped Wikidata Q11303 records for unlisted cities and normalized as towers per 10,000 km². **Conflict**: recent UCDP event cells with click-through to related Wikipedia articles. | Weather falls back to a localStorage cache of the last good fetch when rate-limited |
 | Moon | Position from the Simon 1994 analytic lunar ephemeris evaluated at the real-time scene clock (IAU 2000 orientation), so it sits where the Moon actually is right now; lunar Wikipedia article markers from a Wikidata SPARQL query (Moon-globe coordinates with an English Wikipedia sitelink, ranked by sitelink count) | Bundled list of famous lunar sites (Apollo sites, major craters, maria) |
 | Sun | Live astronomy-engine geocentric solar position, IAU rotation, labeled sky dot, flat Solar System Scope texture, and Mars-style scaled proxy focus transition | No surface article layer |
@@ -66,11 +66,16 @@ or make the globe more interesting:
 
 OpenSky's public REST API does not currently expose `states/all` to arbitrary
 browser origins, and anonymous requests are also credit-limited. Static
-deployments therefore show the flight layer with a `CORS` or `LIMIT` badge and
-use demo traffic unless you serve OpenSky through a same-origin/API-worker proxy.
-Set a proxy endpoint with `?openskyUrl=/api/opensky/states/all`, by assigning
-`window.WIKI_GLOBE_OPENSKY_URL` before loading `js/app.js`, or with
-`localStorage.setItem("wikiGlobeOpenSkyUrl", "/api/opensky/states/all")`.
+deployments therefore show demo traffic at global zoom (with live airplanes.live
+aircraft appearing as you zoom in) unless OpenSky is served through a proxy.
+The `proxy/` directory contains a ready-to-deploy Cloudflare Worker that
+handles OpenSky OAuth2 + edge caching + CORS, and also relays a single
+aisstream.io connection to all visitors for keyless global live shipping —
+see `proxy/README.md`. Set the proxy endpoint with `?openskyUrl=…`, by
+assigning `window.WIKI_GLOBE_OPENSKY_URL` in the config block at the bottom of
+`index.html`, or with `localStorage.setItem("wikiGlobeOpenSkyUrl", …)`; the
+AIS relay endpoint is wired the same way (`?aisstreamWs=…` /
+`window.WIKI_GLOBE_AISSTREAM_WS`).
 
 The globe is lit by the real sun: the day texture shows on the daylit side, the
 night texture past the terminator, blended at the actual day/night boundary for
@@ -108,8 +113,9 @@ readable on the night side.
 - Map tiles © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors
   (the public tile server is fine for development; use a commercial tile provider
   for production traffic).
-- Orbital elements: CelesTrak. Flight states: OpenSky Network (anonymous access is
-  rate-limited; the app degrades to demo flights when unavailable). Flight routes:
+- Orbital elements: CelesTrak. Flight states: OpenSky Network (via the `proxy/`
+  worker) and airplanes.live (keyless, near-view when zoomed in); the app
+  degrades to demo flights when neither is available. Flight routes:
   adsbdb. Article search: Wikipedia / Wikimedia APIs. Reverse geocoding: Nominatim.
 - Earthquake data: USGS Earthquakes Hazards Program (public domain).
 - Skyscraper density: city counts from Wikidata Q1575895 / English Wikipedia,
@@ -127,8 +133,9 @@ readable on the night side.
   by J N Squire (CC BY-SA 4.0), and Callisto from Bjorn Jonsson's
   Voyager/Galileo processing. Titan texture from NASA/JPL-Caltech Cassini
   imagery, and Charon texture from NASA/JHUAPL/SwRI New Horizons imagery.
-- Vessel positions are simulated along real corridors at an accelerated clock —
-  there is no free global live AIS feed.
+- Vessel positions: live AIS from aisstream.io (via a visitor key or the
+  `proxy/` relay) or Digitraffic Finland (Baltic); otherwise simulated along
+  real corridors at an accelerated clock.
 
 ## Structure
 
@@ -137,7 +144,7 @@ index.html              shell + control panel / wiki panel markup
 css/style.css
 js/app.js               viewer setup, zoom crossfade, picking, tooltips, UI wiring
 js/layers/satellites.js TLE fetch + SGP4 propagation + orbit paths
-js/layers/flights.js    OpenSky states, dead reckoning, route arcs, adsbdb lookup
+js/layers/flights.js    OpenSky/airplanes.live states, dead reckoning, route arcs, adsbdb lookup
 js/layers/shipping.js   lane rendering, flow pulses, simulated vessels
 js/layers/heatmap.js    data overlays: Open-Meteo weather grid, choropleths, and conflict cells
 js/country-data.js      bundled per-country GDP/HDI/IHDI/GNI estimates
@@ -152,4 +159,5 @@ data/shipping-lanes.latest.geojson  curated shipping corridor baseline
 assets/earth-night.jpg  night base texture
 assets/moon.jpg         NASA LRO color mosaic (CGI Moon Kit)
 assets/sun.jpg ...      solar-system textures used by the body layers
+proxy/                  optional Cloudflare Worker: OpenSky OAuth2+CORS proxy, AIS relay
 ```

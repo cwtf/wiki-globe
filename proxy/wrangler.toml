@@ -1,0 +1,11 @@
+name = "wiki-globe-proxy"
+main = "worker.js"
+compatibility_date = "2026-01-01"
+
+[[durable_objects.bindings]]
+name = "AIS_RELAY"
+class_name = "AisRelay"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["AisRelay"]
