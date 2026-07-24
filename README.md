@@ -89,6 +89,8 @@ readable on the night side.
 - **Globe**: night-view Earth texture, atmosphere, slow auto-rotation (pauses
   while you interact or read the Wikipedia panel). Drag to rotate, scroll to zoom,
   hover anything for a tooltip.
+- **Milky Way sky**: a panoramic, camera-tracked star field replaces Cesium's
+  default space background across Earth and the other focusable bodies.
 - **Zoom transition**: below ~2,600 km camera height, OpenStreetMap tiles fade in
   progressively over the night texture, reaching full detail by ~550 km — roads,
   place names and landmarks at street level. Zoom out to return to the globe.
@@ -122,6 +124,7 @@ readable on the night side.
   supplemented by grouped Wikidata Q11303 records for cities not in that list.
 - Night Earth texture from the [three-globe](https://github.com/vasturiano/three-globe)
   examples (NASA Earth Observatory "Black Marble").
+- Milky Way panorama: [ESO/S. Brunier](https://www.eso.org/public/images/eso0932a/) (CC BY 4.0), converted from the 6000×3000 source into a Cesium cube map with `scripts/data/generate-skybox.ps1`.
 - Moon texture: [NASA SVS CGI Moon Kit](https://svs.gsfc.nasa.gov/4720/)
   (Lunar Reconnaissance Orbiter camera mosaic, public domain). Lunar article
   coordinates: Wikidata / Wikipedia.
@@ -157,7 +160,10 @@ js/layers/moons.js      Parent-relative major moon body layers
 js/wiki-panel.js        geosearch + Nominatim context articles, radius slider
 data/shipping-lanes.latest.geojson  curated shipping corridor baseline
 assets/earth-night.jpg  night base texture
+assets/milky-way-panorama-hires.jpg  6000×3000 ESO source panorama
+assets/skybox/          Cesium cube-map faces for the Milky Way background
 assets/moon.jpg         NASA LRO color mosaic (CGI Moon Kit)
 assets/sun.jpg ...      solar-system textures used by the body layers
+scripts/data/generate-skybox.ps1  rebuilds the skybox from the panorama
 proxy/                  optional Cloudflare Worker: OpenSky OAuth2+CORS proxy, AIS relay
 ```

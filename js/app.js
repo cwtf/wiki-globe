@@ -38,6 +38,14 @@ const RIGHT_PANEL_DEFAULT_WIDTH = 392;
 const RIGHT_PANEL_MIN_WIDTH = 320;
 const RIGHT_PANEL_MAX_WIDTH = 760;
 const RIGHT_PANEL_VIEWPORT_MARGIN = 46;
+const MILKY_WAY_SKYBOX = {
+  positiveX: "assets/skybox/milky-way-positive-x.jpg",
+  negativeX: "assets/skybox/milky-way-negative-x.jpg",
+  positiveY: "assets/skybox/milky-way-positive-y.jpg",
+  negativeY: "assets/skybox/milky-way-negative-y.jpg",
+  positiveZ: "assets/skybox/milky-way-positive-z.jpg",
+  negativeZ: "assets/skybox/milky-way-negative-z.jpg",
+};
 async function boot() {
   await loadHeatmapMetrics();
 
@@ -55,6 +63,9 @@ async function boot() {
     fullscreenButton: false,
     selectionIndicator: false,
     infoBox: false,
+    skyBox: new Cesium.SkyBox({
+      sources: MILKY_WAY_SKYBOX,
+    }),
   });
 
   const scene = viewer.scene;
