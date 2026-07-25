@@ -21,7 +21,7 @@ use gravitas::geodesic::{
 use gravitas::invariants;
 use gravitas::metric::kerr::CoordinateSystem;
 use gravitas::metric::{Kerr, Metric, Orbit};
-use gravitas::physics::{disk, spectrum, worldline};
+use gravitas::physics::{disk, spectrum, tetrad, worldline};
 
 use js_sys::Float32Array;
 use wasm_bindgen::prelude::*;
@@ -663,8 +663,13 @@ impl PhysicsEngine {
 // upstream merge cannot conflict inside the original block.
 // ===========================================================================
 
-/// Floats per worldline sample in the buffer handed to JS.
-pub const WORLDLINE_STRIDE: usize = 6;
+/// Floats per worldline sample in the buffer handed to JS:
+/// `[tau, t, t_far, r, theta, phi, u_t, u_r, u_theta, u_phi]`.
+///
+/// The 4-velocity rides along because the 1st-person view builds its
+/// orthonormal frame from it (spec §1.6), and must be able to do so at any
+/// point on the stored worldline — not just wherever the integration stopped.
+pub const WORLDLINE_STRIDE: usize = 10;
 
 /// Audit values from the most recent worldline integration. Kept in f64 on
 /// this side: the spec's conservation target is 1e-6, which is close enough
@@ -780,6 +785,10 @@ impl PhysicsEngine {
             flat.push(s.r as f32);
             flat.push(s.theta as f32);
             flat.push(s.phi as f32);
+            flat.push(s.u[0] as f32);
+            flat.push(s.u[1] as f32);
+            flat.push(s.u[2] as f32);
+            flat.push(s.u[3] as f32);
         }
 
         LAST_WORLDLINE.with(|c| {
@@ -848,5 +857,58 @@ impl PhysicsEngine {
     /// `r0` down to `r`. The §4 check for the radial-drop preset.
     pub fn radial_fall_proper_time(&self, r0: f64, r: f64) -> f64 {
         worldline::radial_fall_proper_time(r0, r, self.mass)
+    }
+
+    /// Orthonormal frame of an observer at `(r, theta)` with 4-velocity `u`.
+    ///
+    /// Returns 16 f64: rows `e_(a)^mu`, a = 0..3 major. Row 0 is the
+    /// observer's 4-velocity; rows 1-3 are its spatial axes.
+    ///
+    /// Spec §5: rays for the 1st-person view are generated **only** through
+    /// this basis, so aberration, Doppler and gravitational shift all fall out
+    /// of one construction instead of being applied as separate effects.
+    /// Built by Gram-Schmidt from `u` rather than by boosting a static
+    /// observer, because no static observer exists inside the horizon.
+    pub fn observer_tetrad(
+        &self,
+        r: f64,
+        theta: f64,
+        ut: f64,
+        ur: f64,
+        utheta: f64,
+        uphi: f64,
+    ) -> Vec<f64> {
+        let u = [ut, ur, utheta, uphi];
+        let t = tetrad::tetrad_from_velocity(&self.metric_ks, r, theta, &u);
+        let mut out = Vec::with_capacity(16);
+        for row in &t.e {
+            out.extend_from_slice(row);
+        }
+        out
+    }
+
+    /// Largest deviation of `g(e_a, e_b)` from `eta_ab` for that frame.
+    ///
+    /// One number saying whether the 1st-person view can be trusted at this
+    /// point on the worldline; surfaced for the §4 verification workflow.
+    pub fn tetrad_orthonormality_error(
+        &self,
+        r: f64,
+        theta: f64,
+        ut: f64,
+        ur: f64,
+        utheta: f64,
+        uphi: f64,
+    ) -> f64 {
+        let u = [ut, ur, utheta, uphi];
+        let t = tetrad::tetrad_from_velocity(&self.metric_ks, r, theta, &u);
+        t.orthonormality_error(&self.metric_ks, r, theta)
+    }
+
+    /// Remaining proper time from the horizon to the singularity for a
+    /// radially infalling observer: the Schwarzschild bound `pi * M`
+    /// in geometric units (spec §1.6 asks this be displayed).
+    pub fn max_interior_proper_time(&self) -> f64 {
+        std::f64::consts::PI * self.mass
     }
 }

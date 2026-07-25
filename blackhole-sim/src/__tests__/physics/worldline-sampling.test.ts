@@ -135,6 +135,7 @@ describe("worldline sampling", () => {
       r: 5,
       theta: HALF_PI,
       phi: 0,
+      u: [1, 0, 0, 0],
     });
     expect(x).toBeCloseTo(5, 6);
     expect(y).toBeCloseTo(0, 6); // equatorial orbits stay out of the pole axis

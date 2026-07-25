@@ -9,4 +9,5 @@ pub mod redshift;
 pub mod shadow;
 pub mod spectrum;
 pub mod synchrotron;
+pub mod tetrad;
 pub mod worldline;

@@ -20,7 +20,11 @@ painted on. Full findings and measurements: `blackhole-sim/FORK.md`.
 transport, drop panel, marker/trail overlay and HUD are all in, with 13 Rust
 and 26 TS tests. Note the §1.6 clock correction recorded under milestone 4
 below — the 3rd-person view samples `t_far`, not Kerr-Schild `t`.
-Milestones 5-6 unstarted.
+
+**MILESTONE 5: observer frame done, shader/UI outstanding.** The tetrad and
+its 11 tests are in; ray generation through it is not. Note the second spec
+correction under milestone 5 — the frame cannot be built by boosting a static
+observer, because none exists inside the horizon. Milestone 6 unstarted.
 
 A scientifically accurate interactive black hole, reachable from the body
 dropdown (new group below "Pluto system") and at `wikiglo.be/blackhole`.
@@ -496,8 +500,28 @@ Each lands independently runnable; verify per §4 before moving on.
    from §1.8, and the playback rate is a fixed constant until §1.9's speed
    slider. §1.6's stretch goal — the object's own lensed primary/secondary
    images — is not done; the marker is drawn at its true projected position.
-5. **1st person** — tetrad camera + aberration in the shader, proper-time
-   advance, free-look, dual clocks, horizon crossing, singularity ending.
+5. **1st person** *(observer frame done; shader/UI outstanding)* — tetrad
+   camera + aberration in the shader, proper-time advance, free-look, dual
+   clocks, horizon crossing, singularity ending.
+
+   Done: `physics/tetrad.rs` builds the observer's orthonormal frame and is
+   exposed as `observer_tetrad` / `tetrad_orthonormality_error`. 11 Rust tests,
+   including orthonormality < 1e-8 at every radius of an infall **inside the
+   horizon**, and Doppler asymmetry measured against static emitters.
+   `WorldlineSample` now carries `u^mu` (JS stride 6 → 10) so the frame can be
+   rebuilt anywhere on a stored worldline.
+
+   **Second correction to this spec:** §1.6 says the frame is "the
+   static-observer frame boosted by the object's 4-velocity". Inside the
+   horizon **no static observer exists**, so there is nothing to boost. The
+   frame is built by Gram-Schmidt from the object's own 4-velocity instead —
+   defined everywhere, and identical outside the horizon up to a spatial
+   rotation that free-look absorbs.
+
+   Outstanding: ray generation through the tetrad in the shader, per-ray shift
+   from the frame's `observed_frequency`, the free-look quaternion applied
+   inside the frame before the boost, fixed stated FOV, proper-time advance,
+   and the singularity ending card at r ≈ 0.02 r_s.
 6. **Polish** — curvature-grid toggle, mass presets + tidal readout,
    speed slider (10⁻⁵×–10⁶×, comfort-speed default, 1× detent) + pause,
    attribution (upstream MIT credit + starmap), README section, sitemap,

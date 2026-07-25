@@ -261,6 +261,55 @@ Not done from §1.6: the object's own **lensed** primary/secondary images (the
 stretch goal). The marker is drawn at its true projected position, so it does
 not bend around the hole.
 
+## First-person observer frame (spec milestone 5, physics half)
+
+`physics/tetrad.rs` builds the orthonormal frame the 1st-person camera
+generates rays through. §5 requires this be built **once**, with aberration,
+Doppler and gravitational shift all falling out of it — "ad-hoc per-effect
+redshift shaders are how it becomes a toy". Exposed as `observer_tetrad(...)`
+and `tetrad_orthonormality_error(...)`.
+
+### Second correction to the spec: no static observer exists inside the horizon
+
+§1.6 specifies the frame as "the static-observer frame boosted by the object's
+4-velocity". That recipe has no meaning exactly where the milestone's payoff
+is: **inside the horizon nothing can be static**, so there is no frame to
+boost. Building it by Gram-Schmidt from the object's own 4-velocity is defined
+everywhere the object goes, and reduces to the same frame outside the horizon
+up to a spatial rotation — which free-look absorbs anyway.
+
+A test asserted this the wrong way first, constructing a "dropped from rest at
+r" state *inside* r_h; that state is not timelike, and the frame came back with
+an orthonormality error of 1.02. Using the 4-velocity the integrator actually
+carried to that point gives < 1e-8 at every radius, horizon included.
+
+That also forced a data change: `WorldlineSample` now carries `u^mu`, and the
+JS buffer stride went 6 → 10. The frame has to be reconstructable at *any*
+point on a stored worldline, and re-deriving u by differencing neighbouring
+samples would approximate a quantity the integrator already knows exactly.
+
+### §5 targets, verified by `cargo test -p gravitas-core --test tetrad`
+
+11 tests: orthonormality on a circular orbit, at every radius of an infall
+including inside the horizon, and at near-extremal spin; `e_0` is exactly the
+4-velocity; the observer measures its own velocity as `(1,0,0,0)`; a null ray
+stays null in the frame; project/lift round-trip; and light met head-on is
+blueshifted while light overtaking from behind is redshifted.
+
+That last one was tautological in its first form — both photons were lifted
+*out of* the orbiting frame with unit time component, so both were seen at
+unit frequency by construction. It now emits them from a **static** observer
+(the starfield is at rest), equal-frequency in that frame, and asks what the
+orbiting observer measures. Which spatial leg is "direction of travel" is
+derived by projecting the orbiting 4-velocity into the static frame rather than
+assumed: Gram-Schmidt fills ∂φ at index 2, not 3, and hardcoding 3 silently
+compared two *transverse* photons that were both blueshifted by exactly γ.
+
+**Outstanding for milestone 5:** the shader side — generating rays through the
+tetrad, per-ray shift from `observed_frequency`, free-look quaternion applied
+inside the frame before the boost, fixed stated FOV, proper-time advance, and
+the singularity ending card at r ≈ 0.02 r_s.
+
 ### A trap worth knowing
 
 The shader chunks are JS template literals. A backtick inside a GLSL comment

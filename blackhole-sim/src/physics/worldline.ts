@@ -11,8 +11,14 @@
  * the object is.
  */
 
-/** Floats per sample in the buffer from `integrate_test_object`. */
-export const WORLDLINE_STRIDE = 6;
+/**
+ * Floats per sample in the buffer from `integrate_test_object`:
+ * `[tau, t, tFar, r, theta, phi, u_t, u_r, u_theta, u_phi]`.
+ *
+ * The 4-velocity is carried so the 1st-person view can build the observer's
+ * orthonormal frame at any point on the stored worldline (spec §1.6).
+ */
+export const WORLDLINE_STRIDE = 10;
 
 export interface WorldlinePoint {
   /** The object's own clock. Finite through the horizon. */
@@ -28,6 +34,11 @@ export interface WorldlinePoint {
   r: number;
   theta: number;
   phi: number;
+  /**
+   * Contravariant 4-velocity (u^t, u^r, u^theta, u^phi) at this point.
+   * Feeds `observer_tetrad` to build the 1st-person camera frame.
+   */
+  u: [number, number, number, number];
 }
 
 export interface WorldlineAudit {
@@ -84,6 +95,7 @@ export class Worldline {
       r: this.f(i + 3),
       theta: this.f(i + 4),
       phi: this.f(i + 5),
+      u: [this.f(i + 6), this.f(i + 7), this.f(i + 8), this.f(i + 9)],
     };
   }
 
@@ -169,7 +181,7 @@ export class Worldline {
     maxIndex = this.count - 1,
   ): WorldlinePoint {
     if (this.count === 0) {
-      return { tau: 0, t: 0, tFar: 0, r: 0, theta: 0, phi: 0 };
+      return { tau: 0, t: 0, tFar: 0, r: 0, theta: 0, phi: 0, u: [1, 0, 0, 0] };
     }
     const first = this.f(offset);
     if (!(value > first)) return this.at(0);
@@ -205,6 +217,16 @@ export class Worldline {
       r: a.r + (b.r - a.r) * f,
       theta: a.theta + (b.theta - a.theta) * f,
       phi: a.phi + dphi * f,
+      // Linear blend is adequate between adjacent samples of a smooth
+      // worldline; the frame is rebuilt from it by Gram-Schmidt, which
+      // re-normalises anyway, so small interpolation error does not
+      // accumulate into a non-orthonormal basis.
+      u: [
+        a.u[0] + (b.u[0] - a.u[0]) * f,
+        a.u[1] + (b.u[1] - a.u[1]) * f,
+        a.u[2] + (b.u[2] - a.u[2]) * f,
+        a.u[3] + (b.u[3] - a.u[3]) * f,
+      ],
     };
   }
 }

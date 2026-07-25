@@ -52,6 +52,15 @@ pub struct WorldlineSample {
     pub r: f64,
     pub theta: f64,
     pub phi: f64,
+    /// Contravariant 4-velocity u^mu at this sample.
+    ///
+    /// Needed because the 1st-person view builds its orthonormal frame from
+    /// the object's own 4-velocity (see `physics::tetrad`), and that frame has
+    /// to be reconstructable at any point on the stored worldline — not just
+    /// at the end. Positions alone are not enough: re-deriving u from
+    /// neighbouring samples would be a finite-difference approximation of a
+    /// quantity the integrator already knows exactly.
+    pub u: [f64; 4],
 }
 
 /// Convert Kerr-Schild time to the distant static observer's (Boyer-Lindquist)
@@ -460,6 +469,7 @@ pub fn integrate_worldline(
         r: s.x[1],
         theta: s.x[2],
         phi: s.x[3],
+        u: crate::physics::tetrad::four_velocity(s, metric),
     };
 
     worldline.samples.push(sample_at(tau, &state));
