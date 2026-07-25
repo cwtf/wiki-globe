@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import type { Dispatch, SetStateAction } from "react";
 
 import { physicsBridge } from "@/engine/physics-bridge";
+import { fragmentShaderSource } from "@/shaders/blackhole/fragment.glsl";
 import type { SimulationParams } from "@/types/simulation";
 import type { FeatureToggles } from "@/types/features";
 
@@ -23,6 +24,16 @@ export interface BlackHoleDebugApi {
   setFeatures: (patch: Partial<FeatureToggles>) => void;
   /** Capture the next rendered frame from the default framebuffer. */
   captureFrame: () => Promise<FrameCapture>;
+  /**
+   * Compile the production fragment shader with every feature define enabled,
+   * in a throwaway context. Returns the driver's info log on failure.
+   *
+   * The shader chunks are JS template literals, so a stray backtick or a
+   * broken interpolation is a *runtime* fault that `tsc` and `next build` both
+   * wave through — and in a throttled tab nothing draws, so a broken shader
+   * looks identical to a paused one. This makes the distinction checkable.
+   */
+  compileShader: () => { ok: boolean; log: string };
   /**
    * Camera geometry the fragment shader actually uses, so screen-space
    * measurements can be converted to impact parameter b. See `cameraModel`
@@ -110,6 +121,49 @@ export function DebugHooks({
         }, 2000);
       });
 
+    const compileShader = (): { ok: boolean; log: string } => {
+      const gl = document
+        .createElement("canvas")
+        .getContext("webgl2") as WebGL2RenderingContext | null;
+      if (!gl) return { ok: false, log: "no webgl2 context" };
+
+      // Mirror how ShaderManager assembles a variant: the #version directive
+      // must stay on the first line, so defines are spliced in after it.
+      const defines = [
+        "ENABLE_LENSING",
+        "ENABLE_DISK",
+        "ENABLE_DOPPLER",
+        "ENABLE_STARS",
+        "ENABLE_PHOTON_GLOW",
+        "ENABLE_JETS",
+        "ENABLE_REDSHIFT",
+        "RAY_QUALITY_ULTRA",
+      ]
+        .map((d) => `#define ${d} 1`)
+        .join("\n");
+
+      const lines = fragmentShaderSource.split("\n");
+      const versionIndex = lines.findIndex((l) => l.startsWith("#version"));
+      const source =
+        versionIndex >= 0
+          ? [
+              lines[versionIndex],
+              defines,
+              ...lines.slice(0, versionIndex),
+              ...lines.slice(versionIndex + 1),
+            ].join("\n")
+          : `${defines}\n${fragmentShaderSource}`;
+
+      const shader = gl.createShader(gl.FRAGMENT_SHADER);
+      if (!shader) return { ok: false, log: "createShader failed" };
+      gl.shaderSource(shader, source);
+      gl.compileShader(shader);
+      const ok = !!gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+      const log = gl.getShaderInfoLog(shader) ?? "";
+      gl.deleteShader(shader);
+      return { ok, log };
+    };
+
     window.__bh = {
       isolated: () => window.crossOriginIsolated,
       transport: () => physicsBridge.getTransport(),
@@ -122,6 +176,7 @@ export function DebugHooks({
           features: { ...(prev.features as FeatureToggles), ...patch },
         })),
       captureFrame,
+      compileShader,
       camera: () => ({
         distance: params.zoom * ZOOM_TO_DISTANCE,
         focalLength: SHADER_FOCAL_LENGTH,

@@ -1,4 +1,5 @@
 import { PHYSICS_CONSTANTS } from "@/configs/physics.config";
+import { JET_SHADER_CONSTANTS as JET } from "@/configs/jet.config";
 
 export const DISK_CHUNK = `
   // Accretion Disk Physics & Rendering
@@ -119,43 +120,84 @@ export const DISK_CHUNK = `
       }
   }
 
+  // Bipolar kinematic jet along the spin axis (spec §1.4).
+  //
+  // The LAUNCH mechanism is not simulated -- that needs magnetised GRMHD
+  // (Blandford-Znajek). This is a parameterised conical outflow whose emission
+  // is traced through the same geodesic march and the same shift factors as
+  // the disk, which is what makes the observables emerge instead of being
+  // painted on:
+  //   * one-sidedness      -- both sides get delta^(3-alpha); the receding
+  //                           cone is suppressed by orders of magnitude, and
+  //                           which side is bright flips as the camera crosses
+  //                           the equatorial plane, with no explicit test for
+  //                           camera position anywhere in this function.
+  //   * counter-jet base   -- visible around the shadow purely because strongly
+  //                           bent rays reach it; nothing here knows about it.
+  //   * superluminal knots -- knots advect at the bulk speed beta; the apparent
+  //                           transverse speed beta sin(theta)/(1 - beta cos(theta))
+  //                           is a consequence of light travel time, not a
+  //                           value written into the shader.
+  //
+  // Constants come from src/configs/jet.config.ts so the beaming maths is unit
+  // tested and cannot drift from the shader.
   void sample_relativistic_jets(
-      vec3 p, vec3 v, float r, float rh, float dt,
+      vec3 p, vec3 v, float r, float rh, float rs, float dt,
       inout vec3 accumulatedColor, inout float accumulatedAlpha
   ) {
-      // Jets align with spin axis (Y-axis)
-      float jetVerticalPos = abs(p.y);
-      if (jetVerticalPos > rh * 1.8 && jetVerticalPos < MAX_DIST * 0.8) {
-          float jetRadialDist = length(p.xz);
-          float jetWidth = 1.0 + jetVerticalPos * 0.15;
+      float axial = abs(p.y);
+      if (axial <= rh * ${JET.baseHeight.toFixed(3)} || axial >= MAX_DIST * 0.8) return;
 
-          if (jetRadialDist < jetWidth * 2.0) {
-              float radialFalloff = exp(-(jetRadialDist * jetRadialDist) / (jetWidth * 0.5));
-              float lengthFalloff = exp(-jetVerticalPos * 0.05);
+      float cylR = length(p.xz);
+      float coneR = ${JET.baseRadius.toFixed(3)} + axial * ${JET.tanTheta.toFixed(5)};
+      if (cylR >= coneR) return;
 
-              float flowCombined = p.y * 2.0 - u_time * 8.0;
-              vec3 uvJet = vec3(p.x, flowCombined, p.z);
-              float noiseVal = noise(uvJet * 0.5) * 0.6 + noise(uvJet * 1.5) * 0.4;
+      // Smooth transverse profile, brightest on the axis.
+      float edge = 1.0 - clamp(cylR / max(1e-4, coneR), 0.0, 1.0);
+      float transverse = edge * edge;
 
-              float jetDensity = radialFalloff * lengthFalloff * max(0.0, noiseVal - 0.2);
+      // Emissivity ~ r^-2.
+      float rEm = max(length(p), rh);
+      float emissivity = pow(rEm, -${JET.emissivityExponent.toFixed(1)});
 
-              if (jetDensity > 0.001) {
-                  float jetVel = 0.92 * sign(p.y);
-                  vec3 jetVelVec = vec3(0.0, jetVel, 0.0);
+      // Emission knots advecting outward at the bulk speed. Sampling the
+      // pattern at (axial - beta * t) is what makes a knot a feature that
+      // physically moves along the flow, so its apparent speed on the sky is
+      // produced by light-travel time rather than prescribed.
+      float knotPhase = (axial - ${JET.beta.toFixed(6)} * u_time * ${JET.knotTimeScale.toFixed(2)}) / ${JET.knotSpacing.toFixed(2)};
+      float knots = 1.0 + ${JET.knotContrast.toFixed(2)} * sin(6.28318530718 * knotPhase);
 
-                  float cosThetaJet = dot(normalize(jetVelVec), -v);
-                  float betaJet = abs(jetVel);
-                  float gammaJet = 1.0 / sqrt(1.0 - betaJet * betaJet);
-                  float deltaJet = 1.0 / (gammaJet * (1.0 - betaJet * cosThetaJet));
-                  float beamingJet = pow(deltaJet, 3.5);
+      float turb = 0.65 + 0.35 * noise(vec3(p.x, axial * 0.4 - u_time * 0.25, p.z) * 0.7);
 
-                  vec3 baseJetColor = vec3(0.4, 0.7, 1.0);
-                  vec3 jetEmission = baseJetColor * jetDensity * 0.05 * beamingJet * dt;
+      float density = transverse * emissivity * max(0.0, knots) * turb;
+      if (density <= 1e-5) return;
 
-                  accumulatedColor += jetEmission * (1.0 - accumulatedAlpha);
-                  accumulatedAlpha += jetDensity * 0.05 * dt;
-              }
-          }
-      }
+      // Flow direction: outward along the spin axis on whichever side we are.
+      vec3 flowDir = vec3(0.0, sign(p.y), 0.0);
+
+      // The traced ray travels along +v away from the camera, so the photon
+      // that reaches the observer left this point along -v.
+      float cosTheta = dot(flowDir, -v);
+
+      float beta = ${JET.beta.toFixed(6)};
+      float gamma = ${JET.gamma.toFixed(4)};
+      float deltaDop = 1.0 / max(1e-4, gamma * (1.0 - beta * cosTheta));
+
+      // Same gravitational shift the rest of the scene sees.
+      float gravShift = sqrt(max(0.0, 1.0 - rs / rEm));
+      float g = deltaDop * gravShift;
+
+      float beaming = pow(max(g, 1e-4), ${JET.beamExponent.toFixed(1)});
+
+      // Synchrotron continuum reads blue-white; the shift tints it rather than
+      // recolouring it, since this is not a thermal source.
+      vec3 baseJetColor = vec3(0.45, 0.7, 1.0);
+      vec3 tint = mix(vec3(1.0, 0.55, 0.4), vec3(0.6, 0.8, 1.0), clamp(g, 0.0, 1.0));
+
+      float emission = density * ${JET.brightness.toFixed(4)} * dt;
+      vec3 jetEmission = baseJetColor * tint * emission * beaming;
+
+      accumulatedColor += jetEmission * (1.0 - accumulatedAlpha);
+      accumulatedAlpha += emission;
   }
 `;

@@ -135,12 +135,15 @@ export const METRIC_CHUNK = `
         float sigma_ratio = r2 / max(1e-8, sigma);
         vec3 r_hat = -normalize(p);
 
-        // wiki-globe fork: the Newtonian `M / r^2` term that used to lead this
+        // wiki-globe fork: the Newtonian M/r^2 term that used to lead this
         // expression has been removed. Null geodesics do not carry it: the
         // Binet equation for light is u'' + u = 3*M*u^2, whose Cartesian form
         // with |v| renormalised each step is a purely 3*M*L^2/r^4 central
         // force. Including the Newtonian term over-deflected every ray and
         // inflated the shadow.
+        //
+        // (Note for future edits: this file is a JS template literal. A
+        // backtick in a comment silently ends the shader string.)
         //
         // Measured by bisecting the capture impact parameter against this
         // exact marching loop, camera at r0 = 1000M, a = 0:

@@ -13,7 +13,9 @@ spurious Newtonian term made the shadow 49.7% too large at `a = 0`. Fixed —
 `b_crit` now lands within 0.04% of `3√3 M`. Kerr remains approximate (10-25%
 on the critical curve at high spin) and the photon ring is still partly
 painted on. Full findings and measurements: `blackhole-sim/FORK.md`.
-Milestones 3-6 unstarted.
+
+**MILESTONE 3 DONE** bar the per-mass-preset jet default, which needs §1.8.
+Milestones 4-6 unstarted.
 
 A scientifically accurate interactive black hole, reachable from the body
 dropdown (new group below "Pluto system") and at `wikiglo.be/blackhole`.
@@ -434,9 +436,27 @@ Each lands independently runnable; verify per §4 before moving on.
    already satisfies from §1.3 and patch the gaps (`g⁴` beaming,
    ISCO-anchored annulus, disk toggle). Expose `window.__bh` debug hooks
    (`debugRay(px, py)`, integrator access) for the verification workflow.
-3. **Accretion-disk gaps + jets** — finish §1.3; kinematic jet cone with
-   one-sided beaming, counter-jet lensing, jet toggle with per-preset
-   defaults.
+3. **Accretion-disk gaps + jets** *(done, except the per-preset default)* —
+   finish §1.3; kinematic jet cone with one-sided beaming, counter-jet
+   lensing, jet toggle with per-preset defaults.
+
+   Done: jet rewritten to Γ = 5, 7° half-angle, `r⁻²` emissivity, `g⁴`
+   beaming including the gravitational shift, and knots that advect at the
+   bulk speed so `β_app` emerges from light-travel time. Constants live in
+   `src/configs/jet.config.ts` and are unit-tested
+   (`src/__tests__/physics/jet-beaming.test.ts`, 10 tests) so the shader and
+   the §4 targets cannot drift. Disk outer edge corrected to 12 r_s (the old
+   "Rs"-labelled default was really 25 r_s). Jets toggle labelled
+   "(kinematic)".
+
+   Deferred: the per-mass-preset jet default (on for M87\*, off for Sgr A\*
+   and stellar) needs mass presets, which are §1.8 / milestone 6.
+
+   Not yet verified in a rendered frame: one-sidedness and the bright-side
+   flip across the equatorial plane. The analytic counterparts are unit
+   tested and the production shader compiles with all features enabled
+   (`window.__bh.compileShader()`), but the browser pane does not composite
+   while hidden, so no pixels have been measured.
 4. **Test object, 3rd person** — timelike integrator in `gravitas-core` +
    WASM FFI + worker/SAB plumbing, drop panel + presets, trail,
    coordinate-time sampling with horizon freeze + redshift fade, HUD

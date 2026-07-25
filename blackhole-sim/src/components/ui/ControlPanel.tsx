@@ -786,7 +786,11 @@ export const ControlPanel = ({
                                   icon: Sparkles,
                                 },
                                 {
-                                  label: "Relativistic Jets",
+                                  // Spec §1.4/§5: the emission is traced
+                                  // through real geodesics, but the launch
+                                  // mechanism (Blandford-Znajek) is not
+                                  // simulated. The label has to say so.
+                                  label: "Relativistic Jets (kinematic)",
                                   key: "relativisticJets" as const,
                                   icon: Zap,
                                 },

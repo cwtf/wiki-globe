@@ -216,7 +216,7 @@ void main() {
 
         // Relativistic jets
 #ifdef ENABLE_JETS
-        sample_relativistic_jets(p, v, r, rh, dt, accumulatedColor, accumulatedAlpha);
+        sample_relativistic_jets(p, v, r, rh, rs, dt, accumulatedColor, accumulatedAlpha);
 #endif
     }
 

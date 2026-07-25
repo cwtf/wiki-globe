@@ -136,11 +136,16 @@ export const SIMULATION_CONFIG = {
     label: "Cam Auto-Pan",
   },
   diskSize: {
-    default: 50.0, // Replaces 25.0 Rs (renders at 50.0M)
-    min: 4.0, // Just outside Event Horizon
+    // wiki-globe fork: this value is multiplied by M in the shader
+    // (diskOuter = M * u_disk_size), so its unit is M, not Rs — upstream's
+    // "Rs" label understated the rendered disk by a factor of two. Spec §1.3
+    // puts the outer edge at ~12 r_s = 24 M, which is the new default; the
+    // slider still reaches far larger disks.
+    default: 24.0,
+    min: 4.0, // Clamped up to isco * 1.1 in the shader if set below it
     max: 100.0, // Extended observable disk
     step: 0.5,
-    unit: "Rs",
+    unit: "M",
     decimals: 1,
     label: "Accretion Max Radius",
   },
