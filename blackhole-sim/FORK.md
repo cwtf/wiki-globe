@@ -160,6 +160,72 @@ preset-driven default is deferred.
 upstream's "Rs" unit label understated the disk by 2×. Default changed from
 50 (= 25 r_s) to 24 (= 12 r_s per §1.3) and the unit relabelled to M.
 
+## Test object (spec milestone 4, physics half)
+
+`physics/worldline.rs` in `gravitas-core` is the timelike trajectory primitive
+that `plunge.rs` flagged as "its own change". It integrates a dropped test
+object in **Kerr-Schild** coordinates, parameterised by proper time, with drop
+presets (circular, ISCO knife-edge, radial free fall, eccentric, custom).
+Exposed through `gravitas-wasm` as `integrate_test_object(...)` plus
+`worldline_*` getters, in an append-only `impl` block.
+
+Three things it had to add over `geodesic::integrate`:
+
+- **Proper time.** With H = −1/2 the affine parameter *is* τ, but
+  `AdaptiveStepper::step` returns the *next* recommended step, not the one it
+  accepted, so τ cannot be accumulated through it. The worldline loop drives
+  `adaptive_rkf45_step` directly.
+- **Both clocks per sample**, so §1.6's two views sample one stored worldline
+  rather than two integrations that would drift apart.
+- **Crossing the horizon.** `integrate` stops at r < r_h·1.001; the inner
+  radius is a caller parameter here and reaches ~0.02 r_s.
+
+### The clock that freezes is not the coordinate time
+
+The spec says the 3rd-person view samples "coordinate time t" so the object
+freezes at the horizon. Taken literally against this engine that is **wrong**,
+and a test caught it: Kerr-Schild time is *regular* at the horizon — that is
+the entire point of horizon-penetrating coordinates — so an infalling object
+crosses in finite `t` and would be seen sailing straight through.
+
+The freeze lives in the **distant static observer's** (Boyer-Lindquist) clock.
+Every sample therefore carries `t_far` alongside `t`, converted in closed form
+by partial fractions over the horizon roots:
+
+```text
+t_far = t_KS − ∫ 2Mr/Δ dr,   Δ = r² − 2Mr + a²
+```
+
+`t_far` diverges logarithmically as r → r_+ and is reported as `Infinity` at
+and inside the horizon, where no static observer exists. **The 3rd-person view
+must sample by `t_far`; the 1st-person view samples the same buffer by `tau`.**
+
+### §4 targets, verified by `cargo test -p gravitas-core --test worldline`
+
+13 tests, all passing:
+
+| Target | Result |
+| --- | --- |
+| Circular drop at r = 4 r_s holds ≥ 20 orbits, E/L drift < 1e-6 | radius varies < 1e-6 relative over 20+ orbits |
+| Inside 3 r_s it plunges | holds, once perturbed — see below |
+| Eccentric periapsis precession within 1% of `6πM/p` | 0.6% at p ≈ 960M |
+| Radial-fall proper time matches the closed form | within 1e-3 relative |
+| 3rd-person view never shows a crossing | `t_far` infinite for every sample inside r_h, while τ stays finite |
+| Circular-orbit dilation `dt/dτ = 1/√(1−3M/r)` | within 1e-4 |
+
+Two of those needed the test rewritten rather than the code:
+
+- **"Inside the ISCO it plunges" is a statement about stability, not
+  existence.** Circular geodesics exist at any r > 3M; inside the ISCO they are
+  unstable *equilibria*, so an exactly circular start sits there forever in
+  exact arithmetic. The test now nudges the orbit and asserts the nudge decays
+  outside the ISCO and runs away inside it.
+- **The 1% precession target only holds in the weak field.** `6πM/p` is the
+  leading post-Newtonian term; at p ≈ 288M the fully relativistic integration
+  sits 1.6% above it. A companion test confirms the residual shrinks roughly
+  as M/p, which is what distinguishes a truncated formula from a wrong
+  integrator. The 1% check runs at p ≈ 960M.
+
 ### A trap worth knowing
 
 The shader chunks are JS template literals. A backtick inside a GLSL comment

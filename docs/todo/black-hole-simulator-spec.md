@@ -15,7 +15,11 @@ on the critical curve at high spin) and the photon ring is still partly
 painted on. Full findings and measurements: `blackhole-sim/FORK.md`.
 
 **MILESTONE 3 DONE** bar the per-mass-preset jet default, which needs §1.8.
-Milestones 4-6 unstarted.
+
+**MILESTONE 4: physics done, UI outstanding.** The timelike worldline
+integrator, its WASM FFI, and 13 passing §4 tests are in; the drop panel,
+marker/trail rendering and HUD are not. Note the §1.6 clock correction
+recorded under milestone 4 below. Milestones 5-6 unstarted.
 
 A scientifically accurate interactive black hole, reachable from the body
 dropdown (new group below "Pluto system") and at `wikiglo.be/blackhole`.
@@ -457,10 +461,28 @@ Each lands independently runnable; verify per §4 before moving on.
    tested and the production shader compiles with all features enabled
    (`window.__bh.compileShader()`), but the browser pane does not composite
    while hidden, so no pixels have been measured.
-4. **Test object, 3rd person** — timelike integrator in `gravitas-core` +
-   WASM FFI + worker/SAB plumbing, drop panel + presets, trail,
-   coordinate-time sampling with horizon freeze + redshift fade, HUD
-   readouts, E/L drift check.
+4. **Test object, 3rd person** *(physics done; UI outstanding)* — timelike
+   integrator in `gravitas-core` + WASM FFI + worker/SAB plumbing, drop panel
+   + presets, trail, coordinate-time sampling with horizon freeze + redshift
+   fade, HUD readouts, E/L drift check.
+
+   Done: `physics/worldline.rs` integrates the timelike geodesic in
+   Kerr-Schild coordinates by proper time, with all five drop presets, E/L
+   drift monitoring, and horizon crossing down to ~0.02 r_s. Exposed through
+   `gravitas-wasm` (`integrate_test_object` + `worldline_*` getters).
+   13 Rust tests cover this milestone's §4 targets and pass; the full
+   `gravitas-core` suite stays green.
+
+   **Correction to this spec:** §1.6 says the 3rd-person view samples
+   "coordinate time t". In Kerr-Schild coordinates that is wrong — KS time is
+   horizon-regular, so sampling by it shows the object crossing. The freeze
+   requires the distant static observer's (Boyer-Lindquist) clock, recorded
+   per sample as `t_far` and infinite at/inside the horizon. **3rd person
+   samples `t_far`; 1st person samples `tau`; both index the same buffer.**
+
+   Outstanding: worker/SAB plumbing for the worldline, drop panel UI, marker
+   + trail rendering, redshift fade, and the HUD readouts (r in r_s and km,
+   local velocity, dual clocks, tidal acceleration).
 5. **1st person** — tetrad camera + aberration in the shader, proper-time
    advance, free-look, dual clocks, horizon crossing, singularity ending.
 6. **Polish** — curvature-grid toggle, mass presets + tidal readout,

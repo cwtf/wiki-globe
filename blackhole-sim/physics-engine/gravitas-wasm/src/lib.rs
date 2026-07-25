@@ -21,7 +21,7 @@ use gravitas::geodesic::{
 use gravitas::invariants;
 use gravitas::metric::kerr::CoordinateSystem;
 use gravitas::metric::{Kerr, Metric, Orbit};
-use gravitas::physics::{disk, spectrum};
+use gravitas::physics::{disk, spectrum, worldline};
 
 use js_sys::Float32Array;
 use wasm_bindgen::prelude::*;
@@ -653,5 +653,200 @@ impl PhysicsEngine {
         Ok(vec![
             s.x[0], s.x[1], s.x[2], s.x[3], s.p[0], s.p[1], s.p[2], s.p[3],
         ])
+    }
+}
+
+// ===========================================================================
+// wiki-globe fork: dropped test object (spec §1.5 / §1.6).
+//
+// Kept in its own impl block so the whole addition is append-only and an
+// upstream merge cannot conflict inside the original block.
+// ===========================================================================
+
+/// Floats per worldline sample in the buffer handed to JS.
+pub const WORLDLINE_STRIDE: usize = 6;
+
+/// Audit values from the most recent worldline integration. Kept in f64 on
+/// this side: the spec's conservation target is 1e-6, which is close enough
+/// to f32 epsilon (~1.2e-7) that reporting drift as f32 would be reporting
+/// rounding noise.
+#[derive(Clone, Copy, Debug, Default)]
+struct WorldlineAudit {
+    energy: f64,
+    angular_momentum: f64,
+    max_energy_drift: f64,
+    max_angular_momentum_drift: f64,
+    proper_time: f64,
+    coordinate_time: f64,
+    end: u32,
+    samples: u32,
+}
+
+thread_local! {
+    static LAST_WORLDLINE: std::cell::Cell<WorldlineAudit> =
+        const { std::cell::Cell::new(WorldlineAudit {
+            energy: 0.0,
+            angular_momentum: 0.0,
+            max_energy_drift: 0.0,
+            max_angular_momentum_drift: 0.0,
+            proper_time: 0.0,
+            coordinate_time: 0.0,
+            end: 0,
+            samples: 0,
+        }) };
+}
+
+#[wasm_bindgen]
+impl PhysicsEngine {
+    /// Integrate a dropped test object and return its worldline.
+    ///
+    /// Always runs in **Kerr-Schild** coordinates (spec §5) so the trajectory
+    /// stays valid through the horizon.
+    ///
+    /// `preset`: 0 = circular, 1 = ISCO knife-edge, 2 = radial free fall,
+    /// 3 = eccentric, 4 = custom.
+    ///
+    /// Returns a flat `Float32Array`, `WORLDLINE_STRIDE` floats per sample:
+    /// `[tau, t, t_far, r, theta, phi]`.
+    ///
+    /// `t` is Kerr-Schild time and is finite across the horizon; `t_far` is
+    /// the distant static observer's clock and becomes `Infinity` at and
+    /// inside the horizon. The 3rd-person view must sample by `t_far` for the
+    /// object to freeze and never be seen to cross (§1.6); the 1st-person view
+    /// samples the same buffer by `tau`. Integrating twice would let the two
+    /// views drift apart, so there is one buffer and two parameters into it.
+    ///
+    /// Conservation figures for the run are read back with the
+    /// `worldline_*` getters below.
+    #[allow(clippy::too_many_arguments)]
+    pub fn integrate_test_object(
+        &mut self,
+        preset: u32,
+        r0: f64,
+        tangential_fraction: f64,
+        radial_velocity: f64,
+        inner_radius: f64,
+        max_steps: u32,
+        max_samples: u32,
+    ) -> Result<Float32Array, JsValue> {
+        if !(r0.is_finite() && r0 > 0.0) {
+            return Err(JsValue::from_str(
+                "integrate_test_object: r0 must be positive and finite",
+            ));
+        }
+
+        let drop = match preset {
+            0 => worldline::DropSpec::Circular { r: r0 },
+            1 => worldline::DropSpec::Isco {
+                inward_seed: if radial_velocity == 0.0 {
+                    1e-4
+                } else {
+                    radial_velocity.abs()
+                },
+            },
+            2 => worldline::DropSpec::RadialFall { r: r0 },
+            3 => worldline::DropSpec::Eccentric {
+                r: r0,
+                tangential_fraction,
+            },
+            4 => worldline::DropSpec::Custom {
+                r: r0,
+                tangential_fraction,
+                radial_velocity,
+            },
+            other => {
+                return Err(JsValue::from_str(&format!(
+                    "integrate_test_object: unknown preset {other}"
+                )))
+            }
+        };
+
+        let options = worldline::WorldlineOptions {
+            inner_radius,
+            max_steps: max_steps as usize,
+            max_samples: max_samples.max(1) as usize,
+            ..Default::default()
+        };
+
+        let line = worldline::integrate_worldline(&self.metric_ks, drop, &options);
+
+        let mut flat = Vec::with_capacity(line.samples.len() * WORLDLINE_STRIDE);
+        for s in &line.samples {
+            flat.push(s.tau as f32);
+            flat.push(s.t as f32);
+            // Infinity survives the f32 cast, which is exactly the signal the
+            // 3rd-person view needs: "this sample is never observed".
+            flat.push(s.t_far as f32);
+            flat.push(s.r as f32);
+            flat.push(s.theta as f32);
+            flat.push(s.phi as f32);
+        }
+
+        LAST_WORLDLINE.with(|c| {
+            c.set(WorldlineAudit {
+                energy: line.energy,
+                angular_momentum: line.angular_momentum,
+                max_energy_drift: line.max_energy_drift,
+                max_angular_momentum_drift: line.max_angular_momentum_drift,
+                proper_time: line.proper_time,
+                coordinate_time: line.coordinate_time,
+                end: match line.end {
+                    worldline::WorldlineEnd::ReachedInnerRadius => 0,
+                    worldline::WorldlineEnd::Escaped => 1,
+                    worldline::WorldlineEnd::StepBudget => 2,
+                    worldline::WorldlineEnd::NormalizationFailure => 3,
+                },
+                samples: line.samples.len() as u32,
+            });
+        });
+
+        Ok(Float32Array::from(&flat[..]))
+    }
+
+    /// Conserved energy E = -p_t of the last integrated worldline.
+    pub fn worldline_energy(&self) -> f64 {
+        LAST_WORLDLINE.with(|c| c.get().energy)
+    }
+
+    /// Conserved axial angular momentum L_z = p_phi of the last worldline.
+    pub fn worldline_angular_momentum(&self) -> f64 {
+        LAST_WORLDLINE.with(|c| c.get().angular_momentum)
+    }
+
+    /// Largest |E - E0| over the last worldline. Spec §1.5 wants < 1e-6.
+    pub fn worldline_energy_drift(&self) -> f64 {
+        LAST_WORLDLINE.with(|c| c.get().max_energy_drift)
+    }
+
+    /// Largest |L_z - L_z0| over the last worldline.
+    pub fn worldline_angular_momentum_drift(&self) -> f64 {
+        LAST_WORLDLINE.with(|c| c.get().max_angular_momentum_drift)
+    }
+
+    /// Total proper time elapsed along the last worldline.
+    pub fn worldline_proper_time(&self) -> f64 {
+        LAST_WORLDLINE.with(|c| c.get().proper_time)
+    }
+
+    /// Total Kerr-Schild coordinate time elapsed along the last worldline.
+    pub fn worldline_coordinate_time(&self) -> f64 {
+        LAST_WORLDLINE.with(|c| c.get().coordinate_time)
+    }
+
+    /// 0 = reached inner radius, 1 = escaped, 2 = step budget,
+    /// 3 = normalization failure.
+    pub fn worldline_end_reason(&self) -> u32 {
+        LAST_WORLDLINE.with(|c| c.get().end)
+    }
+
+    /// Number of samples in the last returned buffer.
+    pub fn worldline_sample_count(&self) -> u32 {
+        LAST_WORLDLINE.with(|c| c.get().samples)
+    }
+
+    /// Closed-form Schwarzschild proper time for radial free fall from rest at
+    /// `r0` down to `r`. The §4 check for the radial-drop preset.
+    pub fn radial_fall_proper_time(&self, r0: f64, r: f64) -> f64 {
+        worldline::radial_fall_proper_time(r0, r, self.mass)
     }
 }
