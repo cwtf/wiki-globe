@@ -54,6 +54,7 @@ export function CrossOriginIsolation() {
       })
       .catch((err) => {
         // Non-fatal: the app runs single-threaded without isolation.
+        // eslint-disable-next-line no-console
         console.warn("Cross-origin isolation unavailable:", err);
       });
 

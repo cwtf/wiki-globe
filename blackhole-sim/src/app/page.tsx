@@ -230,7 +230,7 @@ const App = () => {
       )}
 
       <BackToGlobe />
-      <DebugHooks />
+      <DebugHooks params={params} setParams={setParams} />
 
       <ErrorBoundary>
         {params.features?.spacetimeVisualization ? (

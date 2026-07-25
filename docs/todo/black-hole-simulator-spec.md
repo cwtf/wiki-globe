@@ -1,13 +1,19 @@
 # Black Hole Simulator — plan / spec
 
-Status: **MILESTONE 1 IN PROGRESS.** The fork is vendored at `blackhole-sim/`
-(upstream `459c15a`, 2026-04-30) and configured for static export at
-`/blackhole`; the Pages CI workflow and the globe-side entry points are in
-place and verified. Not yet done: **the fork has never been built** — no Bun /
-Rust / wasm-pack on the dev machine, so the first real build happens in CI —
-and GitHub Pages must be switched to the "GitHub Actions" source in repository
-settings before the workflow can publish. See `blackhole-sim/FORK.md` for the
-upstream-delta record. Milestones 2-6 unstarted.
+Status: **MILESTONE 1 DONE (bar one settings flip); MILESTONE 2 DONE.** The
+fork is vendored at `blackhole-sim/` (upstream `459c15a`, 2026-04-30), builds
+clean, and static-exports under `basePath: /blackhole`; the Pages CI workflow,
+globe entry points, and `window.__bh` debug hooks are in place and verified in
+a browser. **GitHub Pages must still be switched to the "GitHub Actions"
+source in repository settings** before the workflow can publish — that is a
+manual step nobody has taken yet.
+
+The milestone-2 audit found the base's **null geodesics were wrong**: a
+spurious Newtonian term made the shadow 49.7% too large at `a = 0`. Fixed —
+`b_crit` now lands within 0.04% of `3√3 M`. Kerr remains approximate (10-25%
+on the critical curve at high spin) and the photon ring is still partly
+painted on. Full findings and measurements: `blackhole-sim/FORK.md`.
+Milestones 3-6 unstarted.
 
 A scientifically accurate interactive black hole, reachable from the body
 dropdown (new group below "Pluto system") and at `wikiglo.be/blackhole`.
@@ -423,7 +429,7 @@ Each lands independently runnable; verify per §4 before moving on.
    deployment checks — `self.crossOriginIsolated === true` once the service
    worker controls the page, and a correct render on the very first
    uncontrolled load via `window.__bh.transport() === "main-thread"`.
-2. **Audit & baseline** — run the §4 lensing/shadow checks against the
+2. **Audit & baseline** *(done — see `blackhole-sim/FORK.md` "Physics audit")* — run the §4 lensing/shadow checks against the
    stock fork at `a = 0`; document what the base's disk/redshift pipeline
    already satisfies from §1.3 and patch the gaps (`g⁴` beaming,
    ISCO-anchored annulus, disk toggle). Expose `window.__bh` debug hooks

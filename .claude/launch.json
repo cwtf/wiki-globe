@@ -10,6 +10,14 @@
       ],
       "port": 8080,
       "autoPort": true
+    },
+    {
+      "name": "blackhole-sim",
+      "cwd": "blackhole-sim",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000,
+      "autoPort": true
     }
   ]
 }

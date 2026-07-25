@@ -71,6 +71,8 @@ Check which path is live: `window.__bh.transport()` →
 | `src/app/manifest.ts` | `start_url`/`scope`/icon paths via `BASE_PATH` | manifest members are plain strings, unaffected by `basePath` |
 | `src/app/page.tsx` | mounts `BackToGlobe` + `DebugHooks`; top-bar `pt` enlarged to clear the back pill; citation block points at the upstream repo | fork navigation + honest citation |
 | `src/engine/physics-bridge.ts` | fallback terminates the orphaned worker and nulls `worker`/`sab`; records `transport`; `console.error` → `console.warn` | the worker is constructed *before* the SAB throw, so the fallback leaked a live thread; the fallback is an expected state, not an error |
+| `src/shaders/blackhole/chunks/metric.ts` | removed the Newtonian `M/r²` term from the null-geodesic force | shadow was 49.7% too large — see the physics audit below |
+| `src/shaders/blackhole/chunks/disk.ts` | beaming exponent `δ^3.5` → `δ⁴` | spec §1.3 requires exact `g⁴` |
 
 ## Upstream files deleted
 
@@ -83,12 +85,93 @@ Check which path is live: `window.__bh.transport()` →
 | `src/app/robots.ts`, `src/app/sitemap.ts` | `robots.txt` is only honoured at the origin root; the globe's root `robots.txt` / `sitemap.xml` own site-wide SEO |
 | `src/app/google71f68cb94e351e26.html`, `public/c9f345b7cd2d289e01df73e6ca6c86e8.txt` | Search Console / IndexNow ownership proofs for upstream's domain |
 
+## Physics audit (spec milestone 2)
+
+Measured by transcribing the shader's own `kerr_geodesic_accel` and marching
+loop into JS and bisecting the capture impact parameter (camera at r0 = 1000M,
+step budget lifted so the result measures the *integrator*, not the step cap).
+Reproduce from the console via `window.__bh`.
+
+**Null geodesics were wrong at a = 0 and are now correct.** The radial force
+carried a Newtonian `M/r²` term alongside the `3M·L²_eff/r⁴` term. Light does
+not carry the Newtonian term — the Binet equation for photons is
+`u'' + u = 3Mu²` — so every ray was over-deflected:
+
+| | b_crit at a = 0 | error vs `3√3 M` |
+| --- | --- | --- |
+| upstream | 7.777 M | **+49.7%** |
+| this fork | 5.194 M | −0.04% |
+
+A ray just outside the corrected b_crit winds ≈ 11.9 rad (≥ 2π) before
+escaping, satisfying the second §4 target. **The shadow was ~50% too large.**
+
+**Kerr is still approximate.** With the fix, the critical curve at a = 0.5 is
+~3.7 M prograde / 6.5 M retrograde against analytic ~4.8 / ~6.3, and at
+a = 0.999 it is ~1.6 / ~7.6 against 2 / 7 — roughly 10–25% off. The force is an
+effective-potential model with a spin-orbit `L_eff` and an added
+frame-dragging cross term, not integration of the Kerr geodesic equations,
+despite the "Kerr-Schild Hamiltonian" comment in `metric.ts`. Spec §4 states
+its analytic targets for a = 0 only, so this is recorded as a limitation
+rather than patched.
+
+### §1.3 accretion disk — what upstream already satisfies
+
+| §1.3 requirement | Status |
+| --- | --- |
+| Annulus anchored at the ISCO | ✅ `diskInner = isco` (exact Bardeen-Press-Teukolsky ISCO) |
+| Keplerian orbits, Kerr-corrected Ω | ✅ `Ω = ±√M / (r^{3/2} + a√M)` |
+| Total shift factor g (gravitational × Doppler) | ✅ exact `δ = 1/(u^t (1 − Ω L))` from the circular-orbit 4-velocity |
+| `T ∝ r^(−3/4)` | ✅ better than asked — full Novikov-Thorne with the zero-torque inner boundary |
+| `g⁴` beaming | ❌ was `δ^3.5` "for visual dynamic range"; **fixed to `δ⁴`** |
+| Disk toggle | ✅ already a feature toggle (`accretionDisk` → `ENABLE_DISK`) |
+| Outer edge ~12 r_s | ⚠️ default `diskSize` is 50 M = 25 r_s, roughly double the spec; it is a user slider, so this is a default to revisit, not a defect |
+
+### Other audit findings (not yet acted on)
+
+- **The photon ring is partly painted on.** `fragment.glsl.ts` adds
+  `exp(-|‖p‖ − r_ph|·40)` as a post-hoc glow rather than letting the ring
+  emerge from the integration. Spec §1.2 says it must never be painted on.
+  Now that b_crit is correct the ring should largely emerge on its own;
+  the additive glow should be re-evaluated and probably removed.
+- The ergosphere highlight is likewise an unlabelled painted overlay.
+- **Jets already exist** (`sample_relativistic_jets`), which the spec's delta
+  table lists as absent — a kinematic cone with β = 0.92 (Γ ≈ 2.6) and its own
+  beaming. Still missing per §1.4: the `(3−α)` counter-jet suppression,
+  per-mass-preset defaults, knots, and the "kinematic model" label. Its
+  beaming exponent is still `δ^3.5` and is deliberately left for milestone 3,
+  where the jet is reworked as a whole.
+- **The starfield is procedural**, not the ESO panorama; `public/textures/`
+  ships three sky JPEGs that no source file references.
+- `renderer.ts` sets `u_spin = params.spin * params.mass` and the shader then
+  computes `a = u_spin * M`, so `a = spin·M²`. Harmless at the default M = 1,
+  wrong for any other mass.
+- The step budget is 256 at "ultra". A ray from a camera at r ≫ 100 M cannot
+  reach the hole within that budget, so shadow geometry degrades at large
+  zoom independently of the physics.
+- `ReprojectionManager: Framebuffer incomplete (36054)` logs on load —
+  pre-existing, unrelated to the fork.
+- **The visual-regression suite is unarmed.** `tests/golden/` contains only a
+  manifest, every entry has `captured_at: null`, and no PNG was ever committed
+  upstream, so `bun run shader:check` skips each frame and reports 4 passed
+  without comparing anything. It also spawns its own dev server on port 3000;
+  use `SHADER_CHECK_SKIP_DEV=1 SHADER_CHECK_BASE_URL=http://localhost:<port>/blackhole`
+  against a running server instead. Capturing goldens now would fix the
+  baseline *after* the geodesic correction — do it before milestone 3 so the
+  jet/disk work has something to regress against.
+
 ## Known gaps (not yet addressed)
 
 - `src/app/page.tsx` carries a large `sr-only` keyword-stuffed SEO section from
   upstream. It is not false, but it is written to rank upstream's domain and
   reads oddly under wiki-globe. Trimming it is a judgement call left open.
-- The Pages workflow runs `lint`/`type-check`/`test` with `continue-on-error`
-  until the fork is verified green in CI.
+- The Pages workflow runs `lint`/`type-check`/`test` with `continue-on-error`.
+  `bun run test` is **364 passed / 1 failed** on the pristine upstream tree as
+  well: `src/__tests__/shaders/manager.test.ts` asserts that any two distinct
+  `FeatureToggles` compile to distinct variants, but `generateCacheKey` in
+  `src/shaders/manager.ts` (byte-identical to upstream) omits
+  `spacetimeVisualization`, so fast-check reliably finds a pair that shares a
+  cache key. Either the key or the test is wrong upstream. Fix that before
+  making the CI step blocking. `lint` is clean apart from two upstream
+  unused-variable warnings in `src/components/spacetime/`.
 - No build has been run against this fork yet — see the milestone-1 status note
   in `docs/todo/black-hole-simulator-spec.md`.
