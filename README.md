@@ -42,6 +42,21 @@ npx serve -l 8080
 Then open <http://localhost:8080>. (Opening `index.html` directly via `file://`
 won't work — the texture and module fetches need an HTTP origin.)
 
+The globe itself stays build-free. The one exception is the black hole
+simulator in `blackhole-sim/`, a vendored fork of an MIT-licensed Next.js +
+Rust/WASM app that is built separately and published at `/blackhole/`; nothing
+in `js/` imports from it. To run that one locally you need Bun, a Rust
+toolchain and `wasm-pack`:
+
+```powershell
+cd blackhole-sim
+bun install
+bun run dev
+```
+
+It serves at <http://localhost:3000/blackhole>. See `blackhole-sim/FORK.md` for
+the deployment shape and the list of upstream files this fork modifies.
+
 ## Data layers and worlds
 
 These are supporting layers you can switch on when they help answer a question
@@ -139,6 +154,10 @@ readable on the night side.
 - Vessel positions: live AIS from aisstream.io (via a visitor key or the
   `proxy/` relay) or Digitraffic Finland (Baltic); otherwise simulated along
   real corridors at an accelerated clock.
+- Black hole simulator based on
+  [blackhole-simulation](https://github.com/steeltroops-ai/blackhole-simulation)
+  by steeltroops-ai (Mayank Pratap Singh), MIT licence — see
+  `blackhole-sim/LICENSE` and `blackhole-sim/FORK.md`.
 
 ## Structure
 

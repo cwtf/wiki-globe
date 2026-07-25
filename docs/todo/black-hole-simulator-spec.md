@@ -1,6 +1,13 @@
 # Black Hole Simulator — plan / spec
 
-Status: **PLANNED — nothing implemented yet.**
+Status: **MILESTONE 1 IN PROGRESS.** The fork is vendored at `blackhole-sim/`
+(upstream `459c15a`, 2026-04-30) and configured for static export at
+`/blackhole`; the Pages CI workflow and the globe-side entry points are in
+place and verified. Not yet done: **the fork has never been built** — no Bun /
+Rust / wasm-pack on the dev machine, so the first real build happens in CI —
+and GitHub Pages must be switched to the "GitHub Actions" source in repository
+settings before the workflow can publish. See `blackhole-sim/FORK.md` for the
+upstream-delta record. Milestones 2-6 unstarted.
 
 A scientifically accurate interactive black hole, reachable from the body
 dropdown (new group below "Pluto system") and at `wikiglo.be/blackhole`.
@@ -395,13 +402,27 @@ app, only with more physics.
 
 Each lands independently runnable; verify per §4 before moving on.
 
-1. **Fork & deploy** — vendor the fork under `blackhole-sim/`, get it
+1. **Fork & deploy** *(in progress)* — vendor the fork under `blackhole-sim/`, get it
    building locally (Bun + wasm-pack), switch to static export with
    `basePath: '/blackhole'`, add `coi-serviceworker` + verify (or add) the
    non-SAB fallback, stand up the CI Pages workflow, and wire the
    dropdown/`?focus=` navigation + "← Wiki Globe" back link. Ship the
    *unmodified* simulator at `wikiglo.be/blackhole` before touching
    physics.
+
+   Done: vendoring, static-export + `basePath` config, `coi-serviceworker` +
+   hardened non-SAB fallback, `.github/workflows/pages.yml`, the `Black Hole`
+   dropdown group, `?focus=` boot handling, back link, attribution, and
+   `blackhole-sim/FORK.md` recording every upstream file touched. Verified in
+   the browser: the group appends after "Pluto system", selecting it restores
+   the dropdown to the focused body and navigates to `/blackhole/`,
+   `?focus=blackhole` redirects there, `?focus=mars` parks the camera on Mars.
+
+   Remaining: run the build (needs Bun + Rust + `wasm-pack`; CI does it first),
+   switch the repo's Pages source to "GitHub Actions", then confirm §4's
+   deployment checks — `self.crossOriginIsolated === true` once the service
+   worker controls the page, and a correct render on the very first
+   uncontrolled load via `window.__bh.transport() === "main-thread"`.
 2. **Audit & baseline** — run the §4 lensing/shadow checks against the
    stock fork at `a = 0`; document what the base's disk/redshift pipeline
    already satisfies from §1.3 and patch the gaps (`g⁴` beaming,

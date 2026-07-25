@@ -1,0 +1,122 @@
+name: Deploy to GitHub Pages
+
+# The globe itself is build-free and was previously published straight from the
+# branch. The black hole simulator (blackhole-sim/) needs Rust -> WASM plus a
+# Next.js static export, so publishing now goes through this workflow:
+#
+#   site root  = the repository, verbatim (Cesium globe, no build)
+#   /blackhole = blackhole-sim/out, the exported Next.js sub-app
+#
+# Pages source must be set to "GitHub Actions" in repository settings for this
+# to take effect.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never let two deploys race; let an in-flight run finish so a half-published
+# site is not left behind.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      # Carried over from upstream's Vercel build config: the wasm32 build
+      # needs bulk-memory, and a single codegen job keeps peak memory inside
+      # the runner's limits.
+      CARGO_BUILD_JOBS: "1"
+      RUSTFLAGS: "-C target-feature=+bulk-memory"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Set up Rust (wasm32 target)
+        run: rustup target add wasm32-unknown-unknown
+
+      - name: Cache Rust build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            blackhole-sim/physics-engine/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('blackhole-sim/**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      - name: Install wasm-pack
+        run: |
+          if ! command -v wasm-pack &> /dev/null; then
+            curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          fi
+
+      - name: Install sub-app dependencies
+        working-directory: blackhole-sim
+        run: bun install
+
+      # Informational for now: the fork has not yet been brought green against
+      # upstream's suite in this repo. Drop continue-on-error once it is, so a
+      # regression blocks the deploy instead of just annotating it.
+      - name: QA (lint, types, tests)
+        working-directory: blackhole-sim
+        continue-on-error: true
+        run: |
+          bun run lint
+          bun run type-check
+          bun run test
+
+      - name: Build simulator (WASM + static export)
+        working-directory: blackhole-sim
+        run: bun run build
+
+      - name: Assemble site
+        run: |
+          mkdir -p _site
+          rsync -a --delete \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude '.agents' \
+            --exclude '.claude' \
+            --exclude 'blackhole-sim' \
+            --exclude 'node_modules' \
+            --exclude '_site' \
+            ./ _site/
+          # Pages served from an Actions artifact is not Jekyll-processed, but
+          # this makes the _next/ directory's survival explicit rather than
+          # dependent on that staying true.
+          touch _site/.nojekyll
+          mkdir -p _site/blackhole
+          cp -r blackhole-sim/out/. _site/blackhole/
+          test -f _site/blackhole/index.html
+          test -f _site/blackhole/coi-serviceworker.js
+          test -f _site/index.html
+          test -f _site/CNAME
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

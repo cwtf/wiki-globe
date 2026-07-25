@@ -255,7 +255,26 @@ async function boot() {
     }
   }
 
+  // The black hole simulator is a separate statically exported app (its own
+  // WebGL context, its own build), not a Cesium body: it has no ephemeris, no
+  // Wikidata globe QID and no IAU orientation, so it is deliberately absent
+  // from BODIES/BODY_ORDER. Selecting it navigates instead of focusing.
+  const BLACKHOLE_KEY = "blackhole";
+  const BLACKHOLE_URL = "/blackhole/";
+
+  function gotoBlackhole() {
+    // Put the dropdown back on the world the camera is actually parked at, so
+    // returning through browser history lands on a consistent globe state
+    // rather than a selector pointing at a body that was never focused.
+    selBody.value = focusedBody;
+    location.href = BLACKHOLE_URL;
+  }
+
   function focusBody(body) {
+    if (body === BLACKHOLE_KEY) {
+      gotoBlackhole();
+      return;
+    }
     if (body === focusedBody && !departingTarget) return;
     if (body !== "earth" && !bodyLayers[body]) {
       selBody.value = focusedBody;
@@ -351,9 +370,31 @@ async function boot() {
     }));
     return group;
   }));
+  // Appended after the generated body groups rather than mixed into them:
+  // BODY_CHOICE_GROUPS is derived from BODIES, which the black hole is not
+  // part of (see gotoBlackhole above).
+  const blackholeGroup = document.createElement("optgroup");
+  blackholeGroup.label = "Black Hole";
+  const blackholeOption = document.createElement("option");
+  blackholeOption.value = BLACKHOLE_KEY;
+  blackholeOption.textContent = "Black hole simulator";
+  blackholeGroup.append(blackholeOption);
+  selBody.append(blackholeGroup);
+
   selBody.addEventListener("change", () => focusBody(selBody.value));
   syncScopedUi("earth");
   syncChildSky("earth");
+
+  // Deep links: ?focus=mars parks the camera on a body at boot, and
+  // ?focus=blackhole hands off to the simulator. Unknown values are ignored so
+  // a stale link degrades to a normal Earth view rather than an error.
+  const focusParam = new URLSearchParams(location.search).get("focus");
+  if (focusParam === BLACKHOLE_KEY) {
+    gotoBlackhole();
+  } else if (focusParam && bodyLayers[focusParam]) {
+    selBody.value = focusParam;
+    focusBody(focusParam);
+  }
 
   // Focus scoping: only the body under the camera keeps its overlays. Earth
   // layers are parked (checkboxes untouched) while another body has focus, and
