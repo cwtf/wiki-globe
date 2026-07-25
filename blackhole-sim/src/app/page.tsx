@@ -9,6 +9,9 @@ import { WebGPUCanvas } from "@/components/canvas/WebGPUCanvas";
 import ErrorBoundary from "@/components/debug/ErrorBoundary";
 import { BackToGlobe } from "@/components/fork/BackToGlobe";
 import { DebugHooks } from "@/components/fork/DebugHooks";
+import { TestObjectOverlay } from "@/components/fork/TestObjectOverlay";
+import { TestObjectPanel } from "@/components/fork/TestObjectPanel";
+import { useTestObject } from "@/hooks/useTestObject";
 import { IdentityHUD } from "@/components/ui/IdentityHUD";
 import { CompatibilityHUD } from "@/components/ui/CompatibilityHUD";
 import { useHardwareSupport } from "@/hooks/useHardwareSupport";
@@ -180,6 +183,9 @@ const App = () => {
   // Phase 7: URL hash state for shareable simulation links
   useUrlState(params, setParams);
 
+  // wiki-globe fork (spec §1.5): dropped test object.
+  const testObject = useTestObject(params.mass);
+
   // Phase 6: WebGPU Support Hook
   const [useWebGPU, setUseWebGPU] = useState(false);
   const [forceShowCompat, setForceShowCompat] = useState(false);
@@ -268,6 +274,14 @@ const App = () => {
         )}
 
         <div className="absolute inset-0 pointer-events-none z-10 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.6)_100%)]" />
+
+        <TestObjectOverlay
+          object={testObject}
+          mouse={mouse}
+          zoom={params.zoom}
+          mass={params.mass}
+        />
+        <TestObjectPanel object={testObject} isVisible={showUI && !isInfoExpanded} />
 
         {/* ENTERPRISE-GRADE SEMANTIC CONTENT LAYER (High-Density Keyword Hub) */}
         <section className="sr-only" aria-hidden="false" id="physics-guide">

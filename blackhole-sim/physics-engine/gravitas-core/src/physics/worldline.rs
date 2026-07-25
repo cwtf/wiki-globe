@@ -335,7 +335,23 @@ pub fn initial_state(metric: &Kerr, drop: DropSpec) -> GeodesicState {
                 -inward_seed.abs(),
             )
         }
-        DropSpec::RadialFall { r } => (r, 0.0, 0.0),
+        // "Radial" must mean zero angular momentum, not zero angular velocity.
+        // Around a spinning hole those differ: holding u^phi = 0 leaves
+        // p_phi = g_{t phi} u^t != 0, so the object carries angular momentum it
+        // was never given. Solving p_phi = 0 instead gives the ZAMO angular
+        // velocity, and the object is then dragged by the hole rather than by
+        // the initial condition. Identical to omega = 0 at a = 0.
+        DropSpec::RadialFall { r } => {
+            let g0 = metric.covariant(r, theta);
+            let ga0 = g0.as_array();
+            let (g_tp0, g_pp0) = (ga0[3], ga0[15]);
+            let omega_zamo = if g_pp0.abs() > 1e-12 {
+                -g_tp0 / g_pp0
+            } else {
+                0.0
+            };
+            (r, omega_zamo, 0.0)
+        }
         DropSpec::Eccentric {
             r,
             tangential_fraction,
@@ -434,7 +450,6 @@ pub fn integrate_worldline(
 
     let mut tau = 0.0f64;
     let mut h = options.initial_step;
-    let sample_stride = 1.max(options.max_steps / options.max_samples.max(1));
 
     let m = metric.mass();
     let a = metric.a();
@@ -511,13 +526,30 @@ pub fn integrate_worldline(
             .max_angular_momentum_drift
             .max((l_now - worldline.angular_momentum).abs());
 
-        if step % sample_stride == 0 {
-            worldline.samples.push(sample_at(tau, &state));
-        }
+        // Record every accepted step, then thin once at the end. Striding by
+        // `max_steps / max_samples` during the loop assumes the run consumes
+        // its whole budget: a plunge that terminates after a few hundred steps
+        // would come back with a handful of samples and a marker that jumps.
+        worldline.samples.push(sample_at(tau, &state));
     }
 
     // Always record the final state, whatever ended the run.
     worldline.samples.push(sample_at(tau, &state));
+
+    // Thin uniformly to the caller's cap, always keeping the endpoints.
+    let cap = options.max_samples.max(2);
+    if worldline.samples.len() > cap {
+        let n = worldline.samples.len();
+        let stride = n.div_ceil(cap);
+        let mut thinned: Vec<WorldlineSample> =
+            worldline.samples.iter().step_by(stride).copied().collect();
+        if let Some(&last) = worldline.samples.last() {
+            if thinned.last().map(|s| s.tau) != Some(last.tau) {
+                thinned.push(last);
+            }
+        }
+        worldline.samples = thinned;
+    }
     worldline.proper_time = tau;
     worldline.coordinate_time = state.x[0];
     worldline

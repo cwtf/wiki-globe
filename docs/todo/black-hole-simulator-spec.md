@@ -16,10 +16,11 @@ painted on. Full findings and measurements: `blackhole-sim/FORK.md`.
 
 **MILESTONE 3 DONE** bar the per-mass-preset jet default, which needs §1.8.
 
-**MILESTONE 4: physics done, UI outstanding.** The timelike worldline
-integrator, its WASM FFI, and 13 passing §4 tests are in; the drop panel,
-marker/trail rendering and HUD are not. Note the §1.6 clock correction
-recorded under milestone 4 below. Milestones 5-6 unstarted.
+**MILESTONE 4 DONE.** Timelike worldline integrator, WASM FFI, worker
+transport, drop panel, marker/trail overlay and HUD are all in, with 13 Rust
+and 26 TS tests. Note the §1.6 clock correction recorded under milestone 4
+below — the 3rd-person view samples `t_far`, not Kerr-Schild `t`.
+Milestones 5-6 unstarted.
 
 A scientifically accurate interactive black hole, reachable from the body
 dropdown (new group below "Pluto system") and at `wikiglo.be/blackhole`.
@@ -480,9 +481,21 @@ Each lands independently runnable; verify per §4 before moving on.
    per sample as `t_far` and infinite at/inside the horizon. **3rd person
    samples `t_far`; 1st person samples `tau`; both index the same buffer.**
 
-   Outstanding: worker/SAB plumbing for the worldline, drop panel UI, marker
-   + trail rendering, redshift fade, and the HUD readouts (r in r_s and km,
-   local velocity, dual clocks, tidal acceleration).
+   UI also done: drop panel with presets and a start-radius slider, marker +
+   trail overlay with redshift fade, and HUD readouts (r/r_s, both clocks,
+   local velocity, tidal stretching, E/L drift). 26 more TS tests cover the
+   sampling contract and the world→screen projection; 401 TS tests and the
+   full Rust suite pass.
+
+   **Deviation from §1.5:** the worldline is delivered by `postMessage` with a
+   transferable, not the SharedArrayBuffer pipeline. The SAB ring is a
+   fixed-layout per-frame telemetry channel; a worldline is one-shot and
+   variable-length, so transferring it is both simpler and cheaper.
+
+   Outstanding: physical units in the HUD (km, seconds) need the mass presets
+   from §1.8, and the playback rate is a fixed constant until §1.9's speed
+   slider. §1.6's stretch goal — the object's own lensed primary/secondary
+   images — is not done; the marker is drawn at its true projected position.
 5. **1st person** — tetrad camera + aberration in the shader, proper-time
    advance, free-look, dual clocks, horizon crossing, singularity ending.
 6. **Polish** — curvature-grid toggle, mass presets + tidal readout,

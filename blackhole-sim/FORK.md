@@ -226,6 +226,41 @@ Two of those needed the test rewritten rather than the code:
   as M/p, which is what distinguishes a truncated formula from a wrong
   integrator. The 1% check runs at p ≈ 960M.
 
+### Test object, UI half
+
+- `src/physics/worldline.ts` — read-only interpretation of the one integrated
+  buffer. `sampleByFarTime` (3rd person) and `sampleByProperTime` (1st person)
+  index the *same* samples, so the two views cannot disagree about where the
+  object is. 15 tests.
+- `src/physics/camera-projection.ts` — world → screen, reproducing the
+  shader's camera term for term (focal length 1.5, `u_zoom = zoom × 2`,
+  X-then-Y rotation, `min(w,h)` normalisation). The marker is an SVG overlay,
+  so a mismatch here would silently misplace it. 11 tests.
+- `src/hooks/useTestObject.ts`, `components/fork/TestObjectPanel.tsx`,
+  `components/fork/TestObjectOverlay.tsx` — drop presets, HUD readouts
+  (r/r_s, both clocks, local velocity from the conserved E, tidal stretching,
+  redshift, E/L drift), marker + trail with redshift fade.
+- Transport: `DROP_OBJECT` / `WORLDLINE` over `postMessage` with a
+  transferable, **not** the SAB ring. The ring is a fixed-layout per-frame
+  telemetry channel; a worldline is one-shot and variable-length. Spec §1.5
+  assumed the SAB pipeline; this is a deliberate deviation.
+
+Two bugs the browser round-trip caught that no unit test would have:
+
+- **Sample stride assumed the full step budget.** `max_steps / max_samples`
+  gave 7 samples for an infall that terminated after ~300 steps. Now every
+  accepted step is recorded and thinned once at the end (237 samples for the
+  same drop).
+- **"Radial" fall was not radial around a spinning hole.** Setting u^φ = 0
+  leaves `p_φ = g_{tφ} u^t ≠ 0` for a ≠ 0, so the object carried angular
+  momentum nobody gave it (L = −0.053 at a = 0.9). The preset now solves
+  `p_φ = 0` for the ZAMO angular velocity, giving L ≈ 7e-18. Identical to
+  u^φ = 0 at a = 0, which is why the Schwarzschild test suite never saw it.
+
+Not done from §1.6: the object's own **lensed** primary/secondary images (the
+stretch goal). The marker is drawn at its true projected position, so it does
+not bend around the hole.
+
 ### A trap worth knowing
 
 The shader chunks are JS template literals. A backtick inside a GLSL comment
@@ -279,9 +314,12 @@ turns that into a one-line check.
   well: `src/__tests__/shaders/manager.test.ts` asserts that any two distinct
   `FeatureToggles` compile to distinct variants, but `generateCacheKey` in
   `src/shaders/manager.ts` (byte-identical to upstream) omits
-  `spacetimeVisualization`, so fast-check reliably finds a pair that shares a
-  cache key. Either the key or the test is wrong upstream. Fix that before
-  making the CI step blocking. `lint` is clean apart from two upstream
+  `spacetimeVisualization`, so a pair differing only in that field shares a
+  cache key. fast-check draws a fresh seed each run, so this fails
+  **intermittently** — it failed twice in a row and then passed on a later
+  run with the identical tree. Either the key or the test is wrong upstream;
+  fix it before making the CI step blocking, and do not read a single green
+  run as evidence it is fixed. `lint` is clean apart from two upstream
   unused-variable warnings in `src/components/spacetime/`.
 - No build has been run against this fork yet — see the milestone-1 status note
   in `docs/todo/black-hole-simulator-spec.md`.

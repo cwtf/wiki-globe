@@ -1,0 +1,261 @@
+/**
+ * Dropped test object: worldline storage and sampling (spec §1.5 / §1.6).
+ *
+ * wiki-globe fork. The Rust side integrates once and hands back a flat buffer;
+ * everything here is read-only interpretation of that one buffer.
+ *
+ * The central rule from §1.6 and §5: **there is one worldline and two ways to
+ * index it.** The 3rd-person view advances the distant observer's clock and
+ * looks up `t_far`; the 1st-person view advances the object's own clock and
+ * looks up `tau`. Re-integrating per view would let them disagree about where
+ * the object is.
+ */
+
+/** Floats per sample in the buffer from `integrate_test_object`. */
+export const WORLDLINE_STRIDE = 6;
+
+export interface WorldlinePoint {
+  /** The object's own clock. Finite through the horizon. */
+  tau: number;
+  /** Kerr-Schild time. Also finite through the horizon. */
+  t: number;
+  /**
+   * Distant static observer's clock. Diverges at the horizon and is
+   * `Infinity` at or inside it — which is exactly why the 3rd-person view
+   * never sees a crossing.
+   */
+  tFar: number;
+  r: number;
+  theta: number;
+  phi: number;
+}
+
+export interface WorldlineAudit {
+  energy: number;
+  angularMomentum: number;
+  energyDrift: number;
+  angularMomentumDrift: number;
+  properTime: number;
+  coordinateTime: number;
+  endReason: number;
+  sampleCount: number;
+}
+
+/** Spec §1.5: log if conservation drifts past this. */
+export const DRIFT_TOLERANCE = 1e-6;
+
+export class Worldline {
+  readonly samples: Float32Array;
+  readonly count: number;
+  readonly audit: WorldlineAudit;
+
+  /** Index of the last sample with finite `t_far`, i.e. the last one a distant
+   * observer can ever see. Everything after it is inside the horizon. */
+  readonly lastVisibleIndex: number;
+
+  constructor(samples: Float32Array, audit: WorldlineAudit) {
+    this.samples = samples;
+    this.count = Math.floor(samples.length / WORLDLINE_STRIDE);
+    this.audit = audit;
+
+    let last = -1;
+    for (let i = 0; i < this.count; i++) {
+      if (Number.isFinite(samples[i * WORLDLINE_STRIDE + 2])) last = i;
+      else break;
+    }
+    this.lastVisibleIndex = last;
+  }
+
+  /**
+   * Read one float. `noUncheckedIndexedAccess` types typed-array reads as
+   * possibly undefined; every call here is bounds-clamped by construction, so
+   * the fallback is unreachable rather than a silent default.
+   */
+  private f(index: number): number {
+    return this.samples[index] ?? 0;
+  }
+
+  at(index: number): WorldlinePoint {
+    const i = Math.min(Math.max(index, 0), this.count - 1) * WORLDLINE_STRIDE;
+    return {
+      tau: this.f(i),
+      t: this.f(i + 1),
+      tFar: this.f(i + 2),
+      r: this.f(i + 3),
+      theta: this.f(i + 4),
+      phi: this.f(i + 5),
+    };
+  }
+
+  /** Whether conservation stayed inside the spec's tolerance. */
+  get conserved(): boolean {
+    return (
+      this.audit.energyDrift < DRIFT_TOLERANCE &&
+      this.audit.angularMomentumDrift < DRIFT_TOLERANCE
+    );
+  }
+
+  /** Proper time at the last sample. */
+  get totalProperTime(): number {
+    return this.count > 0 ? this.at(this.count - 1).tau : 0;
+  }
+
+  /**
+   * Sample by the object's own clock — the 1st-person view (§1.6).
+   * Clamps past the end, which is the singularity.
+   */
+  sampleByProperTime(tau: number): WorldlinePoint {
+    return this.interpolate(tau, 0);
+  }
+
+  /**
+   * Sample by the distant observer's clock — the 3rd-person view (§1.6).
+   *
+   * Because `t_far` diverges at the horizon, no finite argument ever reaches a
+   * sample inside it: the object asymptotically slows and freezes, and is
+   * never seen to cross. That behaviour is a property of the data, not a
+   * special case in this function.
+   */
+  sampleByFarTime(tFar: number): WorldlinePoint {
+    if (this.lastVisibleIndex < 0) return this.at(0);
+    return this.interpolate(tFar, 2, this.lastVisibleIndex);
+  }
+
+  /**
+   * Emitted-to-observed frequency ratio for light leaving the object, in the
+   * static (Schwarzschild) approximation `sqrt(1 - r_s/r)`.
+   *
+   * Drives the 3rd-person redshift fade: as the object approaches the horizon
+   * its image dims and reddens to black. Returns 0 at and inside the horizon.
+   */
+  redshiftFactor(r: number, rs: number): number {
+    if (r <= rs) return 0;
+    return Math.sqrt(1 - rs / r);
+  }
+
+  /** Equatorial-plane Cartesian position, matching the shader's Y-up axis. */
+  toCartesian(p: WorldlinePoint): [number, number, number] {
+    const sinTheta = Math.sin(p.theta);
+    return [
+      p.r * sinTheta * Math.cos(p.phi),
+      p.r * Math.cos(p.theta),
+      p.r * sinTheta * Math.sin(p.phi),
+    ];
+  }
+
+  /**
+   * Trail positions up to `index`, thinned to at most `maxPoints`.
+   */
+  trail(index: number, maxPoints = 256): [number, number, number][] {
+    const end = Math.min(index, this.count - 1);
+    if (end <= 0) return [];
+    const stride = Math.max(1, Math.ceil(end / maxPoints));
+    const out: [number, number, number][] = [];
+    for (let i = 0; i <= end; i += stride) {
+      out.push(this.toCartesian(this.at(i)));
+    }
+    return out;
+  }
+
+  /**
+   * Binary search on a monotonically increasing column, then linear
+   * interpolation between the bracketing samples.
+   *
+   * `offset` selects the clock: 0 = tau, 2 = t_far.
+   */
+  private interpolate(
+    value: number,
+    offset: number,
+    maxIndex = this.count - 1,
+  ): WorldlinePoint {
+    if (this.count === 0) {
+      return { tau: 0, t: 0, tFar: 0, r: 0, theta: 0, phi: 0 };
+    }
+    const first = this.f(offset);
+    if (!(value > first)) return this.at(0);
+
+    const lastVal = this.f(maxIndex * WORLDLINE_STRIDE + offset);
+    if (value >= lastVal) return this.at(maxIndex);
+
+    let lo = 0;
+    let hi = maxIndex;
+    while (hi - lo > 1) {
+      const mid = (lo + hi) >> 1;
+      if (this.f(mid * WORLDLINE_STRIDE + offset) <= value) lo = mid;
+      else hi = mid;
+    }
+
+    const a = this.at(lo);
+    const b = this.at(hi);
+    const va = offset === 0 ? a.tau : a.tFar;
+    const vb = offset === 0 ? b.tau : b.tFar;
+    const span = vb - va;
+    const f = span > 0 ? (value - va) / span : 0;
+
+    // phi is interpolated on the short arc so the marker cannot jump a full
+    // turn backwards when the recorded angle wraps.
+    let dphi = b.phi - a.phi;
+    while (dphi > Math.PI) dphi -= 2 * Math.PI;
+    while (dphi < -Math.PI) dphi += 2 * Math.PI;
+
+    return {
+      tau: a.tau + (b.tau - a.tau) * f,
+      t: a.t + (b.t - a.t) * f,
+      tFar: va + span * f,
+      r: a.r + (b.r - a.r) * f,
+      theta: a.theta + (b.theta - a.theta) * f,
+      phi: a.phi + dphi * f,
+    };
+  }
+}
+
+/** Drop presets, matching the `preset` codes in `integrate_test_object`. */
+export const DROP_PRESETS = {
+  circular: 0,
+  isco: 1,
+  radialFall: 2,
+  eccentric: 3,
+  custom: 4,
+} as const;
+
+export type DropPresetName = keyof typeof DROP_PRESETS;
+
+export interface DropRequest {
+  preset: number;
+  r0: number;
+  tangentialFraction: number;
+  radialVelocity: number;
+  innerRadius: number;
+  maxSteps: number;
+  maxSamples: number;
+}
+
+/**
+ * Build a drop request from UI state.
+ *
+ * `innerRadius` defaults to 0, which the Rust side reads as "just outside the
+ * horizon" — the right stopping point for the 3rd-person view, which cannot
+ * see further in anyway. Milestone 5 pushes it to ~0.02 r_s to ride the object
+ * to the singularity.
+ */
+export function buildDropRequest(
+  preset: DropPresetName,
+  options: {
+    r0?: number;
+    tangentialFraction?: number;
+    radialVelocity?: number;
+    innerRadius?: number;
+    maxSteps?: number;
+    maxSamples?: number;
+  } = {},
+): DropRequest {
+  return {
+    preset: DROP_PRESETS[preset],
+    r0: options.r0 ?? 20,
+    tangentialFraction: options.tangentialFraction ?? 1,
+    radialVelocity: options.radialVelocity ?? 0,
+    innerRadius: options.innerRadius ?? 0,
+    maxSteps: options.maxSteps ?? 200_000,
+    maxSamples: options.maxSamples ?? 8_000,
+  };
+}

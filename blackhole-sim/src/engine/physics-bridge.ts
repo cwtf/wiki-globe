@@ -1,6 +1,20 @@
 export { OFFSETS, BLOCK_FLOATS, TELEMETRY_SLOTS } from "./sab-schema";
 import { OFFSETS } from "./sab-schema";
 
+/** wiki-globe fork: conservation audit returned with a dropped worldline. */
+export interface WorldlineAudit {
+  energy: number;
+  angularMomentum: number;
+  /** Spec §1.5 wants this below 1e-6. */
+  energyDrift: number;
+  angularMomentumDrift: number;
+  properTime: number;
+  coordinateTime: number;
+  /** 0 = reached inner radius, 1 = escaped, 2 = step budget, 3 = normalization failure. */
+  endReason: number;
+  sampleCount: number;
+}
+
 export class PhysicsBridge {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private engine: any = null;
@@ -37,6 +51,9 @@ export class PhysicsBridge {
   // main-thread path is a routine state, not an error — and being able to
   // read it back is what makes that verifiable from the console.
   private transport: "unknown" | "worker-sab" | "main-thread" = "unknown";
+
+  /** Correlates DROP_OBJECT requests with their WORLDLINE replies. */
+  private worldlineRequestId = 0;
 
   public async initialize(): Promise<void> {
     if (this.initializationPromise) return this.initializationPromise;
@@ -437,6 +454,76 @@ export class PhysicsBridge {
   /** Current spin getter for fallback calculations. */
   public getSpin(): number {
     return this.currentSpin;
+  }
+
+  /**
+   * wiki-globe fork (spec §1.5): integrate a dropped test object and return
+   * its worldline.
+   *
+   * One-shot per drop, not per frame, so it goes over postMessage with a
+   * transferable rather than through the SharedArrayBuffer ring — see the
+   * note in physics.worker.ts. Works on both transports: the main-thread
+   * fallback calls the engine directly.
+   */
+  public async dropTestObject(request: {
+    preset: number;
+    r0: number;
+    tangentialFraction: number;
+    radialVelocity: number;
+    innerRadius: number;
+    maxSteps: number;
+    maxSamples: number;
+  }): Promise<{ samples: Float32Array; audit: WorldlineAudit }> {
+    await this.ensureInitialized();
+
+    if (this.worker && this.workerReady) {
+      const id = ++this.worldlineRequestId;
+      const worker = this.worker;
+      return new Promise((resolve, reject) => {
+        const onMessage = (e: MessageEvent) => {
+          if (e.data?.id !== id) return;
+          if (e.data.type === "WORLDLINE") {
+            worker.removeEventListener("message", onMessage);
+            resolve({ samples: e.data.samples, audit: e.data.audit });
+          } else if (e.data.type === "WORLDLINE_ERROR") {
+            worker.removeEventListener("message", onMessage);
+            reject(new Error(e.data.error));
+          }
+        };
+        // addEventListener rather than onmessage: initialize() owns
+        // `worker.onmessage` for the READY handshake, and replacing it would
+        // break the ERROR path.
+        worker.addEventListener("message", onMessage);
+        worker.postMessage({ type: "DROP_OBJECT", data: { id, ...request } });
+      });
+    }
+
+    if (!this.engine) throw new Error("physics engine unavailable");
+
+    const view = this.engine.integrate_test_object(
+      request.preset,
+      request.r0,
+      request.tangentialFraction,
+      request.radialVelocity,
+      request.innerRadius,
+      request.maxSteps,
+      request.maxSamples,
+    );
+    return {
+      // Copy: the returned view aliases WASM memory, which is invalidated
+      // whenever the heap grows.
+      samples: new Float32Array(view),
+      audit: {
+        energy: this.engine.worldline_energy(),
+        angularMomentum: this.engine.worldline_angular_momentum(),
+        energyDrift: this.engine.worldline_energy_drift(),
+        angularMomentumDrift: this.engine.worldline_angular_momentum_drift(),
+        properTime: this.engine.worldline_proper_time(),
+        coordinateTime: this.engine.worldline_coordinate_time(),
+        endReason: this.engine.worldline_end_reason(),
+        sampleCount: this.engine.worldline_sample_count(),
+      },
+    };
   }
 
   /**

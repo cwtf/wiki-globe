@@ -99,6 +99,62 @@ self.onmessage = async (e: MessageEvent) => {
     engine.set_auto_spin(data);
   }
 
+  // wiki-globe fork (spec §1.5): integrate a dropped test object.
+  //
+  // Deliberately NOT routed through the SharedArrayBuffer ring. That buffer is
+  // a fixed-layout, per-frame telemetry channel; a worldline is computed once
+  // per drop and is variable-length (up to ~20k samples). It is transferred
+  // instead, so the copy is zero-cost and the ring layout stays untouched.
+  if (type === "DROP_OBJECT" && engine) {
+    const { id, preset, r0, tangentialFraction, radialVelocity, innerRadius, maxSteps, maxSamples } =
+      data;
+    try {
+      const samples = engine.integrate_test_object(
+        preset,
+        r0,
+        tangentialFraction,
+        radialVelocity,
+        innerRadius,
+        maxSteps,
+        maxSamples,
+      );
+      // Copy out of WASM memory: the returned view aliases the heap, which
+      // moves when WASM grows, and it cannot be transferred while it does.
+      const owned = new Float32Array(samples);
+      // TS resolves `self` to Window here, whose postMessage overloads do not
+      // accept a transfer list; in a worker this is DedicatedWorkerGlobalScope.
+      const post = self.postMessage.bind(self) as (
+        message: unknown,
+        transfer: Transferable[],
+      ) => void;
+      post(
+        {
+          type: "WORLDLINE",
+          id,
+          samples: owned,
+          audit: {
+            energy: engine.worldline_energy(),
+            angularMomentum: engine.worldline_angular_momentum(),
+            energyDrift: engine.worldline_energy_drift(),
+            angularMomentumDrift: engine.worldline_angular_momentum_drift(),
+            properTime: engine.worldline_proper_time(),
+            coordinateTime: engine.worldline_coordinate_time(),
+            endReason: engine.worldline_end_reason(),
+            sampleCount: engine.worldline_sample_count(),
+          },
+        },
+        [owned.buffer],
+      );
+    } catch (err: unknown) {
+      self.postMessage({
+        type: "WORLDLINE_ERROR",
+        id,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+    return;
+  }
+
   if (type === "UPDATE_INPUTS" && sabControlView) {
     // Write directly to shared memory
     sabControlView[1] = data.orbitX;
