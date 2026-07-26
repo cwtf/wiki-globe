@@ -25,8 +25,12 @@ below — the 3rd-person view samples `t_far`, not Kerr-Schild `t`.
 free-look, proper-time clock and singularity card are in and verified in a
 rendered frame. Note the second spec correction under milestone 5 — the frame
 cannot be built by boosting a static observer, because none exists inside the
-horizon. **Milestone 6 is the only one left**, and it unblocks leftovers in
-milestones 3 and 4 (per-preset jet defaults; km/seconds/kelvin readouts).
+horizon. **Milestone 6 is the last of the v1 set**, and it unblocks leftovers
+in milestones 3 and 4 (per-preset jet defaults; km/seconds/kelvin readouts).
+
+**Milestones 7-11 (v2) are specified in §6 and start only after 6:**
+performance, Milky Way skybox, draggable orbits, real black hole presets at
+`/blackhole/{name}`, and those objects as clickable sky dots on the globe.
 
 A scientifically accurate interactive black hole, reachable from the body
 dropdown (new group below "Pluto system") and at `wikiglo.be/blackhole`.
@@ -554,6 +558,20 @@ Each lands independently runnable; verify per §4 before moving on.
    attribution (upstream MIT credit + starmap), README section, sitemap,
    mobile pass.
 
+**Milestones 7-11 are v2 and are not to be started until 6 is done.** They are
+specified in §6. In short:
+
+7. **Performance** — the render is a per-pixel geodesic march and currently
+   pins the GPU. Cut the cost without lying about the physics (§6.1).
+8. **Milky Way skybox** — replace the procedural starfield with a real
+   panorama, shifted correctly per ray (§6.2).
+9. **Draggable orbits** — set an orbit by dragging its apoapsis and periapsis
+   instead of picking a preset (§6.3).
+10. **Real black holes** — presets locked to measured parameters for named
+    objects, each at `/blackhole/{name}` (§6.4).
+11. **Black holes in the globe's sky** — those same objects as clickable sky
+    dots on the wiki-globe main page (§6.5).
+
 ---
 
 ## 4. Verification (no wiki-globe test suite — but use the fork's)
@@ -655,7 +673,195 @@ renders.
   emission is traced through real geodesics, but the launch mechanism is
   not simulated (no MHD) — keep the "kinematic model" label.
 
-## 6. References
+## 6. v2 features (milestones 7-11)
+
+Everything below is **after milestone 6**. Two rules carry over and apply to
+all of it:
+
+- **Honesty over prettiness.** If an optimisation or a preset changes what is
+  being simulated rather than how fast it is computed, the UI says so. The
+  painted photon ring is the cautionary tale: it looked right for two years
+  and was masking the real thing.
+- **Anything adaptive must be inert under `?deterministic=1`**, or it breaks
+  the golden suite. That flag already pins quality, resolution, the simulation
+  clock and TAA; new adaptive behaviour must be added to it in the same
+  commit, not afterwards.
+
+### 6.1 Performance (milestone 7)
+
+The render is a per-pixel backward geodesic integration: at `ultra` every
+pixel runs up to 256 RK-ish steps with a metric evaluation each. That is why
+it heats the room. The goal is to cut work that does not change the image,
+before cutting work that does.
+
+**Measure first.** `PerformanceMonitor` and the `DebugOverlay` already report
+frame time, and `window.__bh` is available. Get a per-pass breakdown (march,
+bloom, TAA) before optimising; the assumption that the march dominates is
+probably right and is still an assumption.
+
+Ordered by expected win per unit of risk:
+
+1. **Analytic weak-field shortcut.** §1.2 already calls for it and it was
+   never implemented: rays whose impact parameter is far above `b_crit` can
+   skip integration entirely and use `α ≈ 2 r_s / b`. That is most of the
+   screen on a wide shot. Needs a threshold chosen by measuring where the
+   analytic and integrated deflections diverge — pick it from data, and make
+   the crossover continuous so no seam appears.
+2. **Render on demand.** The scene is static unless the camera moves, the
+   clock advances, or an object is falling. Nothing needs 60 fps of identical
+   frames. Drive rAF from actual state changes, with a short settle period so
+   TAA still converges.
+3. **Stop rendering in a hidden tab.** The physics worker already drops to
+   1 Hz on `visibilitychange`; the renderer does not.
+4. **Early-out on escape.** A ray past `r_out` with an outward velocity cannot
+   come back. Break instead of stepping to `MAX_DIST`.
+5. **Disk sampling gate.** `sample_accretion_disk` is called every step; it
+   can only contribute between the ISCO and the outer edge. Skip the call
+   outside that shell rather than returning early inside it.
+6. **Revisit the defaults.** Milestone 6's quality work should leave a default
+   that is comfortable on a laptop, with `ultra` an opt-in. The current
+   adaptive resolution controller is disabled by default (`adaptiveResolution`
+   is false in `DEFAULT_PARAMS`) while the PID in `PerformanceMonitor` is
+   enabled — reconcile those two, they currently disagree.
+
+Do **not** reach for lowering the step count as the first move: step budget is
+already the limiter on how much photon ring can emerge (see the note in
+FORK.md), and cutting it further trades physics for frames.
+
+Add a **power/quality control** in the panel and let it be honest about the
+trade: label what each level stops computing.
+
+**Verification.** Frame time before/after on the same scene at a fixed
+quality; the goldens must be unchanged (if an optimisation changes the image,
+that is a physics change and needs justifying).
+
+### 6.2 Milky Way skybox (milestone 8)
+
+`chunks/background.ts` generates a procedural starfield with hashed cells and
+an fbm nebula. Replace it with a real equirectangular panorama.
+
+- **Asset.** wiki-globe already ships the ESO/S. Brunier Milky Way panorama
+  (CC BY 4.0) at `assets/milky-way-panorama-hires.jpg` with attribution in the
+  README and the sidebar `.attrib` block, plus
+  `scripts/data/generate-skybox.ps1` that builds a Cesium cube map from it.
+  Reuse that asset rather than adding another. Note the fork's own
+  `public/textures/{milkyway,milkyway_2020_4k,starmap}.jpg` came with upstream
+  and **no provenance is recorded for them** — do not ship those without
+  establishing their licence first.
+- **Sampling.** Equirectangular lookup from the escaped ray direction `v`,
+  with the texture's galactic orientation mapped to the scene's Y-up axis.
+  Decide and document whether the galactic plane aligns with the disk plane —
+  physically they are unrelated, and pretending otherwise is a styling choice
+  that should be stated.
+- **Colour shift, carefully.** §5 already warns: the shift by `g` must happen
+  in **linear light** — decode sRGB, shift, re-encode. The 1st-person path
+  multiplies the sky by `g⁴` and tints it; that currently operates on
+  procedural output where the error was invisible. With a real photograph it
+  will not be.
+- **Cost.** A 4K+ equirect texture on every escaped ray is a bandwidth change;
+  measure it against milestone 7's budget, and mipmap.
+- Attribution line in the sub-app's own credits UI as well as wiki-globe's
+  (project licensing rule #4).
+- Goldens change; re-capture.
+
+### 6.3 Draggable orbits (milestone 9)
+
+Today an orbit is chosen from presets plus a start-radius slider. Let the user
+grab the **apoapsis and periapsis** and drag them.
+
+- **Physics.** Add `DropSpec::FromApsides { r_apo, r_peri }` to
+  `physics/worldline.rs`. For an equatorial bound orbit the two turning points
+  fix `E` and `L_z`: solve `dr/dτ = 0` at both radii. Return them from the
+  existing conserved-quantity machinery rather than a new one.
+- **Tests** (Rust, alongside the existing worldline suite): the integrated
+  orbit's measured turning points must come back within tolerance of the
+  requested `r_apo`/`r_peri`; and `r_peri` inside the ISCO must **plunge**
+  rather than silently clamp — that is real physics and the UI should show it,
+  not prevent it.
+- **UI.** Drag handles drawn in the existing SVG overlay and projected with
+  `physics/camera-projection.ts` (already unit-tested). Re-integrating on every
+  pointer-move is far too expensive: integrate on drag *end*, and preview the
+  ellipse during the drag with a cheap Newtonian approximation clearly marked
+  as a preview.
+- **Constraints to surface, not hide:** `r_peri > r_apo` swaps them;
+  `r_peri` below the horizon is a capture; near-ISCO orbits precess violently,
+  which is the interesting case and should be reachable.
+- The drop panel keeps its presets — this is an addition, not a replacement.
+
+### 6.4 Real black hole presets (milestone 10)
+
+Presets locked to measured parameters for named objects, reachable from a
+dropdown and at `/blackhole/{name}`.
+
+**Data discipline is the whole feature.** Every parameter needs a cited
+source, and where a quantity is poorly constrained the UI must say so rather
+than pick a number that looks confident. Spin in particular is contested for
+most stellar-mass sources, and Sgr A*'s spin is not settled.
+
+Candidates (Milky Way unless noted). **These figures are a starting point and
+every one must be checked against a cited paper before shipping** — treat them
+as prompts, not values:
+
+| object | mass (M☉) | spin a* | notes |
+| --- | --- | --- | --- |
+| Sgr A* | ~4.3×10⁶ | poorly constrained | GRAVITY/EHT; low inclination |
+| Cygnus X-1 | ~21 | high (>0.95 claimed) | Miller-Jones 2021 revised mass and distance upward |
+| GRS 1915+105 | ~12 | high, disputed | microquasar, strong jets |
+| V404 Cygni | ~9 | poorly constrained | |
+| A0620-00 | ~6.6 | low | nearest known |
+| GRO J1655-40 | ~5.4 | intermediate | |
+| M87* | ~6.5×10⁹ | ~0.9 claimed | **not** in the Milky Way; already the §1.8 preset |
+
+Implementation notes:
+
+- A data module in the fork listing each object with mass, spin, inclination,
+  distance, RA/Dec, jet presence, and a **source citation string plus an
+  uncertainty flag per field**. Milestone 11 reads the same module.
+- Locked parameters: mass/spin/inclination are fixed while a real preset is
+  selected. Changing one drops the UI to "custom" and says so — the badge
+  discipline from the globe (`LIVE` / `DATA`) applies: a real object's
+  parameters are data, a modified one is not.
+- Jets default per object (GRS 1915+105 yes, A0620-00 no), which finally gives
+  §1.4's per-preset jet default something real to key on.
+- **Routing under static export.** `/blackhole/{name}` needs a dynamic segment
+  with `generateStaticParams` enumerating the presets, and `output: "export"`
+  will emit one directory each. Verify against the exported build, not just
+  `bun run dev` — §2.1's warning about export-only behaviour applies.
+- Add each route to `sitemap.xml`.
+- Inclination matters visually: several of these are near face-on and will
+  look nothing like the edge-on default.
+
+### 6.5 Black holes in the globe's sky (milestone 11)
+
+Show the §6.4 objects on the wiki-globe main page as clickable sky dots,
+alongside the existing planet dots, linking to `/blackhole/{name}`.
+
+- **Do not add them to `BODIES`/`BODY_ORDER`.** §2.2 established this for the
+  simulator entry and the reasoning is stronger here: no ephemeris, no
+  Wikidata `geoGlobe` QID, no IAU orientation, and every loop in
+  `js/bodies.js` assumes those exist.
+- **They are fixed on the celestial sphere.** Unlike planets these need no
+  ephemeris at all — RA/Dec is constant on any human timescale. Place them by
+  converting RA/Dec to a direction in Cesium's inertial frame and projecting
+  onto the sky, reusing the sky-dot rendering `BodyLayer` already has for
+  unfocused bodies rather than writing a new one.
+- Distances are kiloparsecs; nothing may be placed at a true position. These
+  are direction-only markers, and the label should give the distance in
+  light-years so the difference from a planet dot is obvious.
+- New sidebar row with its own toggle, following the `data-scope` convention;
+  universal scope (visible from any focused body) is probably right since the
+  sky is the sky.
+- Clicking navigates to `/blackhole/{name}` — the same handoff as §2.2, so
+  restore the body dropdown first.
+- A hover tooltip giving mass and distance would match the interaction parity
+  principle (design principle #3) without needing the Wikipedia panel.
+- Sgr A* is in Sagittarius and sits behind the galactic centre — with
+  milestone 8's panorama in place it should land in the bright band, which is
+  a nice check that both features agree.
+
+---
+
+## 7. References
 
 - Base project: steeltroops-ai, *blackhole-simulation* (MIT) —
   <https://github.com/steeltroops-ai/blackhole-simulation>, live demo
