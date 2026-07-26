@@ -394,10 +394,27 @@ the machine got through before the screenshot. Exactly the same machine-speed
 dependency as the quality tier, arriving by a different route. Deterministic
 captures now pin the clock to `CAPTURE_TIME`.
 
+Round three: **TAA.** `ReprojectionManager.resolve` blends each frame with
+accumulated history at 0.75, so its output depends on the number of frames
+rendered — on a static scene it converges geometrically but never exactly.
+Hashing again after the clock was pinned still showed the frame differing.
+Deterministic captures now bypass the reprojection pass and present the scene
+texture directly; anti-aliasing is not what a regression test measures.
+
 Ordinary visitors are unaffected: the flag is opt-in and absent by default.
 
 **Verify determinism by hash, never by eye.** Two captures of the same frame
-must be byte-identical; "both say ultra" is not evidence.
+must be byte-identical. Every intermediate state here looked like success:
+after round one all three frames reported `ultra`; after round two the images
+looked indistinguishable. Only SHA-256 told the truth, three times running.
+
+**And read a comparison's provenance before believing it.** One A/B run
+reported two frames `IDENTICAL` — but the second capture had aborted before
+reaching them, so those files were untouched copies of the first run. A frame
+that was never re-rendered will always compare equal.
+
+Iterate with `--only=<frame>`; a full three-frame capture is ~12 minutes under
+SwiftShader at ultra.
 
 ### What the first rendered frame caught
 

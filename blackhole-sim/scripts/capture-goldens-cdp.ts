@@ -152,6 +152,29 @@ async function main(): Promise<void> {
 
   const manifest: Manifest = await readManifest();
 
+  // --only=<name>[,<name>] restricts the run to specific frames. A full
+  // capture is minutes per frame under SwiftShader, which makes iterating on
+  // capture behaviour (determinism especially) painfully slow otherwise.
+  //
+  // NB: this filters what is *captured*, not the manifest itself. The entries
+  // are the same objects, so stamping still works, but `manifest` keeps every
+  // frame — filtering it in place would make writeManifest() delete the
+  // frames that were not captured.
+  const onlyArg = process.argv.find((a) => a.startsWith("--only="));
+  let framesToCapture = manifest.frames;
+  if (onlyArg) {
+    const wanted = new Set(
+      onlyArg.slice("--only=".length).split(",").map((s) => s.trim()),
+    );
+    framesToCapture = manifest.frames.filter((f) => wanted.has(f.name));
+    if (framesToCapture.length === 0) {
+      throw new Error(`--only matched no frames in the manifest`);
+    }
+    process.stdout.write(
+      `Restricted to: ${framesToCapture.map((f) => f.name).join(", ")}\n`,
+    );
+  }
+
   if (!(await waitFor(BASE_URL, 3000))) {
     throw new Error(
       `No app at ${BASE_URL}. Start it with \`bun run dev\` (set SHADER_CHECK_BASE_URL if not on port 3000).`,
@@ -200,7 +223,7 @@ async function main(): Promise<void> {
     })();
     const now = new Date().toISOString();
 
-    for (const entry of manifest.frames) {
+    for (const entry of framesToCapture) {
       process.stdout.write(`Capturing ${entry.name}... `);
       const frameStart = Date.now();
 
@@ -286,20 +309,40 @@ async function main(): Promise<void> {
         throw new Error(`${entry.name}: canvas never initialised`);
       }
 
-      const shot = await cdp.send(
-        "Page.captureScreenshot",
-        {
-          format: "png",
-          clip: {
-            x: 0,
-            y: 0,
-            width: manifest.viewport.width,
-            height: manifest.viewport.height,
-            scale: 1,
-          },
-        },
-        sessionId,
-      );
+      // Chromium intermittently answers "Unable to capture screenshot" when
+      // the surface is not presentable at the moment of the call. It is
+      // transient; retry rather than losing a multi-minute render.
+      let shot: { data: string } | null = null;
+      let lastErr: unknown = null;
+      for (let attempt = 0; attempt < 4 && !shot; attempt++) {
+        try {
+          shot = await cdp.send(
+            "Page.captureScreenshot",
+            {
+              format: "png",
+              clip: {
+                x: 0,
+                y: 0,
+                width: manifest.viewport.width,
+                height: manifest.viewport.height,
+                scale: 1,
+              },
+            },
+            sessionId,
+          );
+        } catch (err) {
+          lastErr = err;
+          process.stdout.write("retry ");
+          await new Promise((r) => setTimeout(r, 3000));
+        }
+      }
+      if (!shot) {
+        throw new Error(
+          `${entry.name}: screenshot failed after retries: ${
+            lastErr instanceof Error ? lastErr.message : String(lastErr)
+          }`,
+        );
+      }
 
       const out = goldenPath(entry.name);
       await fs.mkdir(path.dirname(out), { recursive: true });

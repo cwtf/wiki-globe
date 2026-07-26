@@ -16,8 +16,8 @@
       },
       "ssim_threshold": 0.998,
       "max_pixel_delta": 12,
-      "captured_at": "2026-07-26T10:31:55.890Z",
-      "captured_commit": "bbd55231cf0447092691281dcdb58eca1c5e01cf"
+      "captured_at": "2026-07-26T15:07:21.567Z",
+      "captured_commit": "0d56446d3ed2e7500ad063fe9c331f65579e79e0"
     },
     {
       "name": "kerr_inclined",

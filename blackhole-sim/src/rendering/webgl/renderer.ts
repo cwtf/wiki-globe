@@ -454,15 +454,28 @@ export class WebGLRenderer {
     if (this.bloomManager && this.reprojectionManager) {
       const sceneTexture = this.bloomManager.getSceneTexture();
       if (sceneTexture) {
-        // Resolve TAA (Temporal Anti-Aliasing)
-        this.reprojectionManager.resolve(
-          sceneTexture,
-          0.75,
-          this.isCameraMoving,
-          dynamicRenderScale,
-        );
+        let resolved: WebGLTexture | null;
 
-        const resolved = this.reprojectionManager.getResultTexture();
+        if (this.deterministicCapture) {
+          // wiki-globe fork: TAA blends each frame with accumulated history,
+          // so its output depends on how many frames have been rendered. On a
+          // static scene it converges but never exactly, which left goldens
+          // differing byte-for-byte between runs even after quality,
+          // resolution and the simulation clock were all pinned. Bypassed for
+          // captures: the scene texture is already the physically meaningful
+          // image, and anti-aliasing is not what a regression test is
+          // measuring.
+          resolved = sceneTexture;
+        } else {
+          // Resolve TAA (Temporal Anti-Aliasing)
+          this.reprojectionManager.resolve(
+            sceneTexture,
+            0.75,
+            this.isCameraMoving,
+            dynamicRenderScale,
+          );
+          resolved = this.reprojectionManager.getResultTexture();
+        }
 
         if (resolved) {
           // CRITICAL FIX: Explicitly check features.bloom before applying bloom.
