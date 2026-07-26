@@ -75,7 +75,9 @@ Check which path is live: `window.__bh.transport()` →
 | `src/shaders/blackhole/chunks/disk.ts` | beaming exponent `δ^3.5` → `δ⁴`; `sample_relativistic_jets` rewritten against §1.4 | spec §1.3 requires exact `g⁴`; see the jets section below |
 | `src/shaders/blackhole/fragment.glsl.ts` | pass `rs` into the jet sampler | jet emission now carries the gravitational shift |
 | `src/configs/simulation.config.ts` | `diskSize` default 50 → 24, unit `Rs` → `M` | the value multiplies M, so the old label was off by 2×; §1.3 wants ~12 r_s |
-| `src/components/ui/ControlPanel.tsx` | jets toggle labelled "(kinematic)" | §1.4/§5 require stating that the launch mechanism is not simulated |
+| `src/components/ui/ControlPanel.tsx` | jets toggle labelled "(kinematic)"; brand logo via `asset()` | §1.4/§5 require stating that the launch mechanism is not simulated; `images.unoptimized` emits the src verbatim so basePath is not applied |
+| `src/components/ui/IdentityHUD.tsx` | brand logo via `asset()` | same: `/brand-logo.png` 404s under `/blackhole` |
+| `tests/visual-regression/capture.ts` | ANGLE backend configurable, default SwiftShader; optional `SHADER_CHECK_CDP_URL` | upstream's `vulkan` hangs where no Vulkan ICD exists, and GPU-captured goldens are not reproducible |
 
 ## Upstream files deleted
 
@@ -346,6 +348,25 @@ proper-time playback clock, and the singularity ending card at r ≈ 0.02 r_s
 with the final τ. **Nothing in the 1st-person view has been seen rendering** —
 it compiles and the maths is tested, that is all.
 
+### What the first rendered frame caught
+
+The first golden capture was also the first time this fork had been *seen*
+rendering. It immediately surfaced two defects that every unit test, the type
+checker and the shader compile check had all passed over:
+
+- the fork's test-object panel at `top-28` **overprinted** upstream's identity
+  HUD ("SIMULATION KERNEL / METRIC: KERR VACUUM STATE") — moved to `top-48`;
+- the **brand logo was a broken image**, because `next/image` with
+  `images.unoptimized` emits the `src` verbatim and `/brand-logo.png` does not
+  exist under `/blackhole`.
+
+Neither is subtle on screen and neither is detectable by any check in CI today.
+That is the argument for arming the visual suite.
+
+The physics in that frame reads correctly: a round shadow with a sharp photon
+ring, and the accretion disk lensed into arcs above and below it — the
+signature that light from the disk's far side is being bent over the top.
+
 ### A trap worth knowing
 
 The shader chunks are JS template literals. A backtick inside a GLSL comment
@@ -387,8 +408,38 @@ turns that into a one-line check.
   use `SHADER_CHECK_SKIP_DEV=1 SHADER_CHECK_BASE_URL=http://localhost:<port>/blackhole`
   against a running server instead.
 
-  **Capture them with the `Capture shader goldens` workflow**
-  (`.github/workflows/goldens.yml`, manual dispatch), not locally. Two reasons:
+  **Playwright cannot launch a browser at all on some Windows hosts.** Not a
+  sandbox artefact — it reproduces in an ordinary shell, with both
+  `chrome-headless-shell` and full `chrome.exe`. Playwright passes the DevTools
+  channel over inherited handles (`--remote-debugging-pipe`); when security
+  software blocks that, the browser starts, answers `--version`, and the launch
+  then dies on a timeout with no diagnostic. `connectOverCDP` fails the same
+  way, because Playwright's transport lives in its own driver process.
+
+  `scripts/capture-goldens-cdp.ts` is the fallback: **no Playwright**, just
+  Chromium started with a TCP debugging port and driven over Bun's built-in
+  WebSocket, which connects to that same endpoint in ~14 ms on the machine
+  where Playwright hangs. Same outputs and manifest stamping.
+
+  ```
+  bun run dev                     # in one shell
+  SHADER_CHECK_BASE_URL=http://127.0.0.1:3000/blackhole \
+    bun scripts/capture-goldens-cdp.ts --confirm
+  ```
+
+  Two things that will bite anyone writing a capture harness here:
+
+  - **A CDP target that is not fronted has its rAF throttled to nothing**, so
+    a "wait N animation frames" loop hangs forever. `Page.bringToFront` plus a
+    wall-clock fallback on every frame wait. Same trap as a hidden preview pane.
+  - **An unsized canvas reports 300x150** (the HTML default) and screenshots
+    as a blank frame. Wait for a width greater than that, nudging with a
+    `resize` event, before capturing.
+  - SwiftShader takes **minutes per frame** for a 256-step ray-march at
+    1280x720, so CDP command timeouts must be in the ten-minute range.
+
+  **Or capture with the `Capture shader goldens` workflow**
+  (`.github/workflows/goldens.yml`, manual dispatch). Two reasons to prefer CI:
 
   1. *Reproducibility.* Goldens are compared by SSIM at thresholds of
      0.996–0.998. Captured against a workstation GPU they encode that driver

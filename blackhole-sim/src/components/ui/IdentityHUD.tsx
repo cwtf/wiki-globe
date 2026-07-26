@@ -1,6 +1,8 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 
+import { asset } from "@/configs/deployment.config";
+
 interface IdentityHUDProps {
   isCinematic?: boolean;
   cinematicMode?: "orbit" | "dive" | null;
@@ -27,7 +29,10 @@ export const IdentityHUD = ({
     <div className="flex flex-col">
       <div className="flex items-center gap-3 lg:gap-4">
         <Image
-          src="/brand-logo.png"
+          // wiki-globe fork: with images.unoptimized the src is emitted
+          // verbatim, so basePath is not applied and /brand-logo.png 404s
+          // under /blackhole. Prefix it explicitly.
+          src={asset("/brand-logo.png")}
           alt="Interactive Black Hole Simulation Physics Engine"
           width={40}
           height={40}

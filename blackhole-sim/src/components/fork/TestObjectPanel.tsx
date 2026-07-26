@@ -35,7 +35,10 @@ export function TestObjectPanel({
   const { readout, status, error, worldline } = object;
 
   return (
-    <div className="pointer-events-auto absolute left-4 top-28 z-40 w-64 rounded-sm border border-white/10 bg-black/40 p-3 backdrop-blur-md">
+    // top-48 clears the identity HUD stack above it: back pill, logo, title,
+    // and the "SIMULATION KERNEL / METRIC" status lines. At top-28 this panel
+    // overprinted them — caught by the first golden capture, not by any test.
+    <div className="pointer-events-auto absolute left-4 top-48 z-40 w-64 rounded-sm border border-white/10 bg-black/40 p-3 backdrop-blur-md">
       <h3 className="mb-2 font-mono text-[9px] uppercase tracking-[0.25em] text-white/70">
         Test object
       </h3>

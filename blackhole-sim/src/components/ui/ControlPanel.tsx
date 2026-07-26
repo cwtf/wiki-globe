@@ -23,6 +23,7 @@ import {
 import { UserProfile } from "./UserProfile";
 import { type SimulationParams, DEFAULT_PARAMS } from "@/types/simulation";
 import { SIMULATION_CONFIG } from "@/configs/simulation.config";
+import { asset } from "@/configs/deployment.config";
 import { usePhysicsState } from "@/hooks/usePhysicsState";
 import { clampAndValidate } from "@/utils/validation";
 import { usePresets } from "@/hooks/usePresets";
@@ -430,7 +431,7 @@ export const ControlPanel = ({
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
                     <div className="flex items-center gap-4 w-full sm:w-auto">
                       <Image
-                        src="/brand-logo.png"
+                        src={asset("/brand-logo.png")}
                         alt="Interactive Black Hole Simulation Physics Engine"
                         width={48}
                         height={48}
