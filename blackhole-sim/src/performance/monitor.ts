@@ -76,6 +76,16 @@ export class PerformanceMonitor {
   private currentQuality: RayTracingQuality = "high";
   private renderResolution: number = 1.0;
 
+  /**
+   * wiki-globe fork: freeze all self-tuning (spec §4 visual regression).
+   *
+   * When set, calibration never runs and the PID resolution controller is
+   * bypassed, so the same scene renders identically regardless of machine
+   * speed or load. Required for goldens to be comparable at all; see
+   * `configs/capture-mode.ts`.
+   */
+  private deterministic: boolean = false;
+
   // Calibration State Machine (Phase 4)
   private isCalibrating: boolean = true;
   private calibrationStartTime: number = performance.now();
@@ -143,7 +153,11 @@ export class PerformanceMonitor {
     this.invalidateCache();
 
     // Calibration Phase logic
-    if (this.isCalibrating) {
+    if (this.deterministic) {
+      // Pinned: neither the quality tier nor the resolution may move.
+      this.renderResolution = 1.0;
+      this._metrics.renderResolution = 1.0;
+    } else if (this.isCalibrating) {
       if (
         now - this.calibrationStartTime >
         PERFORMANCE_CONFIG.calibration.durationMs
@@ -225,6 +239,20 @@ export class PerformanceMonitor {
         this.cachedAvgTime > 0 ? 1000 / this.cachedAvgTime : 0;
       this.cacheValid = true;
     }
+  }
+
+  /**
+   * wiki-globe fork: pin quality and resolution for a reproducible capture.
+   *
+   * Call before the first frame. Skips calibration outright rather than
+   * ending it, because `finalizeCalibration` would pick a tier from whatever
+   * frame times happened to be measured.
+   */
+  public setDeterministic(quality: RayTracingQuality): void {
+    this.deterministic = true;
+    this.isCalibrating = false;
+    this.renderResolution = 1.0;
+    this.setQuality(quality);
   }
 
   public endCalibration(): void {

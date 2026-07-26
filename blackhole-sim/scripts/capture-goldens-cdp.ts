@@ -230,9 +230,12 @@ async function main(): Promise<void> {
       // for frames that never come. Same trap as a hidden browser pane.
       await cdp.send("Page.bringToFront", {}, sessionId);
 
+      // ?deterministic=1 pins the quality tier and render scale and skips
+      // startup calibration. Without it the app tunes itself to whatever the
+      // machine was doing in its first seconds and no two captures match.
       await cdp.send(
         "Page.navigate",
-        { url: `${BASE_URL}/${encodeHash(entry.config)}` },
+        { url: `${BASE_URL}/?deterministic=1${encodeHash(entry.config)}` },
         sessionId,
       );
 

@@ -372,10 +372,15 @@ resolution near its 0.5 floor.
 Comparing that against SSIM thresholds of 0.996–0.998 would fail essentially at
 random, and would fail hardest on the machine that did not capture it.
 
-**Fix before committing any golden:** a deterministic capture mode — a URL flag
-the manifest sets that skips calibration (`PerformanceMonitor.endCalibration()`
-already exists), pins `rayTracingQuality`, and forces `renderResolution` to 1.0
-with the PID disabled. Without it the goldens are decorative.
+**Fixed.** `?deterministic=1` (see `src/configs/capture-mode.ts`) skips
+calibration outright — rather than ending it, since `finalizeCalibration()`
+would still pick a tier from measured frame times — pins `rayTracingQuality` to
+`ultra`, and forces render scale to 1.0 with the PID bypassed. Applied in
+`PerformanceMonitor.setDeterministic()` before the first frame, and at the
+single point in `renderer.ts` where the quality tier feeds both the shader
+variant and the step budget. The capture script appends the flag automatically.
+
+Ordinary visitors are unaffected: the flag is opt-in and absent by default.
 
 ### What the first rendered frame caught
 

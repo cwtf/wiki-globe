@@ -286,21 +286,27 @@ void main() {
     }
 #endif
 
-    // Photon ring
+    // Photon ring.
+    //
+    // wiki-globe fork: the additive glow that used to live here has been
+    // REMOVED. It painted a white rim wherever a ray happened to end near
+    // r_ph, as exp(-|length(p) - rph| * 40) plus a higher-order term keyed on
+    // the winding count.
+    //
+    // Spec §1.2 lists the photon ring among the things that "must emerge from
+    // the integration, never painted on", and the rendered goldens showed why
+    // that matters: at a = 0 and a = 0.5 the painted ring looked convincing,
+    // but at a = 0.99 edge-on it vanished entirely, leaving a shadow with no
+    // rim. rph is the *prograde* photon sphere (~1.2M at that spin) while
+    // the retrograde side sits near 4M, so a single-radius test matches
+    // neither. A real ring deforms into the Bardeen D-shape; a painted one
+    // can only switch off.
+    //
+    // The genuine ring is light that wound close to the critical impact
+    // parameter and reached the disk or the sky, which the marcher already
+    // accumulates. photonCrossings is still counted and remains available
+    // if a physically-derived emphasis is ever wanted.
     vec3 photonColor = vec3(0.0);
-#ifdef ENABLE_PHOTON_GLOW
-    if (!hitHorizon) {
-        float distToPhotonRing = abs(length(p) - rph);
-        float directRing = exp(-distToPhotonRing * 40.0) * 1.8 * u_lensing_strength;
-        float higherOrderRing = 0.0;
-        if(photonCrossings > 0) {
-          float ringSharpness = 60.0 + float(photonCrossings) * 30.0;
-          float ringBrightness = exp(-float(photonCrossings) * 1.0) * 1.2;
-          higherOrderRing = exp(-distToPhotonRing * ringSharpness) * ringBrightness * u_lensing_strength;
-        }
-        photonColor = vec3(1.0) * (directRing + higherOrderRing);
-    }
-#endif
 
     // Ergosphere
     vec3 ergoColor = vec3(0.0);

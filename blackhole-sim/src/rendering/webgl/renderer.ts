@@ -17,6 +17,11 @@ import { physicsBridge } from "@/engine/physics-bridge";
 import { PerformanceMonitor } from "@/performance/monitor";
 import { PERFORMANCE_CONFIG } from "@/configs/performance.config";
 import { PHYSICS_CONSTANTS } from "@/configs/physics.config";
+import {
+  CAPTURE_QUALITY,
+  CAPTURE_RENDER_SCALE,
+  isDeterministicCapture,
+} from "@/configs/capture-mode";
 
 export interface WebGLError {
   type: "context" | "shader" | "program" | "memory";
@@ -65,6 +70,9 @@ export class WebGLRenderer {
    *
    * Each leg is `[x, y, z, e^t]`.
    */
+  /** wiki-globe fork: true when `?deterministic=1` pinned this render. */
+  private deterministicCapture = false;
+
   public firstPerson: {
     pos: [number, number, number];
     e0: [number, number, number, number];
@@ -89,6 +97,13 @@ export class WebGLRenderer {
       return false;
     }
     this.gl = gl;
+
+    // wiki-globe fork: pin self-tuning before the first frame, so calibration
+    // never gets a chance to sample this machine's frame times.
+    this.deterministicCapture = isDeterministicCapture();
+    if (this.deterministicCapture) {
+      this.performanceMonitor.setDeterministic(CAPTURE_QUALITY);
+    }
 
     // FIX: Set explicit clear color so TAA history starts from a defined state
     // instead of GPU-dependent garbage. Without this, the first several frames
@@ -238,13 +253,23 @@ export class WebGLRenderer {
     }
 
     // Phase 2.3: Virtual Viewport Scaling
-    const dynamicRenderScale = PERFORMANCE_CONFIG.resolution
-      .enableDynamicScaling
-      ? metrics.renderResolution
-      : 1.0;
+    // wiki-globe fork: a deterministic capture renders at a fixed scale, so a
+    // golden does not depend on how fast the capturing machine was.
+    const dynamicRenderScale = this.deterministicCapture
+      ? CAPTURE_RENDER_SCALE
+      : PERFORMANCE_CONFIG.resolution.enableDynamicScaling
+        ? metrics.renderResolution
+        : 1.0;
 
     // 3. Render Pass
-    const features = params.features || DEFAULT_FEATURES;
+    // wiki-globe fork: a deterministic capture pins the quality tier here too.
+    // Overriding at this single point covers both the shader variant and the
+    // step budget, so a golden cannot vary with whatever tier calibration or
+    // stored settings would otherwise have chosen.
+    const rawFeatures = params.features || DEFAULT_FEATURES;
+    const features = this.deterministicCapture
+      ? { ...rawFeatures, rayTracingQuality: CAPTURE_QUALITY }
+      : rawFeatures;
     // Recompile shader if feature toggles changed (cached if same)
     this.recompileShader(features);
     if (!this.program) return; // Recompile may have invalidated program
