@@ -1,0 +1,92 @@
+name: Capture shader goldens
+
+# Manual only. Capturing goldens moves the visual-regression baseline, so it
+# should be a deliberate act with a human reviewing the images before they are
+# committed — never a side effect of pushing.
+#
+# Why here rather than on a developer machine: the goldens are compared by SSIM
+# against whatever renders them later. Captured on a workstation GPU they would
+# encode that GPU's driver and could never match a runner, which has none. The
+# capture pins ANGLE to SwiftShader (software rasterisation) so the same scene
+# gives the same pixels anywhere, and running the capture on the same class of
+# machine that will verify them keeps that promise honest.
+#
+# The PNGs come back as an artifact; download, eyeball them, and commit them to
+# blackhole-sim/tests/golden/ along with the updated manifest.json.
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Why are the goldens being re-captured?"
+        required: true
+        default: "Establish baseline after physics corrections"
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: blackhole-sim
+    env:
+      CARGO_BUILD_JOBS: "1"
+      RUSTFLAGS: "-C target-feature=+bulk-memory"
+      # update-goldens boots `bun run dev` itself when nothing is listening.
+      # The path segment is required: the app is mounted under basePath.
+      SHADER_CHECK_BASE_URL: http://127.0.0.1:3000/blackhole
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Set up Rust (wasm32 target)
+        run: rustup target add wasm32-unknown-unknown
+
+      - name: Cache Rust build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            blackhole-sim/physics-engine/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('blackhole-sim/**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      - name: Install wasm-pack
+        run: |
+          if ! command -v wasm-pack &> /dev/null; then
+            curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          fi
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Install Chromium for Playwright
+        run: bunx playwright install --with-deps chromium
+
+      - name: Build WASM physics engine
+        run: bun run build:wasm
+
+      - name: Capture goldens
+        run: bun run shader:update-goldens --confirm
+
+      - name: Show what changed
+        run: |
+          ls -la tests/golden/
+          cat tests/golden/manifest.json
+
+      - name: Upload goldens for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: shader-goldens
+          path: |
+            blackhole-sim/tests/golden/*.png
+            blackhole-sim/tests/golden/manifest.json
+          if-no-files-found: error
+          retention-days: 14

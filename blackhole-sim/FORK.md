@@ -385,9 +385,29 @@ turns that into a one-line check.
   upstream, so `bun run shader:check` skips each frame and reports 4 passed
   without comparing anything. It also spawns its own dev server on port 3000;
   use `SHADER_CHECK_SKIP_DEV=1 SHADER_CHECK_BASE_URL=http://localhost:<port>/blackhole`
-  against a running server instead. Capturing goldens now would fix the
-  baseline *after* the geodesic correction — do it before milestone 3 so the
-  jet/disk work has something to regress against.
+  against a running server instead.
+
+  **Capture them with the `Capture shader goldens` workflow**
+  (`.github/workflows/goldens.yml`, manual dispatch), not locally. Two reasons:
+
+  1. *Reproducibility.* Goldens are compared by SSIM at thresholds of
+     0.996–0.998. Captured against a workstation GPU they encode that driver
+     and can never match a runner, which has no GPU. `capture.ts` now pins
+     ANGLE to **SwiftShader** — software rasterisation, identical pixels
+     anywhere — and capturing on the same class of machine that verifies them
+     keeps that true. Upstream pinned `--use-angle=vulkan`, which additionally
+     hangs at launch on hosts with no usable Vulkan ICD.
+  2. *Playwright does not run in every sandbox.* Its driver runs
+     out-of-process and could not establish a browser transport in one
+     environment tried here: `--remote-debugging-pipe` timed out at launch,
+     and so did `connectOverCDP` — while Bun's own WebSocket to the very same
+     CDP endpoint connected in 14 ms, and the browser answered `--version`
+     fine. If you hit that, `capture.ts` accepts `SHADER_CHECK_CDP_URL` to
+     attach to a browser you started yourself with `--remote-debugging-port`;
+     it will not help if the driver itself is what's blocked.
+
+  Once the PNGs are committed, drop `continue-on-error` from the QA step and
+  add `shader:check` to CI so the baseline actually protects the render.
 
 ## Known gaps (not yet addressed)
 
