@@ -585,6 +585,22 @@ time out on non-idle WebGL — prefer `preview_eval` state probes; rAF
 pauses in backgrounded tabs, so pump frames manually if a fall "freezes"
 in an inactive tab (that's throttling, not physics).
 
+**Visual regression is now armed.** The fork's `tests/golden/` suite existed
+upstream but had never captured a single image, and could not have worked:
+the renderer calibrates its quality tier from measured frame times and runs a
+PID controller over render resolution, so the same scene rendered differently
+on every run. `?deterministic=1` pins both. Capture with
+`bun scripts/capture-goldens-cdp.ts --confirm` (or the `Capture shader
+goldens` workflow); the images are software-rendered via SwiftShader so they
+are reproducible on any machine, GPU or not. Full details and the traps
+involved are in `blackhole-sim/FORK.md`.
+
+The first captures immediately found three defects that the full test suite,
+the type checker and the shader compile check had all passed over — two UI
+regressions and a photon ring that was painted on and vanished at high spin.
+Treat "the tests pass" as necessary and not sufficient for anything that
+renders.
+
 ---
 
 ## 5. Pitfalls to design around (write-downs from planning)

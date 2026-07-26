@@ -372,15 +372,32 @@ resolution near its 0.5 floor.
 Comparing that against SSIM thresholds of 0.996–0.998 would fail essentially at
 random, and would fail hardest on the machine that did not capture it.
 
-**Fixed.** `?deterministic=1` (see `src/configs/capture-mode.ts`) skips
+**Fixed, in two rounds — and the second only surfaced because the fix was
+tested by hashing the output rather than by inspection.**
+
+Round one: `?deterministic=1` (see `src/configs/capture-mode.ts`) skips
 calibration outright — rather than ending it, since `finalizeCalibration()`
-would still pick a tier from measured frame times — pins `rayTracingQuality` to
-`ultra`, and forces render scale to 1.0 with the PID bypassed. Applied in
+would still pick a tier from measured frame times — pins `rayTracingQuality`
+to `ultra`, and forces render scale to 1.0 with the PID bypassed. Applied in
 `PerformanceMonitor.setDeterministic()` before the first frame, and at the
 single point in `renderer.ts` where the quality tier feeds both the shader
-variant and the step budget. The capture script appends the flag automatically.
+variant and the step budget.
+
+That made every frame report the same quality tier, which *looked* like
+success. Capturing twice and comparing SHA-256 showed it was not: the same
+frame came back `09D68EF4…` and `BD6612DB…`.
+
+Round two: **`u_time` was the remaining leak.** It advances `+0.01` per
+rendered frame and drives the disk rotation phase, jet knot positions, jet
+turbulence, and starfield twinkle — so the image depended on how many frames
+the machine got through before the screenshot. Exactly the same machine-speed
+dependency as the quality tier, arriving by a different route. Deterministic
+captures now pin the clock to `CAPTURE_TIME`.
 
 Ordinary visitors are unaffected: the flag is opt-in and absent by default.
+
+**Verify determinism by hash, never by eye.** Two captures of the same frame
+must be byte-identical; "both say ultra" is not evidence.
 
 ### What the first rendered frame caught
 
@@ -419,13 +436,27 @@ turns that into a one-line check.
   Now that b_crit is correct the ring should largely emerge on its own;
   the additive glow should be re-evaluated and probably removed.
 
-  **The rendered goldens show this failing.** At a = 0 and a = 0.5 the ring is
-  crisp; at a = 0.99 edge-on it is *absent* — the shadow has no rim at all.
-  That is what a single-radius glow test does when the real critical curve
-  stops being a circle: `r_ph` is the prograde photon sphere (~1.2M at this
-  spin) while the retrograde side sits near 4M, so the painted ring matches
-  neither. An emergent ring would simply deform into the D-shape instead of
-  disappearing. Good evidence that the glow has to go rather than be tuned.
+  **Removed, and the goldens show why.** With the paint in place the ring was
+  crisp at a = 0 and a = 0.5 but *absent* at a = 0.99 edge-on — a single-radius
+  glow matches nothing once the critical curve stops being a circle (prograde
+  photon sphere ~1.2M at that spin, retrograde near 4M).
+
+  With it gone, re-captured at ultra quality:
+
+  | spin | rendered result |
+  | --- | --- |
+  | 0 | no ring — but this frame sets `diskTemp: 0`, a cold disk, so there is no light to lens |
+  | 0.5 | thin **asymmetric** rim, brighter on the prograde side |
+  | 0.99 | shadow displaced and visibly **D-shaped**, with a rim along the flattened edge |
+
+  That is the Bardeen critical curve emerging from the integration, which the
+  painted circle could not have produced. The paint was both fake and
+  *masking* the real thing.
+
+  A first reading of the a = 0 frame suggested the emergent ring was missing
+  entirely; that was wrong, and the cold disk in that frame's config is the
+  explanation. Worth remembering when reading goldens: `diskTemp: 0` means
+  there is almost nothing to lens.
 - The ergosphere highlight is likewise an unlabelled painted overlay.
 - **Jets already exist** (`sample_relativistic_jets`), which the spec's delta
   table lists as absent — a kinematic cone with β = 0.92 (Γ ≈ 2.6) and its own

@@ -16,8 +16,8 @@
       },
       "ssim_threshold": 0.998,
       "max_pixel_delta": 12,
-      "captured_at": "2026-07-26T05:49:08.061Z",
-      "captured_commit": "4cda67410918be2fdd51d2e65b628fa92658fb26"
+      "captured_at": "2026-07-26T10:12:54.455Z",
+      "captured_commit": "d1da1239492cf68c374ccb92d1a2bec6cfaafc84"
     },
     {
       "name": "kerr_inclined",
@@ -29,8 +29,8 @@
       },
       "ssim_threshold": 0.997,
       "max_pixel_delta": 16,
-      "captured_at": "2026-07-26T05:49:08.061Z",
-      "captured_commit": "4cda67410918be2fdd51d2e65b628fa92658fb26"
+      "captured_at": "2026-07-26T10:12:54.455Z",
+      "captured_commit": "d1da1239492cf68c374ccb92d1a2bec6cfaafc84"
     },
     {
       "name": "near_extremal_edge_on",
@@ -42,8 +42,8 @@
       },
       "ssim_threshold": 0.996,
       "max_pixel_delta": 20,
-      "captured_at": "2026-07-26T05:49:08.061Z",
-      "captured_commit": "4cda67410918be2fdd51d2e65b628fa92658fb26"
+      "captured_at": "2026-07-26T10:12:54.455Z",
+      "captured_commit": "d1da1239492cf68c374ccb92d1a2bec6cfaafc84"
     }
   ]
 }

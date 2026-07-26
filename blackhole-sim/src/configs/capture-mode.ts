@@ -28,6 +28,22 @@ export const CAPTURE_QUALITY: RayTracingQuality = "ultra";
 export const CAPTURE_RENDER_SCALE = 1.0;
 
 /**
+ * Simulation clock every deterministic capture renders at.
+ *
+ * `u_time` advances once per rendered frame and drives the disk's rotation
+ * phase, the jet knot positions, the jet turbulence field, and the starfield
+ * twinkle. So without pinning it, the captured image depends on how many
+ * frames the machine managed to render before the screenshot — which is the
+ * same machine-speed dependency the quality tier had, arriving by a different
+ * route. Pinning quality and resolution alone still produced goldens that
+ * differed byte-for-byte between runs; this is what closed that gap.
+ *
+ * Non-zero so the turbulence and rotation fields are sampled somewhere
+ * representative rather than at their t = 0 origin.
+ */
+export const CAPTURE_TIME = 10.0;
+
+/**
  * Whether this page load is a deterministic capture.
  *
  * Read from the query string rather than the hash, because the hash is

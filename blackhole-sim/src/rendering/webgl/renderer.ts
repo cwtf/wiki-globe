@@ -20,6 +20,7 @@ import { PHYSICS_CONSTANTS } from "@/configs/physics.config";
 import {
   CAPTURE_QUALITY,
   CAPTURE_RENDER_SCALE,
+  CAPTURE_TIME,
   isDeterministicCapture,
 } from "@/configs/capture-mode";
 
@@ -233,7 +234,11 @@ export class WebGLRenderer {
     // 2. Physics / LUT Sync
     this.syncLUTs();
 
-    if (!params.paused) this.time += 0.01;
+    // wiki-globe fork: a deterministic capture renders one fixed instant of
+    // the simulation. Letting the clock advance would make the disk phase and
+    // jet knots depend on the frame count, i.e. on machine speed.
+    if (this.deterministicCapture) this.time = CAPTURE_TIME;
+    else if (!params.paused) this.time += 0.01;
 
     // --- Dynamic Resolution & Metrics ---
     const now = performance.now();
