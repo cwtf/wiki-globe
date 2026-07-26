@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { Dispatch, SetStateAction } from "react";
+
+import type { PerformanceMetrics } from "@/performance/monitor";
 
 import { physicsBridge } from "@/engine/physics-bridge";
 import { fragmentShaderSource } from "@/shaders/blackhole/fragment.glsl";
@@ -21,6 +23,13 @@ export interface BlackHoleDebugApi {
   bridge: typeof physicsBridge;
   params: () => SimulationParams;
   setParams: (patch: Partial<SimulationParams>) => void;
+  /**
+   * Renderer performance as the app itself measures it (spec §6.1 "measure
+   * first"). Counting draw calls from outside is unreliable — the renderer
+   * owns its context and its own loop — so this surfaces the numbers the
+   * PerformanceMonitor already computes.
+   */
+  metrics: () => PerformanceMetrics | undefined;
   setFeatures: (patch: Partial<FeatureToggles>) => void;
   /** Capture the next rendered frame from the default framebuffer. */
   captureFrame: () => Promise<FrameCapture>;
@@ -76,10 +85,18 @@ const ZOOM_TO_DISTANCE = 2.0;
 export function DebugHooks({
   params,
   setParams,
+  metrics,
 }: {
   params: SimulationParams;
   setParams: Dispatch<SetStateAction<SimulationParams>>;
+  metrics?: PerformanceMetrics;
 }) {
+  // Metrics update every frame; holding them in a ref keeps the debug handle
+  // current without re-running the effect (and re-wrapping the API) 60 times
+  // a second.
+  const metricsRef = useRef(metrics);
+  metricsRef.current = metrics;
+
   useEffect(() => {
     const captureFrame = (): Promise<FrameCapture> =>
       new Promise((resolve, reject) => {
@@ -170,6 +187,7 @@ export function DebugHooks({
       bridge: physicsBridge,
       params: () => params,
       setParams: (patch) => setParams((prev) => ({ ...prev, ...patch })),
+      metrics: () => metricsRef.current,
       setFeatures: (patch) =>
         setParams((prev) => ({
           ...prev,

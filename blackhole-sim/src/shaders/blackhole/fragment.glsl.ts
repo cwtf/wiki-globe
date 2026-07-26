@@ -183,6 +183,18 @@ void main() {
             float farBoost = (r - 30.0) * 0.08;
             dt = max(dt, MIN_STEP + farBoost);
             dt = min(dt, MAX_STEP * 2.5);
+
+            // wiki-globe fork (spec §6.1). The cap above is 3.0, so reaching
+            // MAX_DIST = 10000 would take ~3300 steps against a budget of 256:
+            // every escaping ray -- most of the screen -- used to exhaust its
+            // whole budget marching through empty space and never actually
+            // reach the escape test. Once a ray is outward-bound and well
+            // outside the strong-field region its path is essentially
+            // straight, so grow the step with radius and let it leave.
+            if (dot(p, v) > 0.0) {
+                dt = max(dt, r * 0.1);
+                if (r > ESCAPE_RADIUS) break;
+            }
         }
 
         float sphereProx = abs(r - rph);

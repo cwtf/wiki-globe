@@ -29,8 +29,8 @@
       },
       "ssim_threshold": 0.997,
       "max_pixel_delta": 16,
-      "captured_at": "2026-07-26T10:31:55.890Z",
-      "captured_commit": "bbd55231cf0447092691281dcdb58eca1c5e01cf"
+      "captured_at": "2026-07-26T21:24:01.083Z",
+      "captured_commit": "146f26b3b08b707ee5383cf5b3431a0cb2e437c7"
     },
     {
       "name": "near_extremal_edge_on",

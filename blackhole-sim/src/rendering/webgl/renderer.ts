@@ -258,13 +258,28 @@ export class WebGLRenderer {
     }
 
     // Phase 2.3: Virtual Viewport Scaling
-    // wiki-globe fork: a deterministic capture renders at a fixed scale, so a
-    // golden does not depend on how fast the capturing machine was.
+    //
+    // wiki-globe fork (spec §6.1). Two problems fixed here:
+    //
+    //  * `params.renderScale` existed but was never read — the only thing
+    //    driving resolution was the PID controller, so the user's own setting
+    //    did nothing.
+    //  * `params.adaptiveResolution` defaults to false while
+    //    `PERFORMANCE_CONFIG.resolution.enableDynamicScaling` defaults to
+    //    true, so the PID ran regardless of the flag meant to gate it. The
+    //    flag now wins, and the PID modulates around the user's scale rather
+    //    than replacing it.
+    //
+    // Resolution is the lever that actually matters: cost is quadratic in it,
+    // whereas measurement showed 8x the ray-march step budget costs only ~30%
+    // more time.
+    const baseScale = params.renderScale ?? 1.0;
     const dynamicRenderScale = this.deterministicCapture
       ? CAPTURE_RENDER_SCALE
-      : PERFORMANCE_CONFIG.resolution.enableDynamicScaling
-        ? metrics.renderResolution
-        : 1.0;
+      : params.adaptiveResolution &&
+          PERFORMANCE_CONFIG.resolution.enableDynamicScaling
+        ? metrics.renderResolution * baseScale
+        : baseScale;
 
     // 3. Render Pass
     // wiki-globe fork: a deterministic capture pins the quality tier here too.

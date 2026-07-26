@@ -301,7 +301,7 @@ const App = () => {
       )}
 
       <BackToGlobe />
-      <DebugHooks params={params} setParams={setParams} />
+      <DebugHooks params={params} setParams={setParams} metrics={metrics} />
 
       <ErrorBoundary>
         {params.features?.spacetimeVisualization ? (
@@ -352,6 +352,8 @@ const App = () => {
           isVisible={showUI && !isInfoExpanded}
           massPresetId={massPresetId}
           onMassPresetChange={setMassPresetId}
+          params={params}
+          onParamsChange={(patch) => setParams((prev) => ({ ...prev, ...patch }))}
         />
         <SingularityCard object={testObject} mass={params.mass} />
 

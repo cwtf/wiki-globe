@@ -57,6 +57,12 @@ export const COMMON_CHUNK = `
   // === CONSTANTS ===
 #define PI 3.14159265359
 #define MAX_DIST ${PHYSICS_CONSTANTS.rayMarching.maxDistance.toFixed(1)}
+  // wiki-globe fork (spec §6.1): radius beyond which an outward-bound ray is
+  // treated as escaped and its current direction taken as the sky direction.
+  // The neglected remaining deflection goes as ~2*r_s*b/r^2, which at this
+  // radius is well under a pixel for any impact parameter that still has the
+  // hole in frame.
+#define ESCAPE_RADIUS ${PHYSICS_CONSTANTS.rayMarching.escapeRadius.toFixed(1)}
 #define MIN_STEP ${PHYSICS_CONSTANTS.rayMarching.minStep.toFixed(2)}
 #define MAX_STEP ${PHYSICS_CONSTANTS.rayMarching.maxStep.toFixed(1)}
 

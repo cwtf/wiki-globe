@@ -6,6 +6,8 @@ import { AlertCircle } from "lucide-react";
 import type { SimulationParams, MouseState } from "@/types/simulation";
 import type { PerformanceMetrics } from "@/performance/monitor";
 import type { FirstPersonFrame } from "@/hooks/useTestObject";
+import { PERFORMANCE_CONFIG } from "@/configs/performance.config";
+import { isDeterministicCapture } from "@/configs/capture-mode";
 
 interface CanvasError {
   type: "context" | "shader" | "program" | "memory";
@@ -55,9 +57,31 @@ export const WebGLCanvas = ({
 
   const startLoop = () => {
     if (requestRef.current) cancelAnimationFrame(requestRef.current);
+    // wiki-globe fork (spec §6.1). Two cheap wins that change no pixels:
+    //
+    //  * Frame cap. Every frame is a full per-pixel geodesic march, so running
+    //    at a 144 Hz display's refresh rate burns several times the work
+    //    needed for a slowly rotating disk.
+    //  * Hidden tab. The physics worker already drops to 1 Hz on
+    //    visibilitychange; the renderer did not, and kept marching at full
+    //    rate behind another window.
+    //
+    // Both are disabled for a deterministic capture: the capture needs frames
+    // on demand and drives a target that may not be considered visible.
+    const deterministic = isDeterministicCapture();
+    const minFrameMs = deterministic
+      ? 0
+      : 1000 / PERFORMANCE_CONFIG.scheduler.targetFPS;
+    let lastDraw = 0;
+
     const loop = () => {
       try {
-        if (rendererRef.current) {
+        const now = performance.now();
+        const throttled = now - lastDraw < minFrameMs;
+        const hidden = !deterministic && document.hidden;
+
+        if (rendererRef.current && !throttled && !hidden) {
+          lastDraw = now;
           rendererRef.current.firstPerson = firstPersonRef.current;
           rendererRef.current.render(paramsRef.current, mouseRef.current);
         }

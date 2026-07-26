@@ -504,6 +504,65 @@ both demand, so the toggle now reads "Curvature Grid (visual aid)". Note it is
 a *mode* that replaces the ray-marched view rather than an overlay beneath the
 equatorial plane as §1.7 describes; converting it to an overlay is still open.
 
+## Performance (spec milestone 7) — and why the numbers here are not evidence
+
+**This machine cannot measure rendering performance reliably, and two
+conclusions drawn from it had to be retracted.** Recording that in full,
+because the failure mode is subtle and will otherwise be repeated.
+
+An ordered sweep of ray-march quality gave 67.7 / 86.7 / 86.3 / 88.3 ms for
+low / medium / high / ultra, which reads as "8x the step budget costs only 30%
+more — the march is not the bottleneck". An ordered sweep of render scale then
+gave 58.7 / 74.5 / 81.9 ms for 1.0 / 0.75 / 0.5, i.e. *lower resolution is
+slower*, which is impossible.
+
+Both sweeps were measuring elapsed time. An interleaved A/B/A/B run makes it
+plain:
+
+| order | scale | frame ms |
+| --- | --- | --- |
+| 1 | 1.0 | 47.9 |
+| 2 | 0.5 | 67.8 |
+| 3 | 1.0 | 78.6 |
+| 4 | 0.5 | 81.4 |
+| 5 | 1.0 | 93.0 |
+| 6 | 0.5 | 92.0 |
+
+Frame time climbs monotonically with wall-clock position in the run whatever
+is being set. Under SwiftShader on this host — software rasterisation, plus a
+dev server and a headless browser competing for the same cores — the drift
+swamps the effect. **Never trust an ordered performance sweep here; interleave
+and repeat, and treat a monotonic trend as an artefact until proven
+otherwise.**
+
+Consequently milestone 7 ships only changes that are correct by construction
+rather than by measurement:
+
+- **Hidden-tab stop.** The physics worker already dropped to 1 Hz on
+  `visibilitychange`; the renderer kept marching at full rate behind another
+  window. Skipping render entirely when `document.hidden` removes 100% of that
+  work — no benchmark needed to know that.
+- **Frame cap** at `PERFORMANCE_CONFIG.scheduler.targetFPS`. Bounded work per
+  second is arithmetic, not measurement; the win is largest on 120/144 Hz
+  displays, which were previously doing 2-2.4x the necessary marches.
+- **Render scale actually applies.** `params.renderScale` existed and was
+  never read — only the PID controller drove resolution. And
+  `params.adaptiveResolution` defaults to false while
+  `PERFORMANCE_CONFIG.resolution.enableDynamicScaling` defaults to true, so
+  the PID ran regardless of the flag meant to gate it. The flag now wins and
+  the PID modulates around the user's scale. This is a plain bug fix.
+- **Escape radius** (§1.2/§6.1). The step cap was 3.0 while `MAX_DIST` is
+  10000, so reaching the escape test needed ~3300 steps against a budget of
+  256: every escaping ray exhausted its whole budget in empty space and never
+  escaped. Outward-bound rays past `ESCAPE_RADIUS` now stop, with the
+  neglected residual deflection (~2 r_s b / r²) sub-pixel at r = 400. Bounded
+  worst case, not a measured speed-up.
+- **Power control** in the panel, stating what each level stops computing.
+
+**Left unverified:** whether any of this helps on a real GPU. It needs
+measuring on the target hardware, where `window.__bh.metrics()` and the debug
+overlay report the same numbers used above — interleaved, please.
+
 ### A trap worth knowing
 
 The shader chunks are JS template literals. A backtick inside a GLSL comment

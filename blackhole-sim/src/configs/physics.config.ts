@@ -58,6 +58,11 @@ export const PHYSICS_CONSTANTS = {
   // Ray Marching Limits
   rayMarching: {
     maxDistance: 10000.0, // Maximum render distance
+    // wiki-globe fork: escape radius for outward-bound rays (spec §6.1).
+    // Chosen so the neglected residual deflection ~2*r_s*b/r^2 stays
+    // sub-pixel: at r = 400 with b ~ 30 that is ~1e-4 rad, well under one
+    // pixel across a 1280-wide frame.
+    escapeRadius: 400.0,
     minStep: 0.01, // Minimum ray step size (precision)
     maxStep: 1.2, // Maximum ray step size (speed)
     horizonThreshold: 1.15, // Multiplier for Event Horizon hit detection

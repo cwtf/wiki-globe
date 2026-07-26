@@ -714,7 +714,28 @@ all of it:
   clock and TAA; new adaptive behaviour must be added to it in the same
   commit, not afterwards.
 
-### 6.1 Performance (milestone 7)
+### 6.1 Performance (milestone 7) — partially done
+
+**Shipped:** hidden-tab render stop, frame cap at `scheduler.targetFPS`,
+`params.renderScale` actually being honoured (it was dead code — only the PID
+drove resolution), the `adaptiveResolution` flag now gating the PID that
+previously ran regardless of it, an escape radius for outward-bound rays, and
+a power/quality control that states what each level stops computing.
+
+**Not shipped, and the reason matters:** no measured speed-up. This
+development machine cannot benchmark rendering reliably — under SwiftShader,
+frame time drifts upward with elapsed time regardless of settings, and an
+ordered sweep produced two conclusions that a controlled interleaved run
+demolished (including "lower resolution is slower", which is impossible).
+Everything above is therefore justified by construction — work removed or
+bounded — not by a number. Details and the raw figures are in
+`blackhole-sim/FORK.md`.
+
+**Still to do, on hardware that can actually be measured:**
+the analytic weak-field shortcut, render-on-demand, and the disk-sampling
+gate. Measure interleaved, never in an ordered sweep.
+
+### 6.1a Original plan (retained for the remaining items)
 
 The render is a per-pixel backward geodesic integration: at `ultra` every
 pixel runs up to 256 RK-ish steps with a metric evaluation each. That is why

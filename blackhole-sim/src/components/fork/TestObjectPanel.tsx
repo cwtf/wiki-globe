@@ -6,6 +6,8 @@ import type { DropPresetName } from "@/physics/worldline";
 import type { UseTestObject } from "@/hooks/useTestObject";
 import { ViewToggle } from "./ViewToggle";
 import { SpeedControl } from "./SpeedControl";
+import { PowerControl } from "./PowerControl";
+import type { SimulationParams } from "@/types/simulation";
 import {
   MASS_PRESETS,
   findPreset,
@@ -36,11 +38,15 @@ export function TestObjectPanel({
   isVisible,
   massPresetId,
   onMassPresetChange,
+  params,
+  onParamsChange,
 }: {
   object: UseTestObject;
   isVisible: boolean;
   massPresetId: string;
   onMassPresetChange: (id: string) => void;
+  params?: SimulationParams;
+  onParamsChange?: (patch: Partial<SimulationParams>) => void;
 }) {
   const [preset, setPreset] = useState<DropPresetName>("circular");
   const [r0, setR0] = useState(20);
@@ -192,6 +198,9 @@ export function TestObjectPanel({
       <SpeedControl object={object} />
 
       <ViewToggle object={object} />
+      {params && onParamsChange && (
+        <PowerControl params={params} onChange={onParamsChange} />
+      )}
 
       <p className="mt-2 font-mono text-[7px] leading-relaxed text-white/30">
         Geometric units (G = c = M = 1). Physical scales — km, seconds, kelvin —
