@@ -21,10 +21,12 @@ transport, drop panel, marker/trail overlay and HUD are all in, with 13 Rust
 and 26 TS tests. Note the §1.6 clock correction recorded under milestone 4
 below — the 3rd-person view samples `t_far`, not Kerr-Schild `t`.
 
-**MILESTONE 5: observer frame done, shader/UI outstanding.** The tetrad and
-its 11 tests are in; ray generation through it is not. Note the second spec
-correction under milestone 5 — the frame cannot be built by boosting a static
-observer, because none exists inside the horizon. Milestone 6 unstarted.
+**MILESTONE 5 DONE.** Tetrad, ray construction, shader path, view toggle,
+free-look, proper-time clock and singularity card are in and verified in a
+rendered frame. Note the second spec correction under milestone 5 — the frame
+cannot be built by boosting a static observer, because none exists inside the
+horizon. **Milestone 6 is the only one left**, and it unblocks leftovers in
+milestones 3 and 4 (per-preset jet defaults; km/seconds/kelvin readouts).
 
 A scientifically accurate interactive black hole, reachable from the body
 dropdown (new group below "Pluto system") and at `wikiglo.be/blackhole`.
@@ -527,11 +529,26 @@ Each lands independently runnable; verify per §4 before moving on.
    cull, and the horizon-capture test that would otherwise fire on the first
    step from inside). FOV is fixed at focal length 1.2 per §2.4.
 
-   Outstanding: the React wiring that computes the frame per frame and sets
-   `renderer.firstPerson`, the view toggle, free-look input, the proper-time
-   playback clock, and the singularity ending card at r ≈ 0.02 r_s with the
-   final τ. **The 1st-person view has never been seen rendering** — it
-   compiles and its maths is tested, nothing more.
+   **Done.** Wiring, view toggle (1st person enabled only once something has
+   been dropped), free-look, proper-time clock, dual clocks in the HUD, and the
+   singularity card are all in, and the view has been seen rendering: readouts
+   match theory at r = 10 r_s (τ 200.42 vs t_observer 211.24, v_local 23.3% c,
+   tidal 2.5e-4, redshift 0.9487, zero E/L drift).
+
+   The observer frame is precomputed per worldline sample on the Rust side
+   (buffer stride 10 → 26) rather than requested per frame, because the engine
+   runs in a worker and an on-demand frame would put an async round trip and
+   the metric on the render path.
+
+   Three defects only the rendered frame exposed — the camera pointing 90° away
+   from the hole (a tetrad fixes no preferred orientation, and the leg order is
+   not stable), both clocks reading identically, and the singularity card
+   firing for a stable orbit. All fixed and covered by tests; see
+   `blackhole-sim/FORK.md`.
+
+   Not yet seen in flight: the free-look drag, and the horizon crossing plus
+   singularity card — a radial plunge takes ~66 s of wall clock at the current
+   fixed playback rate, which §1.9's speed slider will make practical.
 6. **Polish** — curvature-grid toggle, mass presets + tidal readout,
    speed slider (10⁻⁵×–10⁶×, comfort-speed default, 1× detent) + pause,
    attribution (upstream MIT credit + starmap), README section, sitemap,

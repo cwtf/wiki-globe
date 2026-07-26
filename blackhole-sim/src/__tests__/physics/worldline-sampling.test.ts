@@ -99,6 +99,40 @@ describe("worldline sampling", () => {
     expect(c.r).toBeCloseTo(2.1, 4);
   });
 
+  it("interpolates each clock from its own column", () => {
+    // Regression: sampling by proper time used to derive t_far from the
+    // column being searched, so it returned tau. The 1st-person HUD showed
+    // both clocks reading the same number — erasing exactly the disagreement
+    // §1.6 exists to display.
+    const w = build([
+      [0, 0, 0, 10, HALF_PI, 0],
+      [100, 130, 120, 9, HALF_PI, 0.1],
+    ]);
+
+    const p = w.sampleByProperTime(50);
+    expect(p.tau).toBeCloseTo(50, 4);
+    expect(p.t).toBeCloseTo(65, 4);
+    expect(p.tFar).toBeCloseTo(60, 4);
+    expect(p.tFar).not.toBeCloseTo(p.tau, 3);
+
+    // And the same when searching the other column.
+    const q = w.sampleByFarTime(60);
+    expect(q.tFar).toBeCloseTo(60, 4);
+    expect(q.tau).toBeCloseTo(50, 4);
+    expect(q.t).toBeCloseTo(65, 4);
+  });
+
+  it("does not produce NaN interpolating up to an infinite t_far", () => {
+    const w = build([
+      [0, 0, 10, 3, HALF_PI, 0],
+      [1, 1, Infinity, 2, HALF_PI, 0.1],
+    ]);
+    for (const tau of [0, 0.25, 0.5, 0.75, 1]) {
+      const p = w.sampleByProperTime(tau);
+      expect(Number.isNaN(p.tFar)).toBe(false);
+    }
+  });
+
   it("gives the two views different positions at the same wall-clock moment", () => {
     // The disagreement between the clocks IS the physics (§1.6).
     const w = infall();
@@ -136,6 +170,7 @@ describe("worldline sampling", () => {
       theta: HALF_PI,
       phi: 0,
       u: [1, 0, 0, 0],
+      tetrad: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
     });
     expect(x).toBeCloseTo(5, 6);
     expect(y).toBeCloseTo(0, 6); // equatorial orbits stay out of the pole axis

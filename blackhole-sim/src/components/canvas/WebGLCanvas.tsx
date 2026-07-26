@@ -5,6 +5,7 @@ import { WebGLRenderer } from "@/rendering/webgl/renderer";
 import { AlertCircle } from "lucide-react";
 import type { SimulationParams, MouseState } from "@/types/simulation";
 import type { PerformanceMetrics } from "@/performance/monitor";
+import type { FirstPersonFrame } from "@/hooks/useTestObject";
 
 interface CanvasError {
   type: "context" | "shader" | "program" | "memory";
@@ -23,6 +24,12 @@ interface WebGLCanvasProps {
   onTouchMove: (e: React.TouchEvent | TouchEvent) => void;
   onTouchEnd: (e: React.TouchEvent | TouchEvent) => void;
   onMetricsUpdate?: (metrics: PerformanceMetrics) => void;
+  /**
+   * wiki-globe fork: the rider's orthonormal frame for the 1st-person view
+   * (spec §1.6), or null for 3rd person. Passed through a ref so a new frame
+   * every animation tick does not re-render the React tree.
+   */
+  firstPerson?: FirstPersonFrame | null;
 }
 
 export const WebGLCanvas = ({
@@ -36,11 +43,13 @@ export const WebGLCanvas = ({
   onTouchMove,
   onTouchEnd,
   onMetricsUpdate,
+  firstPerson,
 }: WebGLCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rendererRef = useRef<WebGLRenderer | null>(null);
   const paramsRef = useRef(params);
   const mouseRef = useRef(mouse);
+  const firstPersonRef = useRef(firstPerson ?? null);
   const [error, setError] = useState<CanvasError | null>(null);
   const requestRef = useRef<number>(0);
 
@@ -49,6 +58,7 @@ export const WebGLCanvas = ({
     const loop = () => {
       try {
         if (rendererRef.current) {
+          rendererRef.current.firstPerson = firstPersonRef.current;
           rendererRef.current.render(paramsRef.current, mouseRef.current);
         }
       } catch (e: unknown) {
@@ -77,6 +87,10 @@ export const WebGLCanvas = ({
   useEffect(() => {
     mouseRef.current = mouse;
   }, [mouse]);
+
+  useEffect(() => {
+    firstPersonRef.current = firstPerson ?? null;
+  }, [firstPerson]);
 
   useEffect(() => {
     if (!canvasRef.current || rendererRef.current) return;

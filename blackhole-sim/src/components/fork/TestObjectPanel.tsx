@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import type { DropPresetName } from "@/physics/worldline";
 import type { UseTestObject } from "@/hooks/useTestObject";
+import { ViewToggle } from "./ViewToggle";
 
 /**
  * Drop panel + test-object HUD (spec §1.5, §2.4).
@@ -126,6 +127,8 @@ export function TestObjectPanel({
           )}
         </dl>
       )}
+
+      <ViewToggle object={object} />
 
       <p className="mt-2 font-mono text-[7px] leading-relaxed text-white/30">
         Geometric units (G = c = M = 1). Physical scales — km, seconds, kelvin —

@@ -13,12 +13,17 @@
 
 /**
  * Floats per sample in the buffer from `integrate_test_object`:
- * `[tau, t, tFar, r, theta, phi, u_t, u_r, u_theta, u_phi]`.
+ * `[tau, t, tFar, r, theta, phi, u_t, u_r, u_theta, u_phi, e[0..16]]`.
  *
- * The 4-velocity is carried so the 1st-person view can build the observer's
- * orthonormal frame at any point on the stored worldline (spec §1.6).
+ * The 4-velocity is carried so the 1st-person view can reason about the
+ * observer's motion, and the orthonormal frame itself is precomputed on the
+ * Rust side — the camera needs it every frame, and the physics engine lives in
+ * a worker, so computing it on demand would make the render path asynchronous.
  */
-export const WORLDLINE_STRIDE = 10;
+export const WORLDLINE_STRIDE = 26;
+
+/** Offset of the tetrad block within a sample. */
+export const TETRAD_OFFSET = 10;
 
 export interface WorldlinePoint {
   /** The object's own clock. Finite through the horizon. */
@@ -36,9 +41,19 @@ export interface WorldlinePoint {
   phi: number;
   /**
    * Contravariant 4-velocity (u^t, u^r, u^theta, u^phi) at this point.
-   * Feeds `observer_tetrad` to build the 1st-person camera frame.
    */
   u: [number, number, number, number];
+  /**
+   * The observer's orthonormal frame, row-major `e[a][mu]` (16 numbers),
+   * in coordinate basis (t, r, theta, phi). Row 0 is the 4-velocity.
+   *
+   * Taken from the nearest recorded sample rather than interpolated:
+   * blending two frames component-wise does not generally produce an
+   * orthonormal one, and a subtly non-orthonormal frame is exactly the
+   * "ad-hoc" failure spec §5 warns about. Sample density is high enough that
+   * the nearest frame is accurate to well under a pixel.
+   */
+  tetrad: number[];
 }
 
 export interface WorldlineAudit {
@@ -96,7 +111,16 @@ export class Worldline {
       theta: this.f(i + 4),
       phi: this.f(i + 5),
       u: [this.f(i + 6), this.f(i + 7), this.f(i + 8), this.f(i + 9)],
+      tetrad: this.tetradAtOffset(i),
     };
+  }
+
+  private tetradAtOffset(sampleOffset: number): number[] {
+    const out = new Array<number>(16);
+    for (let k = 0; k < 16; k++) {
+      out[k] = this.f(sampleOffset + TETRAD_OFFSET + k);
+    }
+    return out;
   }
 
   /** Whether conservation stayed inside the spec's tolerance. */
@@ -181,7 +205,17 @@ export class Worldline {
     maxIndex = this.count - 1,
   ): WorldlinePoint {
     if (this.count === 0) {
-      return { tau: 0, t: 0, tFar: 0, r: 0, theta: 0, phi: 0, u: [1, 0, 0, 0] };
+      return {
+        tau: 0,
+        t: 0,
+        tFar: 0,
+        r: 0,
+        theta: 0,
+        phi: 0,
+        u: [1, 0, 0, 0],
+        // Identity frame: a static observer in flat space.
+        tetrad: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+      };
     }
     const first = this.f(offset);
     if (!(value > first)) return this.at(0);
@@ -210,10 +244,24 @@ export class Worldline {
     while (dphi > Math.PI) dphi -= 2 * Math.PI;
     while (dphi < -Math.PI) dphi += 2 * Math.PI;
 
+    // t_far diverges at the horizon and is Infinity beyond it, so linear
+    // interpolation across that boundary is meaningless — take the nearer
+    // sample instead of producing Infinity or NaN.
+    const tFar =
+      Number.isFinite(a.tFar) && Number.isFinite(b.tFar)
+        ? a.tFar + (b.tFar - a.tFar) * f
+        : f < 0.5
+          ? a.tFar
+          : b.tFar;
+
     return {
       tau: a.tau + (b.tau - a.tau) * f,
       t: a.t + (b.t - a.t) * f,
-      tFar: va + span * f,
+      // Each clock interpolates from its own column. Deriving this from the
+      // column being *searched* made proper-time lookups report tau as t_far,
+      // so the two clocks in the 1st-person HUD read identically — which is
+      // precisely the disagreement §1.6 exists to show.
+      tFar,
       r: a.r + (b.r - a.r) * f,
       theta: a.theta + (b.theta - a.theta) * f,
       phi: a.phi + dphi * f,
@@ -227,6 +275,8 @@ export class Worldline {
         a.u[2] + (b.u[2] - a.u[2]) * f,
         a.u[3] + (b.u[3] - a.u[3]) * f,
       ],
+      // Nearest, never blended — see the note on WorldlinePoint.tetrad.
+      tetrad: f < 0.5 ? a.tetrad : b.tetrad,
     };
   }
 }

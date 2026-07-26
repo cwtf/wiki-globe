@@ -192,6 +192,64 @@ export function rotateByQuaternion(
  */
 export const FIRST_PERSON_FOCAL_LENGTH = 1.2;
 
+/**
+ * Which frame leg the camera should treat as right / up / forward.
+ *
+ * A tetrad fixes no preferred spatial orientation — any rotation of the three
+ * spatial legs is an equally valid frame — so the camera has to choose one,
+ * and choosing wrongly is not a physics error but it does point the viewer at
+ * empty sky. Gram-Schmidt fills the legs in whatever order succeeds
+ * (radial, then azimuthal, then polar, with fallbacks when a candidate is
+ * degenerate), so the order cannot be assumed: a radially infalling observer
+ * produces a different assignment from an orbiting one.
+ *
+ * The legs are therefore identified by what they physically are, using their
+ * coordinate components: `e[a][1]` is the ∂r part, `e[a][2]` the ∂θ part,
+ * `e[a][3]` the ∂φ part. Forward is taken as **inward radial**, so the hole is
+ * on screen when the ride begins; up is the polar axis; right completes it.
+ *
+ * Returns leg indices (1..3) and signs.
+ */
+export function orientFrame(tetrad: TetradArray): {
+  right: { index: number; sign: number };
+  up: { index: number; sign: number };
+  forward: { index: number; sign: number };
+} {
+  const component = (a: number, mu: number) => Math.abs(tetrad[a * 4 + mu] ?? 0);
+
+  const pick = (mu: number, used: Set<number>) => {
+    let best = -1;
+    let bestVal = -1;
+    for (let a = 1; a <= 3; a++) {
+      if (used.has(a)) continue;
+      const v = component(a, mu);
+      if (v > bestVal) {
+        bestVal = v;
+        best = a;
+      }
+    }
+    return best;
+  };
+
+  const used = new Set<number>();
+  const radial = pick(1, used);
+  used.add(radial);
+  const polar = pick(2, used);
+  used.add(polar);
+  let azimuthal = -1;
+  for (let a = 1; a <= 3; a++) if (!used.has(a)) azimuthal = a;
+
+  // Forward points inward: flip if this leg's ∂r component is positive
+  // (outward).
+  const radialSign = (tetrad[radial * 4 + 1] ?? 0) >= 0 ? -1 : 1;
+
+  return {
+    right: { index: azimuthal, sign: 1 },
+    up: { index: polar, sign: 1 },
+    forward: { index: radial, sign: radialSign },
+  };
+}
+
 /** Look direction for a normalised screen coordinate, before free-look. */
 export function lookDirection(u: number, v: number): Vec3 {
   const len = Math.hypot(u, v, FIRST_PERSON_FOCAL_LENGTH) || 1;

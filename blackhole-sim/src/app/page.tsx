@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronUp } from "lucide-react";
@@ -11,6 +11,7 @@ import { BackToGlobe } from "@/components/fork/BackToGlobe";
 import { DebugHooks } from "@/components/fork/DebugHooks";
 import { TestObjectOverlay } from "@/components/fork/TestObjectOverlay";
 import { TestObjectPanel } from "@/components/fork/TestObjectPanel";
+import { SingularityCard } from "@/components/fork/SingularityCard";
 import { useTestObject } from "@/hooks/useTestObject";
 import { IdentityHUD } from "@/components/ui/IdentityHUD";
 import { CompatibilityHUD } from "@/components/ui/CompatibilityHUD";
@@ -186,6 +187,51 @@ const App = () => {
   // wiki-globe fork (spec §1.5): dropped test object.
   const testObject = useTestObject(params.mass);
 
+  // Free-look for the 1st-person view (§1.6). Intercepted before the orbit
+  // camera, because in 1st person a drag turns the rider's head rather than
+  // moving a camera around the hole — the observer's position is the object's
+  // worldline and is not the user's to change.
+  const firstPersonActive = testObject.view === "first";
+  const lookDragRef = useRef<{ x: number; y: number } | null>(null);
+
+  const handleCanvasMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (firstPersonActive) {
+        lookDragRef.current = { x: e.clientX, y: e.clientY };
+        return;
+      }
+      handleMouseDown(e);
+    },
+    [firstPersonActive, handleMouseDown],
+  );
+
+  const handleCanvasMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (firstPersonActive) {
+        const prev = lookDragRef.current;
+        if (!prev) return;
+        const LOOK_SENSITIVITY = 0.004;
+        testObject.addLook(
+          (e.clientX - prev.x) * LOOK_SENSITIVITY,
+          (e.clientY - prev.y) * LOOK_SENSITIVITY,
+        );
+        lookDragRef.current = { x: e.clientX, y: e.clientY };
+        return;
+      }
+      handleMouseMove(e);
+    },
+    [firstPersonActive, handleMouseMove, testObject],
+  );
+
+  const handleCanvasMouseUp = useCallback(() => {
+    if (firstPersonActive) {
+      lookDragRef.current = null;
+      return;
+    }
+    // useCamera's handler takes no event.
+    handleMouseUp();
+  }, [firstPersonActive, handleMouseUp]);
+
   // Phase 6: WebGPU Support Hook
   const [useWebGPU, setUseWebGPU] = useState(false);
   const [forceShowCompat, setForceShowCompat] = useState(false);
@@ -262,14 +308,15 @@ const App = () => {
           <WebGLCanvas
             params={params}
             mouse={mouse}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
+            onMouseDown={handleCanvasMouseDown}
+            onMouseMove={handleCanvasMouseMove}
+            onMouseUp={handleCanvasMouseUp}
             onWheel={handleWheel}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
             onMetricsUpdate={setMetrics}
+            firstPerson={testObject.firstPersonFrame}
           />
         )}
 
@@ -282,6 +329,7 @@ const App = () => {
           mass={params.mass}
         />
         <TestObjectPanel object={testObject} isVisible={showUI && !isInfoExpanded} />
+        <SingularityCard object={testObject} mass={params.mass} />
 
         {/* ENTERPRISE-GRADE SEMANTIC CONTENT LAYER (High-Density Keyword Hub) */}
         <section className="sr-only" aria-hidden="false" id="physics-guide">

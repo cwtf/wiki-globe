@@ -6,6 +6,7 @@ import {
   coordinateBasis,
   frequencyShift,
   lookDirection,
+  orientFrame,
   rotateByQuaternion,
   tetradToCartesian,
   toCartesian,
@@ -248,6 +249,87 @@ describe("free-look", () => {
     // The resulting world direction still leans toward +z (the motion).
     expect(direction[2]).toBeCloseTo(beta, 9);
     expect(direction[2]).toBeGreaterThan(0);
+  });
+});
+
+describe("frame orientation", () => {
+  /** Tetrad rows e[a][mu], mu = (t, r, theta, phi). */
+  function frame(rows: number[][]): number[] {
+    return rows.flat();
+  }
+
+  it("identifies the legs regardless of Gram-Schmidt order", () => {
+    // Order as produced for an orbiting observer: radial, azimuthal, polar.
+    const orbiting = frame([
+      [1, 0, 0, 0],
+      [0, 1, 0, 0], // radial
+      [0, 0, 0, 1], // azimuthal
+      [0, 0, 1, 0], // polar
+    ]);
+    const a = orientFrame(orbiting);
+    expect(a.forward.index).toBe(1);
+    expect(a.up.index).toBe(3);
+    expect(a.right.index).toBe(2);
+
+    // A different order must still be identified correctly — this is the
+    // case that put the camera 90 degrees off the hole.
+    const shuffled = frame([
+      [1, 0, 0, 0],
+      [0, 0, 1, 0], // polar
+      [0, 0, 0, 1], // azimuthal
+      [0, 1, 0, 0], // radial
+    ]);
+    const b = orientFrame(shuffled);
+    expect(b.forward.index).toBe(3);
+    expect(b.up.index).toBe(1);
+    expect(b.right.index).toBe(2);
+  });
+
+  it("points forward inward, whichever way the radial leg was built", () => {
+    // Outward-pointing radial leg must be flipped so the hole is in shot.
+    const outward = frame([
+      [1, 0, 0, 0],
+      [0, 1, 0, 0],
+      [0, 0, 0, 1],
+      [0, 0, 1, 0],
+    ]);
+    expect(orientFrame(outward).forward.sign).toBe(-1);
+
+    const inward = frame([
+      [1, 0, 0, 0],
+      [0, -1, 0, 0],
+      [0, 0, 0, 1],
+      [0, 0, 1, 0],
+    ]);
+    expect(orientFrame(inward).forward.sign).toBe(1);
+  });
+
+  it("always assigns three distinct legs", () => {
+    // Mixed legs, as a boosted or infalling frame produces.
+    const mixed = frame([
+      [1.2, 0.3, 0, 0.1],
+      [0.4, 0.9, 0.1, 0.2],
+      [0.1, 0.2, 0.3, 0.9],
+      [0.0, 0.1, 0.95, 0.1],
+    ]);
+    const a = orientFrame(mixed);
+    const indices = [a.right.index, a.up.index, a.forward.index].sort();
+    expect(indices).toEqual([1, 2, 3]);
+  });
+
+  it("sends the default view toward the hole, not out of the orbital plane", () => {
+    // The regression: forward must have a radial character, never polar.
+    const orbiting = frame([
+      [1, 0, 0, 0],
+      [0, 1, 0, 0],
+      [0, 0, 0, 1],
+      [0, 0, 1, 0],
+    ]);
+    const { forward } = orientFrame(orbiting);
+    // The chosen leg's dominant coordinate component must be ∂r (index 1).
+    const leg = orbiting.slice(forward.index * 4, forward.index * 4 + 4);
+    const dominant = leg.indexOf(Math.max(...leg.map(Math.abs)));
+    expect(dominant).toBe(1);
   });
 });
 

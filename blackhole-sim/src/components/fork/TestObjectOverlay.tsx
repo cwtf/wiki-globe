@@ -48,6 +48,9 @@ export function TestObjectOverlay({
 
   const { worldline, farTime } = object;
   if (!worldline || worldline.count === 0 || size.width === 0) return null;
+  // In 1st person the camera *is* the object, so drawing its marker and trail
+  // would be drawing the inside of the viewer's own head.
+  if (object.view === "first") return null;
 
   const cam: CameraState = { mouseX: mouse.x, mouseY: mouse.y, zoom };
   const point = worldline.sampleByFarTime(farTime);

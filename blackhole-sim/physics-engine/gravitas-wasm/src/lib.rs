@@ -664,12 +664,18 @@ impl PhysicsEngine {
 // ===========================================================================
 
 /// Floats per worldline sample in the buffer handed to JS:
-/// `[tau, t, t_far, r, theta, phi, u_t, u_r, u_theta, u_phi]`.
+/// `[tau, t, t_far, r, theta, phi, u_t, u_r, u_theta, u_phi, e[0..16]]`.
 ///
 /// The 4-velocity rides along because the 1st-person view builds its
 /// orthonormal frame from it (spec §1.6), and must be able to do so at any
 /// point on the stored worldline — not just wherever the integration stopped.
-pub const WORLDLINE_STRIDE: usize = 10;
+///
+/// The frame itself is precomputed here, per sample, rather than on demand.
+/// The 1st-person camera needs it every frame, and the physics engine lives
+/// in a worker: a per-frame FFI round trip would be asynchronous and would
+/// put the metric on the render path. Computing it once at drop time costs
+/// 16 floats per sample and makes the camera a pure lookup.
+pub const WORLDLINE_STRIDE: usize = 26;
 
 /// Audit values from the most recent worldline integration. Kept in f64 on
 /// this side: the spec's conservation target is 1e-6, which is close enough
@@ -789,6 +795,21 @@ impl PhysicsEngine {
             flat.push(s.u[1] as f32);
             flat.push(s.u[2] as f32);
             flat.push(s.u[3] as f32);
+
+            // Observer frame at this sample, row-major e[a][mu]. Built from
+            // the 4-velocity by Gram-Schmidt, which stays valid inside the
+            // horizon where no static observer exists to boost from.
+            let frame = tetrad::tetrad_from_velocity(
+                &self.metric_ks,
+                s.r,
+                s.theta,
+                &s.u,
+            );
+            for row in &frame.e {
+                for &component in row {
+                    flat.push(component as f32);
+                }
+            }
         }
 
         LAST_WORLDLINE.with(|c| {

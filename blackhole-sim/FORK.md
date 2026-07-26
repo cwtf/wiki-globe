@@ -341,12 +341,42 @@ have silently broken the crossing:
 Sky colour is shifted by `g⁴` from the same `p^t` the ray construction
 produced — the same Liouville law the disk and jet use.
 
-**Outstanding for milestone 5:** the React wiring that computes the frame each
-frame from the worldline and sets `renderer.firstPerson`, the view toggle
-(1st person enabled only while an object is falling), free-look input, the
-proper-time playback clock, and the singularity ending card at r ≈ 0.02 r_s
-with the final τ. **Nothing in the 1st-person view has been seen rendering** —
-it compiles and the maths is tested, that is all.
+### Milestone 5 completed
+
+Wiring, view toggle, free-look, proper-time clock and the singularity card are
+in, and the view has now been **seen rendering**. The frame is precomputed per
+sample on the Rust side (buffer stride 10 → 26) rather than fetched per frame:
+the engine lives in a worker, so an on-demand frame would put an async round
+trip and the metric on the render path.
+
+Three defects the rendered frame caught, none of which any test would have:
+
+- **The camera looked 90° away from the hole.** A tetrad fixes no preferred
+  spatial orientation, and Gram-Schmidt fills its legs in whatever order
+  succeeds — radial, azimuthal, polar, with fallbacks. Treating local +z as
+  "forward" landed on the *polar* axis, so the rider stared out of the orbital
+  plane at empty sky. `orientFrame()` now identifies each leg by its
+  coordinate components (`e[a][1]` is the ∂r part) and takes forward as inward
+  radial, so the hole is in shot when the ride begins. Robust to the ordering
+  changing, which it does between an orbiting and an infalling observer.
+- **Both clocks read the same number.** `interpolate()` derived `t_far` from
+  whichever column was being *searched*, so a proper-time lookup returned tau
+  in the t_far slot — erasing precisely the disagreement §1.6 exists to show.
+  Only reachable on the 1st-person path. Now each clock interpolates from its
+  own column, taking the nearer sample where t_far diverges rather than
+  producing NaN.
+- **The singularity card fired for a stable orbit.** "Ran out of worldline" was
+  being read as "arrived" — a circular orbit simply exhausts its step budget.
+  Gated on the integration having terminated at the inner radius *and* the
+  object being inside the horizon.
+
+Verified against theory in the rendered HUD at r = 10 r_s: τ 200.42 vs
+t_observer 211.24 (matches `1.0828 τ − 5.78`), v_local 23.3% c, tidal 2.5e-4,
+redshift 0.9487, E/L drift 0.
+
+Not yet seen: the free-look drag, and the horizon crossing and singularity card
+in flight — a radial plunge takes ~66 s of wall clock at the current fixed
+playback rate, which §1.9's speed slider will make practical to check.
 
 ### The renderer is not deterministic, so goldens cannot work yet
 
