@@ -9,6 +9,14 @@ import {
   tetradToCartesian,
   type CartesianLeg,
 } from "@/physics/first-person";
+import { geometricRatePerSecond } from "@/physics/playback";
+import {
+  comfortSpeed,
+  durationToSeconds,
+  radiusToKm,
+  tidalAccelerationG,
+  timeUnitSeconds,
+} from "@/configs/mass-presets";
 import {
   Worldline,
   buildDropRequest,
@@ -25,13 +33,15 @@ import {
  */
 
 /**
- * Distant-observer seconds per wall-clock second.
+ * Ratio of distant-observer clock rate to proper-time clock rate.
  *
- * A placeholder until §1.8's mass presets exist, since "comfort speed" is
- * defined per preset (§1.9). Deliberately a single named constant so the
- * speed slider replaces exactly this.
+ * Both views advance from the same wall-clock tick and the same speed
+ * multiplier; this only reflects that a distant observer's clock runs ahead of
+ * the rider's. Kept at 1 so the multiplier means exactly what §1.9 says it
+ * means — the actual dilation is already baked into the worldline, and
+ * applying it again here would double-count it.
  */
-const PLAYBACK_RATE = 4.0;
+const OBSERVER_CLOCK_RATIO = 1.0;
 
 export interface TestObjectReadout {
   /** Radius in Schwarzschild radii. */
@@ -51,6 +61,17 @@ export interface TestObjectReadout {
   tidal: number;
   /** Emitted/observed frequency ratio, 0 at the horizon. Drives the fade. */
   redshift: number;
+
+  // Physical units (§1.5, §1.8). The render is mass-invariant; only these
+  // change with the preset.
+  /** Radius in kilometres. */
+  rKm: number;
+  /** Proper time in seconds. */
+  tauSeconds: number;
+  /** Distant-observer time in seconds; Infinity at and inside the horizon. */
+  tFarSeconds: number;
+  /** Tidal stretch across 1 m, in Earth gravities. */
+  tidalG: number;
 }
 
 /** Which camera the simulation is being watched from (spec §1.6). */
@@ -81,6 +102,11 @@ export interface UseTestObject {
   properTime: number;
   paused: boolean;
   setPaused: (p: boolean) => void;
+  /** Playback multiplier: simulated seconds per wall-clock second (§1.9). */
+  speed: number;
+  setSpeed: (s: number) => void;
+  /** Per-preset comfort speed, the labelled default detent. */
+  comfort: number;
   view: ViewMode;
   /** 1st person is only meaningful while an object is on a worldline. */
   setView: (v: ViewMode) => void;
@@ -97,16 +123,10 @@ export interface UseTestObject {
   readout: TestObjectReadout | null;
 }
 
-/**
- * Proper-time seconds per wall-clock second in 1st person.
- *
- * Separate from PLAYBACK_RATE because the two views advance different clocks
- * (§1.6) and an infall takes far less proper time than the distant observer's
- * time it corresponds to. Replaced wholesale by §1.9's speed slider.
- */
-const PROPER_TIME_RATE = 1.5;
-
-export function useTestObject(mass: number): UseTestObject {
+export function useTestObject(
+  mass: number,
+  solarMasses: number,
+): UseTestObject {
   const [worldline, setWorldline] = useState<Worldline | null>(null);
   const [status, setStatus] = useState<UseTestObject["status"]>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -115,6 +135,17 @@ export function useTestObject(mass: number): UseTestObject {
   const [paused, setPaused] = useState(false);
   const [view, setViewInternal] = useState<ViewMode>("third");
   const [look, setLook] = useState({ yaw: 0, pitch: 0 });
+
+  // §1.9: default to the per-preset comfort speed, recomputed whenever the
+  // mass preset changes — one ISCO orbit in ~30 s of wall clock, whatever the
+  // hole. Explicitly set speeds survive a preset change only until the user
+  // has not touched the slider.
+  const [speed, setSpeed] = useState(() => comfortSpeed(solarMasses));
+  const speedTouched = useRef(false);
+
+  useEffect(() => {
+    if (!speedTouched.current) setSpeed(comfortSpeed(solarMasses));
+  }, [solarMasses]);
 
   const rafRef = useRef<number | null>(null);
   const lastRef = useRef<number>(0);
@@ -186,11 +217,18 @@ export function useTestObject(mass: number): UseTestObject {
       const now = performance.now();
       const dt = (now - lastRef.current) / 1000;
       lastRef.current = now;
+
+      // §1.9: the multiplier scales the simulation clock against wall clock
+      // and never touches the physics. The worldline was integrated once at
+      // drop time; this only changes which sample gets looked up, so the same
+      // drop replayed at any speed traces an identical trajectory.
+      const rate = geometricRatePerSecond(speed, timeUnitSeconds(solarMasses));
+
       // Both clocks advance from the same wall-clock tick, but they index the
       // one stored worldline by different parameters (§1.6). Advancing both
       // keeps a view switch continuous rather than jumping.
-      setFarTime((prev) => prev + dt * PLAYBACK_RATE);
-      setProperTime((prev) => prev + dt * PROPER_TIME_RATE);
+      setFarTime((prev) => prev + dt * rate * OBSERVER_CLOCK_RATIO);
+      setProperTime((prev) => prev + dt * rate);
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
@@ -198,7 +236,22 @@ export function useTestObject(mass: number): UseTestObject {
     return () => {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
     };
-  }, [worldline, paused]);
+  }, [worldline, paused, speed, solarMasses]);
+
+  // §1.9: Space toggles pause. Ignored while typing so it cannot hijack a
+  // form field.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code !== "Space") return;
+      const el = document.activeElement;
+      const tag = el?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      e.preventDefault();
+      setPaused((p) => !p);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const canRideAlong = !!worldline && worldline.count > 0;
   const setView = useCallback(
@@ -293,6 +346,12 @@ export function useTestObject(mass: number): UseTestObject {
       localVelocity,
       tidal: (2 * mass) / (p.r * p.r * p.r),
       redshift: worldline.redshiftFactor(p.r, rs),
+      rKm: radiusToKm(p.r, solarMasses),
+      tauSeconds: durationToSeconds(p.tau, solarMasses),
+      tFarSeconds: Number.isFinite(p.tFar)
+        ? durationToSeconds(p.tFar, solarMasses)
+        : Infinity,
+      tidalG: tidalAccelerationG(p.r, solarMasses, 1),
     };
   }
 
@@ -304,6 +363,12 @@ export function useTestObject(mass: number): UseTestObject {
     properTime,
     paused,
     setPaused,
+    speed,
+    setSpeed: (s: number) => {
+      speedTouched.current = true;
+      setSpeed(s);
+    },
+    comfort: comfortSpeed(solarMasses),
     view,
     setView,
     canRideAlong,

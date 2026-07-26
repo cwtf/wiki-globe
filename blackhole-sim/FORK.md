@@ -465,6 +465,45 @@ The physics in that frame reads correctly: a round shadow with a sharp photon
 ring, and the accretion disk lensed into arcs above and below it — the
 signature that light from the disk's far side is being bent over the top.
 
+## Mass presets and playback (spec milestone 6)
+
+`src/configs/mass-presets.ts` is the unit-conversion layer and nothing else —
+it never touches the shader. The render is mass-invariant (everything is
+computed with G = c = M = 1), so a preset changes only what the numbers mean.
+
+The tests assert against the figures **the spec itself states** rather than
+against whatever the code produces, which is what makes them worth having:
+ISCO periods of 4.5 ms / 31 min / 34 days and comfort speeds of 1.5e-4× / 60× /
+1e5× for the stellar / Sgr A* / M87* presets. Confirmed live in the browser at
+4.55 ms / 31.5 min / 34.2 d and 1.5e-4× / 63× / 9.9e4×.
+
+`src/physics/playback.ts` holds the §1.9 speed control: a log-scaled slider
+across ten decades with clickable detents at 1× real time and the per-preset
+comfort speed. Two details worth keeping:
+
+- **Snapping is done in log space.** A fixed absolute tolerance would make the
+  stellar preset's comfort detent (1.5e-4×) unreachable while swallowing whole
+  decades at the top end.
+- **1× means one second of simulated time per wall-clock second**, which is a
+  wildly different *geometric* rate per preset. That is what ties §1.9's
+  slider to §1.8's masses, and why `geometricRatePerSecond` takes the mass's
+  time unit rather than assuming one.
+
+Pause freezes the simulation clock only; rendering and both cameras stay live,
+which falls out of the clock being a separate rAF loop from the renderer.
+`Space` toggles it, ignored while a form control has focus.
+
+**§1.4's per-preset jet default is now closed**, having been deferred since
+milestone 3 for want of mass presets: verified in the browser as
+`stellar:false, sgra:false, m87:true`.
+
+§1.7's curvature grid turned out to be largely present already — upstream's
+`spacetimeVisualization` renders the Flamm paraboloid via
+`generate_embedding_mesh`. What was missing was the honesty label §1.7 and §5
+both demand, so the toggle now reads "Curvature Grid (visual aid)". Note it is
+a *mode* that replaces the ray-marched view rather than an overlay beneath the
+equatorial plane as §1.7 describes; converting it to an overlay is still open.
+
 ### A trap worth knowing
 
 The shader chunks are JS template literals. A backtick inside a GLSL comment

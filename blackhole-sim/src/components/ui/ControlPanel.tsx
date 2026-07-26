@@ -806,7 +806,12 @@ export const ControlPanel = ({
                                   icon: Disc,
                                 },
                                 {
-                                  label: "Spacetime Visualization",
+                                  // Spec §1.7 and §5: the embedding grid is an
+                                  // embedding of spatial curvature, not
+                                  // something any observer would see. It has
+                                  // to say so, or it undermines the accuracy
+                                  // claim the rest of the render earns.
+                                  label: "Curvature Grid (visual aid)",
                                   key: "spacetimeVisualization" as const,
                                   icon: Layers,
                                 },

@@ -13,6 +13,7 @@ import { TestObjectOverlay } from "@/components/fork/TestObjectOverlay";
 import { TestObjectPanel } from "@/components/fork/TestObjectPanel";
 import { SingularityCard } from "@/components/fork/SingularityCard";
 import { useTestObject } from "@/hooks/useTestObject";
+import { DEFAULT_MASS_PRESET, findPreset } from "@/configs/mass-presets";
 import { IdentityHUD } from "@/components/ui/IdentityHUD";
 import { CompatibilityHUD } from "@/components/ui/CompatibilityHUD";
 import { useHardwareSupport } from "@/hooks/useHardwareSupport";
@@ -184,8 +185,26 @@ const App = () => {
   // Phase 7: URL hash state for shareable simulation links
   useUrlState(params, setParams);
 
+  // wiki-globe fork (spec §1.8): the mass preset changes no pixels — the
+  // render is mass-invariant — only what the numbers mean and how fast the
+  // clock should run.
+  const [massPresetId, setMassPresetId] = useState(DEFAULT_MASS_PRESET);
+  const massPreset = findPreset(massPresetId);
+
   // wiki-globe fork (spec §1.5): dropped test object.
-  const testObject = useTestObject(params.mass);
+  const testObject = useTestObject(params.mass, massPreset.solarMasses);
+
+  // §1.4: the jet default follows the mass preset — on for M87*, off for
+  // Sgr A* and the stellar case — and the user can still override afterwards.
+  useEffect(() => {
+    setParams((prev) => ({
+      ...prev,
+      features: {
+        ...(prev.features ?? DEFAULT_FEATURES),
+        relativisticJets: massPreset.jetByDefault,
+      },
+    }));
+  }, [massPreset]);
 
   // Free-look for the 1st-person view (§1.6). Intercepted before the orbit
   // camera, because in 1st person a drag turns the rider's head rather than
@@ -328,7 +347,12 @@ const App = () => {
           zoom={params.zoom}
           mass={params.mass}
         />
-        <TestObjectPanel object={testObject} isVisible={showUI && !isInfoExpanded} />
+        <TestObjectPanel
+          object={testObject}
+          isVisible={showUI && !isInfoExpanded}
+          massPresetId={massPresetId}
+          onMassPresetChange={setMassPresetId}
+        />
         <SingularityCard object={testObject} mass={params.mass} />
 
         {/* ENTERPRISE-GRADE SEMANTIC CONTENT LAYER (High-Density Keyword Hub) */}

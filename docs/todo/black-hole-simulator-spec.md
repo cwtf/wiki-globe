@@ -25,8 +25,16 @@ below — the 3rd-person view samples `t_far`, not Kerr-Schild `t`.
 free-look, proper-time clock and singularity card are in and verified in a
 rendered frame. Note the second spec correction under milestone 5 — the frame
 cannot be built by boosting a static observer, because none exists inside the
-horizon. **Milestone 6 is the last of the v1 set**, and it unblocks leftovers
-in milestones 3 and 4 (per-preset jet defaults; km/seconds/kelvin readouts).
+horizon.
+
+**MILESTONE 6 DONE — v1 is complete.** Mass presets, physical units, the
+speed slider with pause, and the curvature-grid label are in and verified
+against the figures this spec states. The leftovers from milestones 3 and 4
+(per-preset jet defaults; km/seconds/kelvin readouts) closed with it.
+
+**Not yet deployed.** The Pages workflow exists and Pages is set to GitHub
+Actions, but nothing has been pushed — `wikiglo.be/blackhole` does not exist
+yet, and CI has never run. That is the outstanding item from milestone 1.
 
 **Milestones 7-11 (v2) are specified in §6 and start only after 6:**
 performance, Milky Way skybox, draggable orbits, real black hole presets at
@@ -553,10 +561,29 @@ Each lands independently runnable; verify per §4 before moving on.
    Not yet seen in flight: the free-look drag, and the horizon crossing plus
    singularity card — a radial plunge takes ~66 s of wall clock at the current
    fixed playback rate, which §1.9's speed slider will make practical.
-6. **Polish** — curvature-grid toggle, mass presets + tidal readout,
+6. **Polish** *(done)* — curvature-grid toggle, mass presets + tidal readout,
    speed slider (10⁻⁵×–10⁶×, comfort-speed default, 1× detent) + pause,
    attribution (upstream MIT credit + starmap), README section, sitemap,
    mobile pass.
+
+   Mass presets, unit conversion (km, s, K, tidal in g), the log-scaled speed
+   slider with both labelled detents, pause with the `Space` shortcut, and the
+   HUD multiplier are all in. Verified in the browser against the figures this
+   spec quotes: ISCO periods 4.55 ms / 31.5 min / 34.2 d and comfort speeds
+   1.5e-4× / 63× / 9.9e4×.
+
+   **§1.4's per-preset jet default is now closed** (deferred since milestone 3
+   for want of mass presets): `stellar:false, sgra:false, m87:true`, confirmed
+   live — and the M87* preset renders its jets visibly one-sided, which is the
+   beaming from §1.4 doing its job.
+
+   §1.7's curvature grid was already present as upstream's
+   `spacetimeVisualization` (Flamm paraboloid via `generate_embedding_mesh`);
+   what was missing was the "visual aid" label §1.7 and §5 require. Still open:
+   it is a *mode* that replaces the ray-marched view rather than an overlay
+   beneath the equatorial plane as §1.7 describes.
+
+   Attribution, README and sitemap were completed back in milestone 1.
 
 **Milestones 7-11 are v2 and are not to be started until 6 is done.** They are
 specified in §6. In short:
