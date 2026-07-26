@@ -48,7 +48,20 @@ void main() {
 
     // Camera
     vec3 ro, rd;
-    if (length(u_camPos) > 0.001) {
+    // wiki-globe fork: photon energy at infinity for this ray, used to shift
+    // the sky in 1st person. 1.0 leaves the 3rd-person path untouched.
+    float fpEnergy = 1.0;
+    bool firstPerson = u_fp_enabled > 0.5;
+
+    if (firstPerson) {
+        // Ray built in the rider's own frame (spec §1.6). Fixed focal length:
+        // a variable FOV would masquerade as aberration (§2.4).
+        vec3 n = normalize(vec3(uv, 1.2));
+        ro = u_fp_pos;
+        rd = normalize(u_fp_e0.xyz + n.x * u_fp_e1.xyz + n.y * u_fp_e2.xyz + n.z * u_fp_e3.xyz);
+        // Contravariant p^t from the same legs; the conserved energy follows.
+        fpEnergy = u_fp_e0.w + n.x * u_fp_e1.w + n.y * u_fp_e2.w + n.z * u_fp_e3.w;
+    } else if (length(u_camPos) > 0.001) {
         ro = u_camPos;
         rd = qrot(u_camQuat, normalize(vec3(uv, 1.2)));
     } else {
@@ -90,11 +103,18 @@ void main() {
     vec3 p = ro;
     vec3 v = rd;
 
-    // Kamikaze protection
-    if(length(ro) < rh * 1.5) {
+    // Kamikaze protection. Skipped in 1st person: the whole point of that view
+    // is to get close to and then through the horizon, so shoving the camera
+    // back out to 1.5 r_h would silently prevent the crossing (§1.6).
+    if(!firstPerson && length(ro) < rh * 1.5) {
        ro = normalize(ro) * rh * 1.5;
        p = ro;
     }
+
+    // Whether the camera itself is inside the horizon. Rays traced backwards
+    // from in here can still have come from outside, so the usual "r < r_h
+    // means captured" test must not fire on the very first step.
+    bool cameraInside = firstPerson && length(ro) < rh;
 
     vec3 accumulatedColor = vec3(0.0);
     float accumulatedAlpha = 0.0;
@@ -122,7 +142,9 @@ void main() {
     // or accretion disk since disk inner edge = isco >> rh.
     // Safe margin: 0.9 * rh. Even at maximum spin (a=0.999M), rh = 1.045M while
     // the prograde critical impact param b_pro > 2.0M -- safe margin of 2x.
-    if (impactParam < rh * 0.9) {
+    // Not valid in 1st person: this cull assumes the ray starts far outside,
+    // where the impact parameter of a straight line is meaningful.
+    if (!firstPerson && impactParam < rh * 0.9) {
         hitHorizon = true;
     }
 
@@ -132,7 +154,15 @@ void main() {
 
         // Horizon check (Euclidean distance for fast rejection,
         // Kerr r is only slightly different near horizon)
-        if(r < rh * ${PHYSICS_CONSTANTS.rayMarching.horizonThreshold.toFixed(2)}) {
+        if(cameraInside) {
+            // Inside, only the singularity terminates a ray; anything that
+            // climbs back out is light that fell in with us and is still
+            // visible as the shrinking window on the outside universe.
+            if(r < rs * 0.02) {
+                hitHorizon = true;
+                break;
+            }
+        } else if(r < rh * ${PHYSICS_CONSTANTS.rayMarching.horizonThreshold.toFixed(2)}) {
             hitHorizon = true;
             break;
         }
@@ -239,6 +269,21 @@ void main() {
     vec3 background = vec3(0.0);
 #ifdef ENABLE_STARS
     background = starfield(v);
+
+    if (firstPerson) {
+        // Shift the sky by the SAME factor the ray construction produced.
+        // g = nu_obs / nu_emit = 1 / E for a static source at infinity, with
+        // E = -p_t already carrying both the observer's motion (through e0)
+        // and the gravitational potential. There is deliberately no separate
+        // Doppler or redshift term anywhere in this shader (§5).
+        float g = 1.0 / max(1e-4, abs(fpEnergy));
+        // Liouville: specific intensity scales as g^4, the same law the disk
+        // and jet use.
+        float boost = clamp(pow(g, 4.0), 0.0, 64.0);
+        // Blue toward the direction of travel, red away from it.
+        vec3 tint = mix(vec3(1.0, 0.45, 0.25), vec3(0.6, 0.8, 1.0), clamp(g, 0.0, 1.0));
+        background *= boost * tint;
+    }
 #endif
 
     // Photon ring

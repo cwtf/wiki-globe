@@ -58,6 +58,21 @@ export class WebGLRenderer {
   // attachment-completeness check (FRAMEBUFFER_INCOMPLETE_ATTACHMENT).
   public hasFloatFramebuffer = false;
 
+  /**
+   * wiki-globe fork: the rider's orthonormal frame for the 1st-person view
+   * (spec §1.6), already resolved into this shader's Cartesian axes with
+   * free-look folded into the spatial legs. Null means 3rd person.
+   *
+   * Each leg is `[x, y, z, e^t]`.
+   */
+  public firstPerson: {
+    pos: [number, number, number];
+    e0: [number, number, number, number];
+    e1: [number, number, number, number];
+    e2: [number, number, number, number];
+    e3: [number, number, number, number];
+  } | null = null;
+
   constructor() {}
 
   public init(canvas: HTMLCanvasElement): boolean {
@@ -328,6 +343,25 @@ export class WebGLRenderer {
     // all user interaction (drag, auto-spin, cinematic) is reflected.
     this.uniformBatcher.set3f("u_camPos", 0.0, 0.0, 0.0);
     this.uniformBatcher.set4f("u_camQuat", 0.0, 0.0, 0.0, 1.0);
+
+    // wiki-globe fork: 1st-person rider frame (spec §1.6). `firstPerson` is
+    // set from React via setFirstPerson(); when absent the shader takes the
+    // ordinary 3rd-person path and nothing here changes behaviour.
+    const fp = this.firstPerson;
+    this.uniformBatcher.set1f("u_fp_enabled", fp ? 1.0 : 0.0);
+    if (fp) {
+      this.uniformBatcher.set3f("u_fp_pos", fp.pos[0], fp.pos[1], fp.pos[2]);
+      this.uniformBatcher.set4f("u_fp_e0", fp.e0[0], fp.e0[1], fp.e0[2], fp.e0[3]);
+      this.uniformBatcher.set4f("u_fp_e1", fp.e1[0], fp.e1[1], fp.e1[2], fp.e1[3]);
+      this.uniformBatcher.set4f("u_fp_e2", fp.e2[0], fp.e2[1], fp.e2[2], fp.e2[3]);
+      this.uniformBatcher.set4f("u_fp_e3", fp.e3[0], fp.e3[1], fp.e3[2], fp.e3[3]);
+    } else {
+      this.uniformBatcher.set3f("u_fp_pos", 0.0, 0.0, 0.0);
+      this.uniformBatcher.set4f("u_fp_e0", 0.0, 0.0, 0.0, 1.0);
+      this.uniformBatcher.set4f("u_fp_e1", 1.0, 0.0, 0.0, 0.0);
+      this.uniformBatcher.set4f("u_fp_e2", 0.0, 1.0, 0.0, 0.0);
+      this.uniformBatcher.set4f("u_fp_e3", 0.0, 0.0, 1.0, 0.0);
+    }
 
     // Set Common Uniforms
     this.uniformBatcher.set2f(

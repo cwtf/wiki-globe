@@ -305,10 +305,46 @@ derived by projecting the orbiting 4-velocity into the static frame rather than
 assumed: Gram-Schmidt fills ∂φ at index 2, not 3, and hardcoding 3 silently
 compared two *transverse* photons that were both blueshifted by exactly γ.
 
-**Outstanding for milestone 5:** the shader side — generating rays through the
-tetrad, per-ray shift from `observed_frequency`, free-look quaternion applied
-inside the frame before the boost, fixed stated FOV, proper-time advance, and
-the singularity ending card at r ≈ 0.02 r_s.
+### Ray construction and the shader path
+
+`src/physics/first-person.ts` turns the frame into rays:
+`p = e_0 + n_x e_1 + n_y e_2 + n_z e_3`, with `n` the look direction in the
+observer's own frame. **There is no aberration function and no Doppler
+function in the render path** — both are consequences of that sum, because
+`e_0` is the *moving* observer's time leg.
+
+20 tests check exactly that claim, comparing against closed forms the module
+has never been told about: aberration matches `(cosθ + β)/(1 + β cosθ)` to
+10 decimals at β up to 0.99, and the frequency shift matches
+`1/(γ(1 + β cosθ))`. The flat-space frames in those tests are written by hand
+rather than taken from the Rust Gram-Schmidt — if both used the same
+construction, agreeing would prove nothing.
+
+Free-look is applied to `n` **inside** the frame, before the combination.
+Rotating the finished world-space ray instead would drag the forward
+compression around with the view, which is the "toy" failure §5 warns about; a
+test pins it.
+
+Shader (`fragment.glsl.ts`, `chunks/common.ts`) gained a 1st-person branch
+behind `u_fp_enabled`, taking the four legs as `vec4`s (xyz spatial, w = e^t).
+Three exterior-camera assumptions had to be gated off, each of which would
+have silently broken the crossing:
+
+- the "kamikaze protection" that shoves the camera out to 1.5 r_h,
+- the `impactParam < 0.9 r_h` shadow cull, which presumes a distant start,
+- the `r < 1.15 r_h → captured` test, which would fire on the first step once
+  the camera is inside. Inside the horizon only the singularity terminates a
+  ray; anything climbing back out is light that fell in alongside the observer.
+
+Sky colour is shifted by `g⁴` from the same `p^t` the ray construction
+produced — the same Liouville law the disk and jet use.
+
+**Outstanding for milestone 5:** the React wiring that computes the frame each
+frame from the worldline and sets `renderer.firstPerson`, the view toggle
+(1st person enabled only while an object is falling), free-look input, the
+proper-time playback clock, and the singularity ending card at r ≈ 0.02 r_s
+with the final τ. **Nothing in the 1st-person view has been seen rendering** —
+it compiles and the maths is tested, that is all.
 
 ### A trap worth knowing
 

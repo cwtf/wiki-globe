@@ -36,6 +36,24 @@ export const COMMON_CHUNK = `
   uniform vec3 u_camPos;
   uniform vec4 u_camQuat;
 
+  // wiki-globe fork: 1st-person camera riding the dropped object (spec §1.6).
+  //
+  // The four legs of the observer's orthonormal frame, resolved into this
+  // shader's Cartesian axes on the CPU: .xyz is the spatial part, .w is the
+  // contravariant time component e_(a)^t. Free-look is already baked into the
+  // spatial legs, applied INSIDE the frame before it got here -- rotating the
+  // finished world-space ray instead would drag the aberration pattern around
+  // with the view.
+  //
+  // Every 1st-person ray is p = e0 + n.x*e1 + n.y*e2 + n.z*e3. Aberration and
+  // the Doppler shift are consequences of that sum, never applied separately.
+  uniform float u_fp_enabled;
+  uniform vec3 u_fp_pos;
+  uniform vec4 u_fp_e0;
+  uniform vec4 u_fp_e1;
+  uniform vec4 u_fp_e2;
+  uniform vec4 u_fp_e3;
+
   // === CONSTANTS ===
 #define PI 3.14159265359
 #define MAX_DIST ${PHYSICS_CONSTANTS.rayMarching.maxDistance.toFixed(1)}

@@ -518,10 +518,20 @@ Each lands independently runnable; verify per §4 before moving on.
    defined everywhere, and identical outside the horizon up to a spatial
    rotation that free-look absorbs.
 
-   Outstanding: ray generation through the tetrad in the shader, per-ray shift
-   from the frame's `observed_frequency`, the free-look quaternion applied
-   inside the frame before the boost, fixed stated FOV, proper-time advance,
-   and the singularity ending card at r ≈ 0.02 r_s.
+   Also done: `src/physics/first-person.ts` builds rays as
+   `p = e_0 + n_x e_1 + n_y e_2 + n_z e_3` with free-look applied inside the
+   frame; 20 tests confirm aberration and Doppler match the closed forms to
+   10 decimals *without either formula appearing in the render path*. The
+   shader has a 1st-person branch behind `u_fp_enabled` with the three
+   exterior-camera assumptions gated off (kamikaze clamp, impact-parameter
+   cull, and the horizon-capture test that would otherwise fire on the first
+   step from inside). FOV is fixed at focal length 1.2 per §2.4.
+
+   Outstanding: the React wiring that computes the frame per frame and sets
+   `renderer.firstPerson`, the view toggle, free-look input, the proper-time
+   playback clock, and the singularity ending card at r ≈ 0.02 r_s with the
+   final τ. **The 1st-person view has never been seen rendering** — it
+   compiles and its maths is tested, nothing more.
 6. **Polish** — curvature-grid toggle, mass presets + tidal readout,
    speed slider (10⁻⁵×–10⁶×, comfort-speed default, 1× detent) + pause,
    attribution (upstream MIT credit + starmap), README section, sitemap,
