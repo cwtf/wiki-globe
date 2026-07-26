@@ -348,6 +348,35 @@ proper-time playback clock, and the singularity ending card at r ≈ 0.02 r_s
 with the final τ. **Nothing in the 1st-person view has been seen rendering** —
 it compiles and the maths is tested, that is all.
 
+### The renderer is not deterministic, so goldens cannot work yet
+
+**This is the blocker for the whole visual-regression suite, and it is almost
+certainly why upstream shipped the harness and the manifest but never captured
+a single golden.**
+
+Two mechanisms make the same scene render differently on consecutive runs:
+
+- `PERFORMANCE_CONFIG.calibration.durationMs = 3000` — a three-second stress
+  test at startup picks the ray-tracing quality tier from measured frame times.
+- `PERFORMANCE_CONFIG.resolution.enableDynamicScaling = true` — a PID
+  controller then continuously rescales render resolution between
+  `minScale 0.5` and `maxScale 2.0` to hit a frame-time budget.
+
+So the captured image depends on how fast and how loaded the machine was during
+those first seconds. The evidence is in the goldens themselves: captured back to
+back in one session from one manifest, `schwarzschild_face_on` reports
+`QUALITY: medium` and `kerr_inclined` reports `QUALITY: high`. Neither frame
+asks for a quality. Under SwiftShader at ~10 FPS the PID will also be pinning
+resolution near its 0.5 floor.
+
+Comparing that against SSIM thresholds of 0.996–0.998 would fail essentially at
+random, and would fail hardest on the machine that did not capture it.
+
+**Fix before committing any golden:** a deterministic capture mode — a URL flag
+the manifest sets that skips calibration (`PerformanceMonitor.endCalibration()`
+already exists), pins `rayTracingQuality`, and forces `renderResolution` to 1.0
+with the PID disabled. Without it the goldens are decorative.
+
 ### What the first rendered frame caught
 
 The first golden capture was also the first time this fork had been *seen*
@@ -384,6 +413,14 @@ turns that into a one-line check.
   emerge from the integration. Spec §1.2 says it must never be painted on.
   Now that b_crit is correct the ring should largely emerge on its own;
   the additive glow should be re-evaluated and probably removed.
+
+  **The rendered goldens show this failing.** At a = 0 and a = 0.5 the ring is
+  crisp; at a = 0.99 edge-on it is *absent* — the shadow has no rim at all.
+  That is what a single-radius glow test does when the real critical curve
+  stops being a circle: `r_ph` is the prograde photon sphere (~1.2M at this
+  spin) while the retrograde side sits near 4M, so the painted ring matches
+  neither. An emergent ring would simply deform into the D-shape instead of
+  disappearing. Good evidence that the glow has to go rather than be tuned.
 - The ergosphere highlight is likewise an unlabelled painted overlay.
 - **Jets already exist** (`sample_relativistic_jets`), which the spec's delta
   table lists as absent — a kinematic cone with β = 0.92 (Γ ≈ 2.6) and its own

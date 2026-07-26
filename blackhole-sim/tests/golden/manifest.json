@@ -1,31 +1,49 @@
 {
   "version": 1,
-  "viewport": { "width": 1280, "height": 720 },
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
   "stabilization_frames": 8,
   "frames": [
     {
       "name": "schwarzschild_face_on",
-      "config": { "mass": 1.0, "spin": 0.0, "zoom": 20.0, "diskTemp": 0.0 },
+      "config": {
+        "mass": 1,
+        "spin": 0,
+        "zoom": 20,
+        "diskTemp": 0
+      },
       "ssim_threshold": 0.998,
       "max_pixel_delta": 12,
-      "captured_at": null,
-      "captured_commit": null
+      "captured_at": "2026-07-26T05:49:08.061Z",
+      "captured_commit": "4cda67410918be2fdd51d2e65b628fa92658fb26"
     },
     {
       "name": "kerr_inclined",
-      "config": { "mass": 1.0, "spin": 0.5, "zoom": 20.0, "diskTemp": 1.0 },
+      "config": {
+        "mass": 1,
+        "spin": 0.5,
+        "zoom": 20,
+        "diskTemp": 1
+      },
       "ssim_threshold": 0.997,
       "max_pixel_delta": 16,
-      "captured_at": null,
-      "captured_commit": null
+      "captured_at": "2026-07-26T05:49:08.061Z",
+      "captured_commit": "4cda67410918be2fdd51d2e65b628fa92658fb26"
     },
     {
       "name": "near_extremal_edge_on",
-      "config": { "mass": 1.0, "spin": 0.99, "zoom": 20.0, "diskTemp": 1.0 },
+      "config": {
+        "mass": 1,
+        "spin": 0.99,
+        "zoom": 20,
+        "diskTemp": 1
+      },
       "ssim_threshold": 0.996,
       "max_pixel_delta": 20,
-      "captured_at": null,
-      "captured_commit": null
+      "captured_at": "2026-07-26T05:49:08.061Z",
+      "captured_commit": "4cda67410918be2fdd51d2e65b628fa92658fb26"
     }
   ]
 }
