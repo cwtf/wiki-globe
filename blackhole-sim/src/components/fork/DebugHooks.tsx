@@ -6,6 +6,7 @@ import type { Dispatch, SetStateAction } from "react";
 import type { PerformanceMetrics } from "@/performance/monitor";
 
 import { physicsBridge } from "@/engine/physics-bridge";
+import { getSkyboxStatus, type SkyboxStatus } from "@/rendering/skybox";
 import { fragmentShaderSource } from "@/shaders/blackhole/fragment.glsl";
 import type { SimulationParams } from "@/types/simulation";
 import type { FeatureToggles } from "@/types/features";
@@ -50,6 +51,15 @@ export interface BlackHoleDebugApi {
    * assumed.
    */
   camera: () => { distance: number; focalLength: number; mass: number; spin: number };
+  /**
+   * Load state of the Milky Way panorama (spec §6.2).
+   *
+   * A capture taken before the JPEG has been decoded silently records the
+   * procedural fallback instead of the real sky — the same frame-count
+   * dependence `?deterministic=1` exists to eliminate, arriving by yet another
+   * route. Golden captures must wait for `"ready"`.
+   */
+  skybox: () => SkyboxStatus;
 }
 
 declare global {
@@ -201,6 +211,7 @@ export function DebugHooks({
         mass: params.mass,
         spin: params.spin,
       }),
+      skybox: getSkyboxStatus,
     };
   }, [params, setParams]);
 

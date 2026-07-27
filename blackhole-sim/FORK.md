@@ -60,6 +60,10 @@ Check which path is live: `window.__bh.transport()` →
 | `src/components/fork/CrossOriginIsolation.tsx` | registers the shim |
 | `src/components/fork/BackToGlobe.tsx` | persistent "← Wiki Globe" link |
 | `src/components/fork/DebugHooks.tsx` | `window.__bh` console handle |
+| `src/components/fork/SkyCredit.tsx` | panorama credit + the stated galactic tilt |
+| `src/configs/skybox.config.ts` | sky orientation, equirect mapping, spectral shift |
+| `src/rendering/skybox.ts` | loads/uploads the panorama, publishes load state |
+| `public/textures/milky-way-eso-4k.jpg` | the panorama, derived from the globe's copy |
 
 ## Upstream files modified
 
@@ -73,11 +77,14 @@ Check which path is live: `window.__bh.transport()` →
 | `src/engine/physics-bridge.ts` | fallback terminates the orphaned worker and nulls `worker`/`sab`; records `transport`; `console.error` → `console.warn` | the worker is constructed *before* the SAB throw, so the fallback leaked a live thread; the fallback is an expected state, not an error |
 | `src/shaders/blackhole/chunks/metric.ts` | removed the Newtonian `M/r²` term from the null-geodesic force | shadow was 49.7% too large — see the physics audit below |
 | `src/shaders/blackhole/chunks/disk.ts` | beaming exponent `δ^3.5` → `δ⁴`; `sample_relativistic_jets` rewritten against §1.4 | spec §1.3 requires exact `g⁴`; see the jets section below |
-| `src/shaders/blackhole/fragment.glsl.ts` | pass `rs` into the jet sampler | jet emission now carries the gravitational shift |
+| `src/shaders/blackhole/chunks/background.ts` | procedural starfield demoted to a fallback; `sky()`, `sky_lod()`, `sky_shift()` added | spec §6.2 — the sky is a real panorama, lensed per ray |
+| `src/shaders/blackhole/chunks/common.ts` | `u_skyTex`, `u_sky_enabled`, `u_sky_intensity`, `u_sky_basis_*` | uniforms for the above; three vec3s rather than a mat3 so `UniformBatcher` stays untouched |
+| `src/shaders/blackhole/fragment.glsl.ts` | pass `rs` into the jet sampler; `starfield()` → `sky()`; 1st-person tint replaced by `sky_shift()` | jet emission carries the gravitational shift; §6.2 requires the colour shift in linear light |
+| `src/rendering/webgl/renderer.ts` | owns a `SkyboxTexture`, binds it to unit 6, uploads the galactic basis | see the milestone 8 section below |
 | `src/configs/simulation.config.ts` | `diskSize` default 50 → 24, unit `Rs` → `M` | the value multiplies M, so the old label was off by 2×; §1.3 wants ~12 r_s |
-| `src/components/ui/ControlPanel.tsx` | jets toggle labelled "(kinematic)"; brand logo via `asset()` | §1.4/§5 require stating that the launch mechanism is not simulated; `images.unoptimized` emits the src verbatim so basePath is not applied |
+| `src/components/ui/ControlPanel.tsx` | jets toggle labelled "(kinematic)"; brand logo via `asset()`; "Background Stars" → "Milky Way Sky" + `SkyCredit` | §1.4/§5 require stating that the launch mechanism is not simulated; `images.unoptimized` emits the src verbatim so basePath is not applied; §6.2/licensing rule #4 want the panorama credited in-app |
 | `src/components/ui/IdentityHUD.tsx` | brand logo via `asset()` | same: `/brand-logo.png` 404s under `/blackhole` |
-| `tests/visual-regression/capture.ts` | ANGLE backend configurable, default SwiftShader; optional `SHADER_CHECK_CDP_URL` | upstream's `vulkan` hangs where no Vulkan ICD exists, and GPU-captured goldens are not reproducible |
+| `tests/visual-regression/capture.ts` | ANGLE backend configurable, default SwiftShader; optional `SHADER_CHECK_CDP_URL`; waits for `window.__bh.skybox()` | upstream's `vulkan` hangs where no Vulkan ICD exists, GPU-captured goldens are not reproducible, and a capture must not shoot before the panorama lands |
 
 ## Upstream files deleted
 
@@ -89,6 +96,8 @@ Check which path is live: `window.__bh.transport()` →
 | `scripts/indexnow-ping.ts` | pings search engines for upstream's domain |
 | `src/app/robots.ts`, `src/app/sitemap.ts` | `robots.txt` is only honoured at the origin root; the globe's root `robots.txt` / `sitemap.xml` own site-wide SEO |
 | `src/app/google71f68cb94e351e26.html`, `public/c9f345b7cd2d289e01df73e6ca6c86e8.txt` | Search Console / IndexNow ownership proofs for upstream's domain |
+| `public/textures/milkyway.jpg`, `milkyway_2020_4k.jpg`, `starmap.jpg` | sky imagery with no recorded provenance, referenced by nothing; §6.2 forbids shipping it without establishing a licence (see milestone 8 below) |
+| `scripts/convert_exr.py` | produced one of the above from an `.exr` that is not in the tree |
 
 ## Physics audit (spec milestone 2)
 
@@ -563,6 +572,150 @@ rather than by measurement:
 measuring on the target hardware, where `window.__bh.metrics()` and the debug
 overlay report the same numbers used above — interleaved, please.
 
+## Milky Way sky (spec milestone 8)
+
+The procedural starfield is gone from the production path. The background is
+now the ESO/S. Brunier panorama, sampled equirectangularly from the direction
+each ray was travelling when it escaped — so it is lensed by the same
+integration that produces the shadow, not pasted behind it. Everything below is
+in `src/configs/skybox.config.ts` (the decisions and the maths, unit-tested),
+`src/rendering/skybox.ts` (GL plumbing) and the `sky()` function in
+`chunks/background.ts`.
+
+**The asset is a derivative of the one the globe already ships**, per §6.2.
+`scripts/data/generate-blackhole-skybox.ps1` (in the *parent* repo, next to the
+existing `generate-skybox.ps1`) area-averages `assets/milky-way-panorama-hires.jpg`
+from 6000×3000 down to 4096×2048 and writes
+`public/textures/milky-way-eso-4k.jpg`, 2.8 MB. Two things about that script
+matter:
+
+- **It resamples in linear light.** The panorama is mostly point sources;
+  averaging pixels in sRGB space loses flux non-linearly and the stars come out
+  dim with flattened cores. Decode, average, re-encode.
+- **Box filter, not bicubic.** GDI+'s `HighQualityBicubic` is a sharpening
+  kernel and rings around every bright pixel on a starfield.
+
+**Upstream's three sky JPEGs are deleted**, not shipped. §6.2 flagged that no
+provenance was recorded for `milkyway.jpg`, `milkyway_2020_4k.jpg` or
+`starmap.jpg`, and nothing referenced any of them. One clue did turn up while
+checking: `scripts/convert_exr.py` (also deleted, and it referenced an `.exr`
+that is not in the tree) converted `starmap_2020_4k_gal.exr` into
+`milkyway_2020_4k.jpg`, which points at NASA/Goddard SVS *Deep Star Maps 2020*.
+That is probably public domain — but "probably, from a filename" is not
+establishing a licence, and there is no need to now.
+
+### Orientation is a styling choice, and it says so
+
+§6.2 asks for the galactic-plane/disk-plane question to be decided and stated.
+The scene's +Y is the hole's spin axis, which fixes the disk in Y = 0. A black
+hole's spin axis and the galactic plane are physically unrelated, so aligning
+them would invent a correlation — and would also read as though the band were
+part of the disk. `GALACTIC_ORIENTATION` therefore tilts the galactic pole 60°
+away from the spin axis and puts the bulge 55° off the default camera axis so
+the shadow does not eat the most interesting part of the photograph. The
+`SkyCredit` line in the control panel states the tilt and that it is chosen
+rather than measured.
+
+The equirect convention is copied exactly from the globe's
+`generate-skybox.ps1` (`longitude = atan2(z, x)`, `u = lon/2π + 0.5`,
+`v = 0.5 − lat/π`), and a test asserts it, so both apps read the same pixel for
+the same direction. Milestone 11's RA/Dec sky dots key off the same basis
+rather than introducing a second one.
+
+### Three details that are load-bearing
+
+- **`SRGB8_ALPHA8`, not `RGBA8`.** §5 and §6.2 both require the shift by `g` to
+  happen in linear light. Letting the sampler do the sRGB decode puts the
+  photograph in the same space the rest of the shader already works in
+  (`blackbody()` converts *up* to linear for exactly this reason, and the
+  single gamma encode happens at the end of `main()` or in the post chain under
+  `ENABLE_LINEAR_OUTPUT`). Sampling as RGBA8 and multiplying by `g⁴` would be
+  wrong by a power of 2.2 while still looking plausible.
+- **Mip level is computed, not left to the hardware.** Automatic LOD
+  differentiates the UV, and at the longitude wrap `du` jumps by ~1 — which
+  would select the 1×1 mip and draw a blurred vertical line down the sky.
+  `sky_lod()` differentiates the ray *direction* instead: no seam, and it is
+  also the physically right quantity, because near the critical curve
+  neighbouring pixels genuinely do see wildly separated parts of the sky. The
+  blur there is the demagnification, not an artefact. The `1/cos(latitude)`
+  term is the usual equirect pole correction.
+- **The tint hack is gone.** The 1st-person path multiplied the sky by `g⁴` and
+  then `mix()`ed between a warm and a cool colour. That was defensible only
+  while the sky was procedural. `sky_shift()` replaces it: the JPEG's three
+  channels are treated as a piecewise-linear spectral density through the sRGB
+  primaries (464.2 / 549.1 / 611.4 nm), and an observer's channel at `λ_c`
+  resamples that curve at `λ_c · g`. Intensity still carries the exact `g⁴`
+  from Liouville. **The approximation is the three-sample spectrum, and nothing
+  else** — and outside 464–611 nm the photograph has no data, so the curve is
+  held flat and a strong blueshift saturates rather than extrapolating a
+  spectrum nobody measured. A grey pixel stays grey at every `g`, which is the
+  test a tint cannot pass.
+
+### The sky is one more thing a deterministic capture has to wait for
+
+The panorama is fetched and uploaded asynchronously, and until it lands the
+shader falls back to the procedural starfield — so a screenshot taken in that
+window records a *different sky* with nothing in the frame to say so. That is
+the same "depends on how fast the machine was" failure that the quality tier,
+the simulation clock and TAA each produced in turn, arriving by a fourth route.
+Nothing in `capture-mode.ts` can pin it, because it is a network fetch; both
+capture harnesses now poll `window.__bh.skybox()` until it reads `ready` (or
+`failed`, so a missing asset still produces a comparable frame instead of
+hanging the run).
+
+Goldens are unaffected in practice only because none were ever captured — every
+manifest entry is still `captured_at: null`. When they are captured, they will
+be captured against this sky.
+
+### Seen rendering
+
+The unit tests constrain the mapping and the shift; they cannot tell you the
+GLSL applies them. These frames can, captured over CDP against `bun run dev`
+(the preview pane does not composite, so `window.__bh.captureFrame()` plus
+`Page.bringToFront` is the way to get pixels here — same trap as the golden
+harness):
+
+- **3rd person, disk off, `zoom = 8`.** The galactic band is bent into a bright
+  arc wrapping the top and right of the shadow, and the stars around it are
+  smeared *tangentially*. That is lensing acting on the photograph; a backdrop
+  pasted behind the hole cannot do it.
+- **3rd person, disk on, ultra.** Individual bright stars carry the source
+  photograph's diffraction spikes, which no hashed-cell starfield produces.
+  Round shadow, disk lensed above and below, approaching side beamed — the
+  milestone 2/3 physics is unchanged.
+- **1st person, circular orbit at 20 M, disk off.** The most informative frame.
+  The band is lensed into arcs on both sides of the shadow, the Magellanic
+  Clouds are recognisable, and the sky is visibly **brighter and denser toward
+  the direction of travel** and dimmer behind — aberration plus `g⁴`, on real
+  imagery, with no tint anywhere in the path.
+
+`window.__bh.compileShader()` returns ok with every feature define set, and
+`gl.getError()` is 0 after a frame.
+
+Two notes for whoever repeats this. The 1st-person toggle stays disabled for
+~3 s after `Drop` while the worldline integrates — clicking too early silently
+does nothing and you get a 3rd-person frame that looks plausible. And a `const`
+in an injected snippet that shadows a name in the harness's own IIFE throws a
+TDZ error that surfaces only as `result.value === undefined`; log
+`exceptionDetails`.
+
+### Not done here
+
+- **The WebGPU path keeps its procedural starfield.** `raymarching.wgsl.ts` has
+  its own simplified port and is opt-in behind `?webgpu=true`; the WebGL
+  renderer is what visitors get. Porting the panorama there is open.
+- **`src/hooks/useWebGL.ts` and `useAnimation.ts` are untouched.** They are
+  upstream's older render path and nothing imports them — `WebGLCanvas` uses
+  `rendering/webgl/renderer.ts`. If either is ever revived it will simply not
+  set `u_sky_enabled`, which defaults to 0 and leaves the procedural sky. Safe
+  by construction, but worth knowing.
+- **No measured cost.** §6.2 asks for the bandwidth to be measured against
+  milestone 7's budget. This machine still cannot benchmark rendering (see
+  above), so the honest statement is the shape of the change, not a number:
+  one 2.8 MB fetch at startup, ~44 MB of VRAM with mips at 4096×2048, and one
+  extra `textureLod` on the *escaped* rays only — rays that hit the horizon or
+  saturate the disk never reach it.
+
 ### A trap worth knowing
 
 The shader chunks are JS template literals. A backtick inside a GLSL comment
@@ -610,7 +763,9 @@ turns that into a one-line check.
   beaming exponent is still `δ^3.5` and is deliberately left for milestone 3,
   where the jet is reworked as a whole.
 - **The starfield is procedural**, not the ESO panorama; `public/textures/`
-  ships three sky JPEGs that no source file references.
+  ships three sky JPEGs that no source file references. **Both closed in
+  milestone 8** — the panorama is in and the three unprovenanced JPEGs are
+  deleted.
 - `renderer.ts` sets `u_spin = params.spin * params.mass` and the shader then
   computes `a = u_spin * M`, so `a = spin·M²`. Harmless at the default M = 1,
   wrong for any other mass.

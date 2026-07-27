@@ -590,8 +590,40 @@ specified in §6. In short:
 
 7. **Performance** — the render is a per-pixel geodesic march and currently
    pins the GPU. Cut the cost without lying about the physics (§6.1).
-8. **Milky Way skybox** — replace the procedural starfield with a real
+8. **Milky Way skybox** *(done)* — replace the procedural starfield with a real
    panorama, shifted correctly per ray (§6.2).
+
+   The ESO/S. Brunier panorama the globe already ships is area-averaged **in
+   linear light** from 6000×3000 to 4096×2048 by
+   `scripts/data/generate-blackhole-skybox.ps1` and sampled equirectangularly
+   from each ray's escape direction, so it is lensed by the same integration
+   that draws the shadow. Upstream's three unprovenanced sky JPEGs are deleted
+   rather than shipped, per this section's warning.
+
+   The galactic plane is deliberately **not** aligned with the disk — the two
+   are physically unrelated — and both the credit line in the panel and
+   `blackhole-sim/FORK.md` say that the 60° tilt is chosen, not measured.
+
+   §5's linear-light requirement is met by uploading as `SRGB8_ALPHA8`, so the
+   sampler decodes and the shader's existing single gamma encode re-encodes.
+   The 1st-person path's warm/cool `mix()` tint is gone: the JPEG's three
+   channels are treated as a piecewise-linear spectral density through the sRGB
+   primaries and each observed channel resamples it at `λ·g`, with intensity
+   still carrying the exact `g⁴`. A grey pixel stays grey at every `g`, which
+   is the test a tint cannot pass.
+
+   Mip level is computed from the ray *direction*, not from UV derivatives:
+   automatic LOD would select the 1×1 mip along the longitude seam and draw a
+   blurred line down the sky.
+
+   Not done: the opt-in WebGPU path (`?webgpu=true`) keeps its own procedural
+   starfield, and the bandwidth is still unmeasured — this machine cannot
+   benchmark rendering (§6.1), so the honest statement is the shape of the
+   change (one 2.8 MB fetch, ~44 MB VRAM with mips, one extra `textureLod` on
+   escaped rays only) rather than a number. Goldens were never captured, so
+   there was nothing to re-capture; both capture harnesses now wait for
+   `window.__bh.skybox()` first, because a shot taken before the panorama lands
+   silently records the procedural fallback.
 9. **Draggable orbits** — set an orbit by dragging its apoapsis and periapsis
    instead of picking a preset (§6.3).
 10. **Real black holes** — presets locked to measured parameters for named
@@ -783,7 +815,10 @@ trade: label what each level stops computing.
 quality; the goldens must be unchanged (if an optimisation changes the image,
 that is a physics change and needs justifying).
 
-### 6.2 Milky Way skybox (milestone 8)
+### 6.2 Milky Way skybox (milestone 8) — done
+
+Shipped; see the milestone 8 entry in §3 for what landed and what did not, and
+`blackhole-sim/FORK.md` for the write-up. The plan as written follows.
 
 `chunks/background.ts` generates a procedural starfield with hashed cells and
 an fbm nebula. Replace it with a real equirectangular panorama.

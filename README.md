@@ -139,7 +139,7 @@ readable on the night side.
   supplemented by grouped Wikidata Q11303 records for cities not in that list.
 - Night Earth texture from the [three-globe](https://github.com/vasturiano/three-globe)
   examples (NASA Earth Observatory "Black Marble").
-- Milky Way panorama: [ESO/S. Brunier](https://www.eso.org/public/images/eso0932a/) (CC BY 4.0), converted from the 6000×3000 source into a Cesium cube map with `scripts/data/generate-skybox.ps1`.
+- Milky Way panorama: [ESO/S. Brunier](https://www.eso.org/public/images/eso0932a/) (CC BY 4.0), converted from the 6000×3000 source into a Cesium cube map with `scripts/data/generate-skybox.ps1`. The same source also becomes the black hole simulator's sky, area-averaged in linear light to a 4096×2048 equirectangular texture by `scripts/data/generate-blackhole-skybox.ps1`.
 - Moon texture: [NASA SVS CGI Moon Kit](https://svs.gsfc.nasa.gov/4720/)
   (Lunar Reconnaissance Orbiter camera mosaic, public domain). Lunar article
   coordinates: Wikidata / Wikipedia.
@@ -184,5 +184,6 @@ assets/skybox/          Cesium cube-map faces for the Milky Way background
 assets/moon.jpg         NASA LRO color mosaic (CGI Moon Kit)
 assets/sun.jpg ...      solar-system textures used by the body layers
 scripts/data/generate-skybox.ps1  rebuilds the skybox from the panorama
+scripts/data/generate-blackhole-skybox.ps1  same panorama → the simulator's equirect sky
 proxy/                  optional Cloudflare Worker: OpenSky OAuth2+CORS proxy, AIS relay
 ```

@@ -84,3 +84,14 @@ bun run dev
 ## License
 
 MIT - Copyright (c) 2026 Mayank / steeltroops-ai.
+
+### Asset credits (wiki-globe fork)
+
+- **Sky**: [Milky Way panorama](https://www.eso.org/public/images/eso0932a/) by
+  ESO / S. Brunier, CC BY 4.0. The shipped
+  `public/textures/milky-way-eso-4k.jpg` is the 6000×3000 original
+  area-averaged in linear light to 4096×2048 by the parent repository's
+  `scripts/data/generate-blackhole-skybox.ps1`. It is sampled per escaped ray,
+  so the sky is genuinely lensed; the galactic plane's 60° tilt relative to the
+  accretion disk is a stated styling choice, not a measurement — the two are
+  physically unrelated. See `FORK.md`.

@@ -21,6 +21,7 @@ import {
   Layers,
 } from "lucide-react";
 import { UserProfile } from "./UserProfile";
+import { SkyCredit } from "@/components/fork/SkyCredit";
 import { type SimulationParams, DEFAULT_PARAMS } from "@/types/simulation";
 import { SIMULATION_CONFIG } from "@/configs/simulation.config";
 import { asset } from "@/configs/deployment.config";
@@ -777,7 +778,12 @@ export const ControlPanel = ({
                                   icon: Sun,
                                 },
                                 {
-                                  label: "Background Stars",
+                                  // Spec §6.2: no longer a procedural
+                                  // starfield. This is the real ESO panorama,
+                                  // sampled from each ray's escape direction,
+                                  // so it is lensed by the same integration
+                                  // that draws the shadow.
+                                  label: "Milky Way Sky",
                                   key: "backgroundStars" as const,
                                   icon: Star,
                                 },
@@ -831,6 +837,13 @@ export const ControlPanel = ({
                                 }),
                               )}
                             </div>
+                            {/* wiki-globe fork: the sky is a real photograph
+                                now, so it needs a credit here as well as in
+                                the globe's own attribution block (project
+                                licensing rule #4). The galactic tilt is stated
+                                because it is a styling choice: a hole's spin
+                                axis and the galactic plane are unrelated. */}
+                            <SkyCredit />
                           </div>
 
                           {/* Right Column Stack: Cinematic Utility */}

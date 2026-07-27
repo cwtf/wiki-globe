@@ -291,6 +291,18 @@ async function main(): Promise<void> {
             if (!c) return 'no-canvas';
             if (c.width <= 300) return 'no-canvas:unsized-' + c.width + 'x' + c.height;
 
+            // Spec §6.2: the Milky Way panorama loads asynchronously and the
+            // shader draws the procedural starfield until it lands. Capturing
+            // in that window records a different sky with nothing in the frame
+            // to say so. 'failed' is accepted so a missing asset still yields
+            // a comparable frame instead of hanging the run.
+            const skyDeadline = Date.now() + 60000;
+            while (Date.now() < skyDeadline) {
+              const s = window.__bh && window.__bh.skybox && window.__bh.skybox();
+              if (s === 'ready' || s === 'failed') break;
+              await sleep(250);
+            }
+
             for (let i = 0; i < ${manifest.stabilization_frames}; i++) {
               await frame();
             }

@@ -3,6 +3,8 @@ import { fragmentShaderSource } from "@/shaders/blackhole/fragment.glsl";
 import { ShaderManager } from "@/shaders/manager";
 import { BloomManager } from "@/rendering/bloom";
 import { ReprojectionManager } from "@/rendering/reprojection";
+import { SkyboxTexture } from "@/rendering/skybox";
+import { galacticBasis, SKYBOX_INTENSITY } from "@/configs/skybox.config";
 import {
   createNoiseTexture,
   createBlueNoiseTexture,
@@ -48,6 +50,10 @@ export class WebGLRenderer {
   private blueNoiseTex: WebGLTexture | null = null;
   private diskLUT: WebGLTexture | null = null;
   private spectrumLUT: WebGLTexture | null = null;
+  /** wiki-globe fork: the ESO Milky Way panorama (spec §6.2). */
+  private skybox: SkyboxTexture | null = null;
+  /** Galactic axes in scene coordinates; constant, so computed once. */
+  private readonly skyBasis = galacticBasis();
 
   private width = 0;
   private height = 0;
@@ -168,6 +174,12 @@ export class WebGLRenderer {
 
     this.noiseTex = createNoiseTexture(gl, 256);
     this.blueNoiseTex = createBlueNoiseTexture(gl, 256);
+
+    // wiki-globe fork: kicked off, not awaited. The shader falls back to the
+    // procedural starfield until this resolves, so the first frames still draw
+    // a sky rather than a black void.
+    this.skybox = new SkyboxTexture(gl);
+    this.skybox.load();
 
     // LUTs will be initialized when physics starts
   }
@@ -341,6 +353,36 @@ export class WebGLRenderer {
       gl.bindTexture(gl.TEXTURE_2D, this.spectrumLUT);
       this.uniformBatcher.set("u_spectrumLUT", 5);
     }
+
+    // wiki-globe fork: Milky Way sky (spec §6.2). u_sky_enabled gates the
+    // lookup, so a texture that has not arrived (or failed) leaves the shader
+    // on the procedural starfield rather than sampling unit 6 blind.
+    const skyTexture = this.skybox?.get() ?? null;
+    if (skyTexture) {
+      gl.activeTexture(gl.TEXTURE6);
+      gl.bindTexture(gl.TEXTURE_2D, skyTexture);
+      this.uniformBatcher.set("u_skyTex", 6);
+    }
+    this.uniformBatcher.set1f("u_sky_enabled", skyTexture ? 1.0 : 0.0);
+    this.uniformBatcher.set1f("u_sky_intensity", SKYBOX_INTENSITY);
+    this.uniformBatcher.set3f(
+      "u_sky_basis_x",
+      this.skyBasis.centre[0],
+      this.skyBasis.centre[1],
+      this.skyBasis.centre[2],
+    );
+    this.uniformBatcher.set3f(
+      "u_sky_basis_y",
+      this.skyBasis.pole[0],
+      this.skyBasis.pole[1],
+      this.skyBasis.pole[2],
+    );
+    this.uniformBatcher.set3f(
+      "u_sky_basis_z",
+      this.skyBasis.third[0],
+      this.skyBasis.third[1],
+      this.skyBasis.third[2],
+    );
 
     // Physics Bridge Integration
     let shadowShiftMin = -(params.mass * 2.0) * 2.6; // Fallback
@@ -582,6 +624,7 @@ export class WebGLRenderer {
       if (this.diskLUT) this.gl.deleteTexture(this.diskLUT);
       if (this.spectrumLUT) this.gl.deleteTexture(this.spectrumLUT);
     }
+    if (this.skybox) this.skybox.cleanup();
     if (this.bloomManager) this.bloomManager.cleanup();
     if (this.reprojectionManager) this.reprojectionManager.cleanup();
   }

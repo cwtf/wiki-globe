@@ -110,6 +110,21 @@ export async function captureFrame(opts: CaptureOptions): Promise<void> {
       { timeout: 30_000 },
     );
 
+    // wiki-globe fork (spec §6.2): the Milky Way panorama is fetched and
+    // uploaded asynchronously, and until it lands the shader draws the
+    // procedural starfield instead. Shooting before it arrives records a
+    // different sky with nothing in the frame to say so — the same
+    // machine-speed dependence `?deterministic=1` exists to remove. "failed"
+    // is accepted so a missing asset produces a comparable (procedural) frame
+    // rather than hanging the run.
+    await page.waitForFunction(
+      () => {
+        const status = window.__bh?.skybox?.();
+        return status === "ready" || status === "failed";
+      },
+      { timeout: 60_000 },
+    );
+
     // TAA accumulates over a handful of frames; let it settle before capture.
     await page.evaluate(async (n: number) => {
       for (let i = 0; i < n; i++) {

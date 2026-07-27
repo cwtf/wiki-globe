@@ -44,6 +44,19 @@ export const CAPTURE_RENDER_SCALE = 1.0;
 export const CAPTURE_TIME = 10.0;
 
 /**
+ * One more thing a capture has to wait for: the sky.
+ *
+ * The Milky Way panorama (spec §6.2) is fetched and uploaded asynchronously,
+ * and until it arrives the shader draws the procedural starfield instead. A
+ * screenshot taken in that window records a different image with no flag to
+ * say so — the same "depends on how fast the machine was" failure that the
+ * quality tier, the simulation clock and TAA each produced in turn. Nothing
+ * here can pin it, because it is a network fetch; the capture harness must
+ * poll `window.__bh.skybox() === "ready"` before shooting.
+ */
+export const CAPTURE_REQUIRES_SKYBOX = true;
+
+/**
  * Whether this page load is a deterministic capture.
  *
  * Read from the query string rather than the hash, because the hash is

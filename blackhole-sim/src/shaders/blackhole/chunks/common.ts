@@ -54,6 +54,20 @@ export const COMMON_CHUNK = `
   uniform vec4 u_fp_e2;
   uniform vec4 u_fp_e3;
 
+  // wiki-globe fork: the real Milky Way panorama (spec §6.2). u_sky_enabled is
+  // 0 until the JPEG has been decoded and uploaded, and stays 0 if it fails --
+  // the procedural starfield is then the fallback, so the sky is never a void.
+  //
+  // The basis vectors are the galactic frame's axes (centre / north pole /
+  // right-handed third) expressed in scene coordinates. Passing three vec3s
+  // rather than a mat3 keeps UniformBatcher, an upstream file, untouched.
+  uniform sampler2D u_skyTex;
+  uniform float u_sky_enabled;
+  uniform float u_sky_intensity;
+  uniform vec3 u_sky_basis_x;
+  uniform vec3 u_sky_basis_y;
+  uniform vec3 u_sky_basis_z;
+
   // === CONSTANTS ===
 #define PI 3.14159265359
 #define MAX_DIST ${PHYSICS_CONSTANTS.rayMarching.maxDistance.toFixed(1)}

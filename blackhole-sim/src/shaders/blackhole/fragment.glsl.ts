@@ -87,7 +87,7 @@ void main() {
 
     // === LOW QUALITY MODE ===
 #if defined(RAY_QUALITY_LOW) || defined(RAY_QUALITY_OFF)
-    vec3 bg = starfield(rd);
+    vec3 bg = sky(rd);
     float d = length(cross(ro, rd));
     float shadow = smoothstep(rh * 1.2, rh * 0.9, d);
     float photonGlowIndicator = exp(-abs(d - rph) * 12.0) * 0.8;
@@ -280,7 +280,7 @@ void main() {
     // Background
     vec3 background = vec3(0.0);
 #ifdef ENABLE_STARS
-    background = starfield(v);
+    background = sky(v);
 
     if (firstPerson) {
         // Shift the sky by the SAME factor the ray construction produced.
@@ -289,12 +289,15 @@ void main() {
         // and the gravitational potential. There is deliberately no separate
         // Doppler or redshift term anywhere in this shader (§5).
         float g = 1.0 / max(1e-4, abs(fpEnergy));
-        // Liouville: specific intensity scales as g^4, the same law the disk
-        // and jet use.
-        float boost = clamp(pow(g, 4.0), 0.0, 64.0);
-        // Blue toward the direction of travel, red away from it.
-        vec3 tint = mix(vec3(1.0, 0.45, 0.25), vec3(0.6, 0.8, 1.0), clamp(g, 0.0, 1.0));
-        background *= boost * tint;
+        // Colour first, in linear light, by resampling the sky's spectrum at
+        // lambda * g (spec §6.2). This replaces a mix() between a warm and a
+        // cool tint that was defensible only while the sky was procedural --
+        // against a photograph an invented tint is visible.
+        background = sky_shift(background, g);
+        // Then Liouville: specific intensity scales as g^4, the same law the
+        // disk and jet use. Clamped so a deep plunge cannot hand the tone
+        // mapper an unbounded value.
+        background *= clamp(pow(g, 4.0), 0.0, 64.0);
     }
 #endif
 
