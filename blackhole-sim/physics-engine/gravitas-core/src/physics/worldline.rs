@@ -185,6 +185,27 @@ impl Worldline {
         out
     }
 
+    /// Smallest radius reached. For a bound orbit this is the measured
+    /// periapsis — the number spec §6.3's test compares against the requested
+    /// one, because agreeing with the *integrated* trajectory is the only
+    /// claim worth making about a solver that feeds it.
+    #[must_use]
+    pub fn min_radius(&self) -> f64 {
+        self.samples
+            .iter()
+            .map(|s| s.r)
+            .fold(f64::INFINITY, f64::min)
+    }
+
+    /// Largest radius reached, i.e. the measured apoapsis.
+    #[must_use]
+    pub fn max_radius(&self) -> f64 {
+        self.samples
+            .iter()
+            .map(|s| s.r)
+            .fold(f64::NEG_INFINITY, f64::max)
+    }
+
     /// Azimuth, unwrapped to a monotonic total, sample by sample.
     #[must_use]
     pub fn unwrapped_azimuth(&self) -> Vec<f64> {
@@ -284,6 +305,14 @@ pub enum DropSpec {
         tangential_fraction: f64,
         radial_velocity: f64,
     },
+    /// Named by its two turning points (spec §6.3, milestone 9).
+    ///
+    /// Released at `r_apo` with dr/dτ = 0 and the angular momentum that puts
+    /// the periapsis at `r_peri`. If no bound orbit can reach that periapsis
+    /// from that apoapsis — i.e. it is inside the separatrix — the object
+    /// plunges rather than being quietly clamped to the nearest orbit that
+    /// works; see [`crate::physics::apsides::solve_apsides`].
+    FromApsides { r_apo: f64, r_peri: f64 },
 }
 
 /// Integration controls for a worldline.
@@ -334,6 +363,41 @@ pub fn initial_state(metric: &Kerr, drop: DropSpec) -> GeodesicState {
     let m = metric.mass();
     let a = metric.a();
 
+    // Apsides are specified by conserved quantities, not by an angular
+    // velocity, so this branch writes p_mu straight down instead of going
+    // through (omega, u_r). That is deliberate: E = -p_t and L_z = p_phi are
+    // the *same numbers* in Boyer-Lindquist and Kerr-Schild, because the two
+    // systems share the Killing vectors d/dt and d/dphi, whereas
+    // Omega = dphi/dt is not. Converting a Boyer-Lindquist Omega into these
+    // coordinates is exactly the kind of quiet coordinate mixing spec §5
+    // warns about.
+    if let DropSpec::FromApsides { r_apo, r_peri } = drop {
+        let solution = crate::physics::apsides::solve_apsides(metric, r_peri, r_apo);
+        let r = solution.apoapsis;
+
+        let p_t = -solution.energy;
+        let p_phi = solution.angular_momentum;
+
+        // Released at the apoapsis, so u^r = g^{r mu} p_mu = 0. Solving that
+        // for p_r is one division; note p_r is NOT zero in Kerr-Schild, where
+        // g^{rt} != 0 — writing p_r = 0 (correct in Boyer-Lindquist) would
+        // launch a subtly different orbit, the same trap the comment above
+        // this function records for circular drops.
+        let inverse = metric.contravariant(r, theta);
+        let gi = inverse.as_array();
+        let (g_rt, g_rr, g_rp) = (gi[4], gi[5], gi[7]);
+        let p_r = if g_rr.abs() > 1e-15 {
+            -(g_rt * p_t + g_rp * p_phi) / g_rr
+        } else {
+            0.0
+        };
+
+        return GeodesicState {
+            x: [0.0, r, theta, 0.0],
+            p: [p_t, p_r, 0.0, p_phi],
+        };
+    }
+
     let (r, omega, u_r) = match drop {
         DropSpec::Circular { r } => (r, circular_angular_velocity(r, m, a, Orbit::Prograde), 0.0),
         DropSpec::Isco { inward_seed } => {
@@ -378,6 +442,8 @@ pub fn initial_state(metric: &Kerr, drop: DropSpec) -> GeodesicState {
             circular_angular_velocity(r, m, a, Orbit::Prograde) * tangential_fraction,
             radial_velocity,
         ),
+        // Handled above, before this match, because it builds p_mu directly.
+        DropSpec::FromApsides { .. } => unreachable!(),
     };
 
     // u^mu proportional to (1, u_r, 0, omega); the normalisation N follows from

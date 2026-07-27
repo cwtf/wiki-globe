@@ -624,8 +624,41 @@ specified in §6. In short:
    there was nothing to re-capture; both capture harnesses now wait for
    `window.__bh.skybox()` first, because a shot taken before the panorama lands
    silently records the procedural fallback.
-9. **Draggable orbits** — set an orbit by dragging its apoapsis and periapsis
-   instead of picking a preset (§6.3).
+9. **Draggable orbits** *(done)* — set an orbit by dragging its apoapsis and
+   periapsis instead of picking a preset (§6.3).
+
+   `DropSpec::FromApsides` solves the two turning points for `(E, L_z)` in
+   closed form: the difference of `R(r_p) = 0` and `R(r_a) = 0` loses the
+   `2aEx` cross term and is linear in `E²` and `x²`, which reduces the pair to
+   one quadratic. The constants go into a Kerr-Schild initial state as `p_μ`
+   directly rather than through an angular velocity, because `E` and `L_z` are
+   the same numbers in both coordinate systems and `Ω = dφ/dt` is not.
+   17 Rust tests and 13 more TS tests; both suites green.
+
+   **Correction to this spec:** §6.3 says "`r_peri` inside the ISCO must
+   plunge". It must not — an eccentric orbit's periapsis can sit well inside
+   the ISCO and stay bound. The real limit is the **separatrix**, which for
+   Schwarzschild is `r_p = 4 M r_a / (r_a − 2M)`, reaching down to 4M for a
+   distant apoapsis and touching 6M only where the two apsides merge. Inside
+   it the angular momentum is scaled `L = L_sep · (r_peri / r_peri_sep)`, which
+   is continuous at the separatrix and tends to a radial free fall as the inner
+   handle reaches the middle — a plunge, never a clamp.
+
+   UI as specified: handles projected with `camera-projection.ts`, integration
+   on drag *end*, a dashed Newtonian ellipse during (and after) it, captioned
+   so it cannot be mistaken for the orbit. Sliders alongside the handles,
+   because a handle edge-on to the camera cannot be grabbed and a drag is not
+   keyboard-reachable. The bound/capture verdict comes live from the same Rust
+   solver the integration will run, over the worker. The panel reports the
+   apsides the integration *reached*, not the ones requested: verified live at
+   `7.00 – 26.00 M` for a bound pair and `1.85 – 26.00 M` — the horizon — for
+   one inside the separatrix.
+
+   This also surfaced a pre-existing defect: the Rust engine kept the
+   hard-coded `a* = 0.9` it was constructed with for the whole of startup,
+   because `usePhysicsState` only pushed mass and spin once
+   `physicsBridge.isReady()` and its `useMemo` never re-ran. The shadow curve
+   was reading the same stale metric. Fixed.
 10. **Real black holes** — presets locked to measured parameters for named
     objects, each at `/blackhole/{name}` (§6.4).
 11. **Black holes in the globe's sky** — those same objects as clickable sky
@@ -847,7 +880,11 @@ an fbm nebula. Replace it with a real equirectangular panorama.
   (project licensing rule #4).
 - Goldens change; re-capture.
 
-### 6.3 Draggable orbits (milestone 9)
+### 6.3 Draggable orbits (milestone 9) — done
+
+Shipped; see the milestone 9 entry in §3 for what landed, including the
+correction to the "inside the ISCO" claim below, and `blackhole-sim/FORK.md`
+for the write-up. The plan as written follows.
 
 Today an orbit is chosen from presets plus a start-radius slider. Let the user
 grab the **apoapsis and periapsis** and drag them.

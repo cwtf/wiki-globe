@@ -106,8 +106,17 @@ self.onmessage = async (e: MessageEvent) => {
   // per drop and is variable-length (up to ~20k samples). It is transferred
   // instead, so the copy is zero-cost and the ring layout stays untouched.
   if (type === "DROP_OBJECT" && engine) {
-    const { id, preset, r0, tangentialFraction, radialVelocity, innerRadius, maxSteps, maxSamples } =
-      data;
+    const {
+      id,
+      preset,
+      r0,
+      tangentialFraction,
+      radialVelocity,
+      innerRadius,
+      maxSteps,
+      maxSamples,
+      rPeri,
+    } = data;
     try {
       const samples = engine.integrate_test_object(
         preset,
@@ -117,6 +126,7 @@ self.onmessage = async (e: MessageEvent) => {
         innerRadius,
         maxSteps,
         maxSamples,
+        rPeri ?? 0,
       );
       // Copy out of WASM memory: the returned view aliases the heap, which
       // moves when WASM grows, and it cannot be transferred while it does.
@@ -148,6 +158,28 @@ self.onmessage = async (e: MessageEvent) => {
     } catch (err: unknown) {
       self.postMessage({
         type: "WORLDLINE_ERROR",
+        id,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+    return;
+  }
+
+  // wiki-globe fork (spec §6.3): classify a pair of apsides without
+  // integrating. Cheap enough to answer while a handle is being dragged, which
+  // is the point — the alternative was a TypeScript copy of the solver, and a
+  // second implementation of the same physics is how the two drift apart.
+  if (type === "SOLVE_APSIDES" && engine) {
+    const { id, rPeri, rApo } = data;
+    try {
+      self.postMessage({
+        type: "APSIDES",
+        id,
+        values: Array.from(engine.solve_apsides(rPeri, rApo) as Float64Array),
+      });
+    } catch (err: unknown) {
+      self.postMessage({
+        type: "APSIDES_ERROR",
         id,
         error: err instanceof Error ? err.message : String(err),
       });

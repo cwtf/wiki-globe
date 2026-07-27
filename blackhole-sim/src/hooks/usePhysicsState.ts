@@ -23,10 +23,13 @@ export function usePhysicsState(params: SimulationParams): PhysicsState {
     // Spin is now directly in physics units [-1, 1]
     const normalizedSpin = Math.max(-1, Math.min(1, params.spin));
 
-    // Update bridge parameters if ready
-    if (physicsBridge.isReady()) {
-      physicsBridge.updateParameters(params.mass, normalizedSpin);
-    }
+    // wiki-globe fork: record the parameters whether or not the engine is up.
+    // The `isReady()` gate that used to be here meant nothing was recorded
+    // during startup, and since this runs in a useMemo it did not run again
+    // until `params` changed — so the engine kept the hard-coded spin it was
+    // constructed with. The bridge stores these and re-sends them when the
+    // worker signals READY.
+    physicsBridge.updateParameters(params.mass, normalizedSpin);
 
     // Calculate core metric properties using the bridge
     // Note: computeHorizon and computeISCO handle the checks internally

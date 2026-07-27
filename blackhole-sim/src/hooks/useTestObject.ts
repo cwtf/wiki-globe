@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { physicsBridge } from "@/engine/physics-bridge";
+import { physicsBridge, type ApsidesSolution } from "@/engine/physics-bridge";
+import { orderApsides, type ApsisPair } from "@/physics/apsides";
 import {
   orientFrame,
   rotateByQuaternion,
@@ -118,14 +119,45 @@ export interface UseTestObject {
   firstPersonFrame: FirstPersonFrame | null;
   /** True once the rider has reached the singularity. */
   reachedSingularity: boolean;
-  drop: (preset: DropPresetName, options?: { r0?: number; tangentialFraction?: number }) => void;
+  drop: (
+    preset: DropPresetName,
+    options?: { r0?: number; tangentialFraction?: number; rPeri?: number },
+  ) => void;
   reset: () => void;
   readout: TestObjectReadout | null;
+
+  // --- Draggable apsides (spec §6.3, milestone 9) ---
+  /** The pair the handles currently describe, in M. */
+  apsides: ApsisPair;
+  /** Move a handle. Live during the drag; nothing is integrated yet. */
+  setApsides: (pair: ApsisPair) => void;
+  /**
+   * The Rust solver's verdict on the current pair — bound orbit or capture,
+   * and where the separatrix is. Null until the first answer arrives; it lags
+   * the drag by a worker round trip, which is milliseconds.
+   */
+  apsidesSolution: ApsidesSolution | null;
+  /** True while a handle is held, which is what puts the preview on screen. */
+  draggingApsis: "periapsis" | "apoapsis" | null;
+  setDraggingApsis: (which: "periapsis" | "apoapsis" | null) => void;
+  /**
+   * Apsides the last integration actually reached, in M. Compared against the
+   * request in the panel, because agreeing with the trajectory is the only
+   * claim worth making.
+   */
+  measuredApsides: { min: number; max: number } | null;
 }
 
 export function useTestObject(
   mass: number,
   solarMasses: number,
+  /**
+   * Dimensionless spin. Not used by the playback maths — it is here so §6.3's
+   * apsides classification is re-asked when the geometry changes. A separatrix
+   * computed for a* = 0.9 and displayed next to a a* = 0.5 hole is exactly the
+   * kind of quietly-wrong number this project keeps having to dig out.
+   */
+  spin: number,
 ): UseTestObject {
   const [worldline, setWorldline] = useState<Worldline | null>(null);
   const [status, setStatus] = useState<UseTestObject["status"]>("idle");
@@ -150,8 +182,56 @@ export function useTestObject(
   const rafRef = useRef<number | null>(null);
   const lastRef = useRef<number>(0);
 
+  // §6.3: the dragged pair. Kept here rather than in the panel so the overlay
+  // (which draws the handles) and the panel (which reads them out) see one
+  // source of truth, and so a drop can use them without prop-drilling.
+  const [apsides, setApsidesInternal] = useState<ApsisPair>({
+    periapsis: 10,
+    apoapsis: 20,
+  });
+  const [apsidesSolution, setApsidesSolution] =
+    useState<ApsidesSolution | null>(null);
+  const [draggingApsis, setDraggingApsis] = useState<
+    "periapsis" | "apoapsis" | null
+  >(null);
+
+  const setApsides = useCallback((pair: ApsisPair) => {
+    setApsidesInternal(orderApsides(pair.periapsis, pair.apoapsis));
+  }, []);
+
+  // Ask Rust what the current pair is. Latest-wins rather than debounced: the
+  // solve is microseconds and the round trip is the only cost, so dropping
+  // stale answers is simpler than throttling and never leaves the panel
+  // showing a verdict for a pair the user has already moved past.
+  const apsidesRequest = useRef(0);
+  useEffect(() => {
+    const token = ++apsidesRequest.current;
+    let cancelled = false;
+    physicsBridge
+      .solveApsides(apsides.periapsis, apsides.apoapsis)
+      .then((solution) => {
+        if (cancelled || token !== apsidesRequest.current) return;
+        setApsidesSolution(solution);
+      })
+      .catch(() => {
+        // The engine may not be up yet on the first render; the next drag
+        // asks again. A failed classification must not block the drag.
+      });
+    return () => {
+      cancelled = true;
+    };
+    // mass and spin are dependencies even though they are not arguments: the
+    // solver reads the engine's current metric, so the answer changes when
+    // they do. `usePhysicsState` pushes them to the engine from a child
+    // component, whose effects React runs before this parent one, so by the
+    // time this fires the engine already has the new geometry.
+  }, [apsides.periapsis, apsides.apoapsis, mass, spin]);
+
   const drop = useCallback(
-    (preset: DropPresetName, options?: { r0?: number; tangentialFraction?: number }) => {
+    (
+      preset: DropPresetName,
+      options?: { r0?: number; tangentialFraction?: number; rPeri?: number },
+    ) => {
       setStatus("integrating");
       setError(null);
       setFarTime(0);
@@ -379,6 +459,12 @@ export function useTestObject(
     drop,
     reset,
     readout,
+    apsides,
+    setApsides,
+    apsidesSolution,
+    draggingApsis,
+    setDraggingApsis,
+    measuredApsides: worldline ? worldline.radialExtent() : null,
   };
 }
 

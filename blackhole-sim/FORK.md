@@ -64,6 +64,10 @@ Check which path is live: `window.__bh.transport()` →
 | `src/configs/skybox.config.ts` | sky orientation, equirect mapping, spectral shift |
 | `src/rendering/skybox.ts` | loads/uploads the panorama, publishes load state |
 | `public/textures/milky-way-eso-4k.jpg` | the panorama, derived from the globe's copy |
+| `src/components/fork/ApsisHandles.tsx` | draggable periapsis/apoapsis handles + preview |
+| `src/physics/apsides.ts` | Newtonian preview ellipse and drag limits |
+| `physics-engine/gravitas-core/src/physics/apsides.rs` | apsides → (E, L), separatrix |
+| `physics-engine/gravitas-core/tests/apsides.rs` | §6.3's verification targets |
 
 ## Upstream files modified
 
@@ -74,7 +78,16 @@ Check which path is live: `window.__bh.transport()` →
 | `src/app/layout.tsx` | self-referential URLs → `SITE_URL`; Search Console token removed; `SearchAction` dropped; icons via `asset()`; mounts `CrossOriginIsolation` | upstream's SEO identity points at their domain — publishing it here would claim another site's identity |
 | `src/app/manifest.ts` | `start_url`/`scope`/icon paths via `BASE_PATH` | manifest members are plain strings, unaffected by `basePath` |
 | `src/app/page.tsx` | mounts `BackToGlobe` + `DebugHooks`; top-bar `pt` enlarged to clear the back pill; citation block points at the upstream repo | fork navigation + honest citation |
-| `src/engine/physics-bridge.ts` | fallback terminates the orphaned worker and nulls `worker`/`sab`; records `transport`; `console.error` → `console.warn` | the worker is constructed *before* the SAB throw, so the fallback leaked a live thread; the fallback is an expected state, not an error |
+| `src/engine/physics-bridge.ts` | fallback terminates the orphaned worker and nulls `worker`/`sab`; records `transport`; `console.error` → `console.warn`; `solveApsides`; re-pushes mass/spin on `READY` | the worker is constructed *before* the SAB throw, so the fallback leaked a live thread; the fallback is an expected state, not an error; §6.3 needs a live apsides verdict, and the engine's metric was stale for the whole of startup |
+| `src/hooks/usePhysicsState.ts` | dropped the `isReady()` gate around `updateParameters` | the gate is false during startup and the `useMemo` never re-ran, so the engine kept the spin it was constructed with — see milestone 9 below |
+| `src/hooks/useTestObject.ts` | apsides state, live solve, measured apsides; takes `spin` | §6.3 |
+| `src/physics/camera-projection.ts` | `screenToEquatorial` | §6.3: a dragged handle is a pixel that has to become a radius |
+| `src/physics/worldline.ts` | `apsides` preset, `rPeri`, `radialExtent()` | §6.3 |
+| `src/components/fork/TestObjectPanel.tsx` | apsides sliders + verdict; preset lifted to `page.tsx` | §6.3 |
+| `src/components/fork/TestObjectOverlay.tsx` | trail budget 192 → 512 | long eccentric orbits made the polyline read as a polygon |
+| `src/workers/physics.worker.ts` | `SOLVE_APSIDES`; passes `rPeri` through | §6.3 |
+| `physics-engine/gravitas-wasm/src/lib.rs` | preset 5 + `r_peri` arg; `solve_apsides` | §6.3 |
+| `physics-engine/gravitas-core/src/physics/worldline.rs` | `DropSpec::FromApsides`; `min_radius`/`max_radius` | §6.3 |
 | `src/shaders/blackhole/chunks/metric.ts` | removed the Newtonian `M/r²` term from the null-geodesic force | shadow was 49.7% too large — see the physics audit below |
 | `src/shaders/blackhole/chunks/disk.ts` | beaming exponent `δ^3.5` → `δ⁴`; `sample_relativistic_jets` rewritten against §1.4 | spec §1.3 requires exact `g⁴`; see the jets section below |
 | `src/shaders/blackhole/chunks/background.ts` | procedural starfield demoted to a fallback; `sky()`, `sky_lod()`, `sky_shift()` added | spec §6.2 — the sky is a real panorama, lensed per ray |
@@ -715,6 +728,147 @@ TDZ error that surfaces only as `result.value === undefined`; log
   one 2.8 MB fetch at startup, ~44 MB of VRAM with mips at 4096×2048, and one
   extra `textureLod` on the *escaped* rays only — rays that hit the horizon or
   saturate the disk never reach it.
+
+## Draggable orbits (spec milestone 9)
+
+The drop panel gains an **Apsides (drag)** trajectory: two handles on the
+equatorial plane, one at the periapsis and one at the apoapsis. Drag either and
+release, and the orbit that has those two turning points is integrated. The
+presets stay — §6.3 is explicit that this is an addition.
+
+`physics/apsides.rs` is the whole physics; `physics/apsides.ts` is the preview
+geometry and nothing else.
+
+### The algebra, and why it stays in Kerr-Schild
+
+For an equatorial timelike geodesic the radial potential is usually written in
+Boyer-Lindquist, and §5 forbids mixing coordinate systems near the horizon.
+This does not mix them: `E = −p_t`, `L_z = p_φ`, `r` and `dr/dτ` are *identical*
+in the two systems, because Kerr-Schild differs by `t_KS = t_BL + f(r)` and
+`φ_KS = φ_BL + g(r)`, which leaves the Killing vectors `∂_t`/`∂_φ` and `r`
+alone. What does **not** survive is `Ω = dφ/dt`, which is exactly why the
+`FromApsides` branch of `initial_state` writes `p_μ` down directly instead of
+going through an angular velocity like every other drop preset does.
+
+Both `R(r_p) = 0` and `R(r_a) = 0` are quadratic in `(E, x)` with `x = L − aE`,
+but their **difference loses the cross term** and is linear in `E²` and `x²`:
+
+```text
+  E² = α + β x²,   α = 1 − 2M/(r_p + r_a),   β = 2M / (r_p r_a (r_p + r_a))
+```
+
+Substituting back and squaring away the remaining `2aEx` leaves a quadratic in
+`y = x²`. Closed form, no iteration. Squaring introduces the retrograde branch,
+so the root is chosen by checking it against the *unsquared* relation.
+
+### Two numerical traps, both of which produced plausible wrong answers
+
+- **`disc < 0 → no solution` rejected every Schwarzschild input.** At `a = 0`
+  that discriminant vanishes *identically*, so it comes back as ±1e-16 and half
+  the inputs were refused on a rounding error. It also loses half its digits to
+  `(−b ± √disc)/2a` when the roots are that close. Fixed with a collapse
+  window — but the same window in `inner_turning_point` reports a turning point
+  across a band of angular momenta that have none, because the separatrix *is*
+  the sign change of that discriminant, and it dragged the bisected separatrix
+  4% inward at a distant apoapsis. The two call sites need opposite tolerances;
+  they now take it as a parameter.
+- **`k = E² − 1` has no significant digits at large `r_apo`.** It is ≈ −2M/r,
+  so at `r_a = 10⁶` every digit cancels, and the forward synthetic division
+  `b = 2M + k·r_apo` then differences two equal numbers. Both are recovered from
+  the fact that `r_apo` *is* a root — `k = −(c₂r² + c₁r + c₀)/r³`, and the
+  division runs backwards from the constant term.
+
+### Correction to the spec: the limit is the separatrix, not the ISCO
+
+§6.3 says "`r_peri` inside the ISCO must **plunge**". That is not right, and the
+test `a_periapsis_inside_the_isco_is_still_a_stable_orbit` pins it: an eccentric
+orbit's periapsis can sit well inside the ISCO and stay perfectly bound. For
+Schwarzschild the real limit is
+
+```text
+  r_p,min = 4 M r_a / (r_a − 2M)
+```
+
+which tends to **4M** for a distant apoapsis (the marginally bound orbit) and
+meets 6M only where the two apsides merge — which is the ISCO, and is why the
+ISCO is the special case rather than the rule. A periapsis of 5M from an
+apoapsis of 20M is inside the ISCO and completely stable.
+
+Kerr has no such closed form, so the production path bisects on `L` for the
+angular momentum whose inner turning point is about to vanish, and the
+Schwarzschild expression is kept only as the test's anchor — so the general
+route is the one that gets exercised.
+
+Inside the separatrix there is no orbit to return. Rather than clamping to the
+nearest one that works — which is the "silent clamp" §6.3 forbids — the angular
+momentum is scaled `L = L_sep · (r_peri / r_peri_sep)`. That is continuous at
+the separatrix (ratio 1) and tends to zero as the inner handle reaches the
+middle, where a zero-angular-momentum radial free fall is exactly right. The
+launch radius stays the requested apoapsis either way, so the outer handle
+always means what it says.
+
+### The precession test caught the test, not the code
+
+`integrated_precession_matches_the_exact_schwarzschild_formula` failed by 13%
+on its first run. The integrator was right; the *expected value* was wrong. The
+exact advance is
+
+```text
+  Δφ = 4 √(p / (p − 6 + 2e)) K(k) − 2π,   k² = 4e / (p − 6 + 2e)
+```
+
+and it had been written with `p − 6 − 2e`. The sign is checkable without any
+reference: `k → 1` must reproduce the separatrix `p = 6 + 2e`, and with the
+wrong sign it does not. The wrong version still agreed with the weak field and
+still passed at `e = 0.01`, which is how it survived being read twice.
+
+Worth keeping the exact formula rather than §4's "within 1% of the analytic
+formula" reading of `6πM/p`: at `p = 60, e = 0.01` those two differ by 8%, so an
+integration agreeing with `6πM/p` to 1% would have to be *wrong*.
+
+### UI
+
+- **Integrate on drag end, preview during.** §6.3's instruction, and the
+  Newtonian ellipse it asks for is drawn dashed and captioned. The caption is
+  *not* gated on the drag: once the integrated trail is on screen next to a
+  closed dashed ellipse, an unlabelled ellipse reads as the orbit. It says
+  `NEWTONIAN PREVIEW — THE INTEGRATED ORBIT PRECESSES`, and the two curves side
+  by side make that concrete better than any label could.
+- **Sliders as well as handles.** A handle that is edge-on cannot be grabbed,
+  and a drag is not keyboard-reachable. Both write the same state.
+- **The verdict is the solver's, live.** `physicsBridge.solveApsides` asks the
+  same Rust code the integration will run — a TypeScript copy of the separatrix
+  would be a second implementation of the same physics, which is how the two
+  drift. Latest-wins rather than debounced.
+- **The panel reports what was *reached*, not what was asked.** Verified live:
+  peri 7 / apo 26 comes back `7.00 – 26.00 M`; peri 2.5 / apo 26, with the
+  separatrix at 3.06 M, comes back `1.85 – 26.00 M` — the horizon for
+  a\* = 0.5. It plunged; it did not clamp.
+- `screenToEquatorial` inverts the shader's own camera onto `y = 0`. Exactly
+  edge-on it returns null and the drag simply stops tracking, which is honest;
+  the alternative is a handle that flies across the screen for a one-pixel move.
+- Trail point budget 192 → 512. Draggable apsides make long eccentric orbits
+  the easy thing to ask for, and at 192 the polyline cuts visible chords across
+  periapsis — precisely where the curvature is.
+
+### A bug this milestone surfaced: the engine had the wrong black hole
+
+`usePhysicsState` pushed mass and spin to the engine only when
+`physicsBridge.isReady()`, from inside a `useMemo`. During startup that is
+false, and the memo does not re-run afterwards because `params` has not
+changed — so the Rust engine kept the hard-coded `(1.0, 0.9)` it was
+constructed with while the shader rendered the UI's `a* = 0.5`, until the user
+happened to move a slider.
+
+Nothing had noticed because nothing had asked the engine a question about the
+geometry and compared it to the screen. The apsides panel does, and printed a
+separatrix of 1.77 M — the a\* = 0.9 answer — next to an a\* = 0.5 hole. The
+analytic shadow curve was reading from the same stale metric.
+
+Fixed in two places: `page.tsx` pushes the parameters from an effect it owns
+(declared above `useTestObject` so it registers first), and the bridge re-pushes
+whatever it has on the worker's `READY`, since the first push happens before
+there is a worker to push to.
 
 ### A trap worth knowing
 

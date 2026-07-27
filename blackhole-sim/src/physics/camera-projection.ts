@@ -119,3 +119,51 @@ export function projectToScreen(
     visible: true,
   };
 }
+
+/**
+ * Inverse of {@link projectToScreen} onto the **equatorial plane** `y = 0`.
+ *
+ * wiki-globe fork (spec §6.3): a dragged apsis handle is a point on the disk
+ * plane, so a pixel maps to a unique world point — cast the camera ray through
+ * that pixel and intersect it with `y = 0`.
+ *
+ * Returns `null` when the ray is parallel to the plane, or hits it behind the
+ * camera. Both are real states of an edge-on view, and both must stop a drag
+ * rather than snap the handle to a nonsense radius.
+ */
+export function screenToEquatorial(
+  screen: { x: number; y: number },
+  cam: CameraState,
+  width: number,
+  height: number,
+): { world: Vec3; radius: number; azimuth: number } | null {
+  const minRes = Math.min(width, height);
+  const u = (screen.x - 0.5 * width) / minRes;
+  // Undo the CSS/gl_FragCoord flip that projectToScreen applies.
+  const v = (height - screen.y - 0.5 * height) / minRes;
+
+  // The shader's ray, in the camera's own frame, before the world rotation.
+  const originLocal: Vec3 = [0, 0, -cam.zoom * ZOOM_TO_DISTANCE];
+  const directionLocal: Vec3 = [u, v, SHADER_FOCAL_LENGTH];
+
+  const origin = cameraToWorld(originLocal, cam);
+  const direction = cameraToWorld(directionLocal, cam);
+
+  // Near-parallel to the disk: the intersection runs off to infinity and the
+  // handle would fly across the screen for a one-pixel move.
+  if (Math.abs(direction[1]) < 1e-6) return null;
+
+  const t = -origin[1] / direction[1];
+  if (!(t > 0)) return null;
+
+  const world: Vec3 = [
+    origin[0] + t * direction[0],
+    0,
+    origin[2] + t * direction[2],
+  ];
+  return {
+    world,
+    radius: Math.hypot(world[0], world[2]),
+    azimuth: Math.atan2(world[2], world[0]),
+  };
+}

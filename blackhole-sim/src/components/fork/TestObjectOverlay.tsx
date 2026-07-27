@@ -72,7 +72,12 @@ export function TestObjectOverlay({
     trailIndex = i;
   }
   const trailPoints = worldline
-    .trail(trailIndex, 192)
+    // 512, not upstream's 192. §6.3's draggable apsides make long, strongly
+    // eccentric orbits the easy thing to ask for, and at 192 points spread
+    // over a dozen precessing loops the polyline reads as a wireframe
+    // polygon rather than a rosette — the chords cut visibly across
+    // periapsis, which is exactly where the interesting curvature is.
+    .trail(trailIndex, 512)
     .map((p) => projectToScreen(p, cam, size.width, size.height))
     .filter((p) => p.visible)
     .map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`)

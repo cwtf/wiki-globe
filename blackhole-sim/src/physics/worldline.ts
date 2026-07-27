@@ -137,6 +137,24 @@ export class Worldline {
   }
 
   /**
+   * Smallest and largest radius actually reached, in M.
+   *
+   * The *measured* apsides — spec §6.3 wants the drag to be checkable against
+   * what the integration did, not against what the solver intended. When the
+   * two disagree the panel says so rather than repeating the request back.
+   */
+  radialExtent(): { min: number; max: number } {
+    let min = Infinity;
+    let max = -Infinity;
+    for (let i = 0; i < this.count; i++) {
+      const r = this.f(i * WORLDLINE_STRIDE + 3);
+      if (r < min) min = r;
+      if (r > max) max = r;
+    }
+    return this.count > 0 ? { min, max } : { min: 0, max: 0 };
+  }
+
+  /**
    * Sample by the object's own clock — the 1st-person view (§1.6).
    * Clamps past the end, which is the singularity.
    */
@@ -288,6 +306,8 @@ export const DROP_PRESETS = {
   radialFall: 2,
   eccentric: 3,
   custom: 4,
+  /** Named by its two turning points (spec §6.3, milestone 9). */
+  apsides: 5,
 } as const;
 
 export type DropPresetName = keyof typeof DROP_PRESETS;
@@ -300,6 +320,8 @@ export interface DropRequest {
   innerRadius: number;
   maxSteps: number;
   maxSamples: number;
+  /** Periapsis in M. Read only by the `apsides` preset. */
+  rPeri: number;
 }
 
 /**
@@ -319,6 +341,7 @@ export function buildDropRequest(
     innerRadius?: number;
     maxSteps?: number;
     maxSamples?: number;
+    rPeri?: number;
   } = {},
 ): DropRequest {
   return {
@@ -329,5 +352,8 @@ export function buildDropRequest(
     innerRadius: options.innerRadius ?? 0,
     maxSteps: options.maxSteps ?? 200_000,
     maxSamples: options.maxSamples ?? 8_000,
+    // The apsides preset reads r0 as the apoapsis and this as the periapsis;
+    // 0 is inert for every other preset.
+    rPeri: options.rPeri ?? 0,
   };
 }

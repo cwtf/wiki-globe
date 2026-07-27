@@ -15,6 +15,36 @@ export interface WorldlineAudit {
   sampleCount: number;
 }
 
+/**
+ * wiki-globe fork (spec §6.3): what a requested pair of apsides turned out to
+ * be, straight from the Rust solver.
+ */
+export interface ApsidesSolution {
+  energy: number;
+  angularMomentum: number;
+  /** Launch radius: always the outer of the two requested radii. */
+  apoapsis: number;
+  /** The periapsis these constants produce, or null when there is none. */
+  periapsis: number | null;
+  /** Smallest periapsis any bound orbit can reach from this apoapsis. */
+  separatrix: number;
+  /** True when the request is inside the separatrix and the object falls in. */
+  plunges: boolean;
+}
+
+/** Decode the flat `[E, L, r_apo, r_peri, separatrix, kind]` from Rust. */
+function decodeApsides(values: number[]): ApsidesSolution {
+  const periapsis = values[3] ?? NaN;
+  return {
+    energy: values[0] ?? 0,
+    angularMomentum: values[1] ?? 0,
+    apoapsis: values[2] ?? 0,
+    periapsis: Number.isFinite(periapsis) ? periapsis : null,
+    separatrix: values[4] ?? 0,
+    plunges: (values[5] ?? 0) > 0.5,
+  };
+}
+
 export class PhysicsBridge {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private engine: any = null;
@@ -54,6 +84,7 @@ export class PhysicsBridge {
 
   /** Correlates DROP_OBJECT requests with their WORLDLINE replies. */
   private worldlineRequestId = 0;
+  private apsidesRequestId = 0;
 
   public async initialize(): Promise<void> {
     if (this.initializationPromise) return this.initializationPromise;
@@ -91,6 +122,16 @@ export class PhysicsBridge {
               console.log("PhysicsBridge: Worker Ready.");
               this.workerReady = true;
               this.transport = "worker-sab";
+              // wiki-globe fork: push the UI's mass and spin now that there is
+              // something to push them to. The worker is constructed with the
+              // hard-coded (1.0, 0.9) above, and `usePhysicsState` only calls
+              // updateParameters once `isReady()` — which is false for the
+              // whole of startup. So without this the engine's metric stayed
+              // at a* = 0.9 while the shader rendered the UI's value, and
+              // anything asking the engine a question about the geometry (the
+              // shadow curve, and §6.3's apsides solver) got an answer for a
+              // different black hole until the user happened to move a slider.
+              this.updateParameters(this.currentMass, this.currentSpin);
               resolve();
             } else if (e.data.type === "ERROR") {
               reject(e.data.error);
@@ -473,6 +514,8 @@ export class PhysicsBridge {
     innerRadius: number;
     maxSteps: number;
     maxSamples: number;
+    /** Periapsis in M; read only by the from-apsides preset (spec §6.3). */
+    rPeri?: number;
   }): Promise<{ samples: Float32Array; audit: WorldlineAudit }> {
     await this.ensureInitialized();
 
@@ -508,6 +551,7 @@ export class PhysicsBridge {
       request.innerRadius,
       request.maxSteps,
       request.maxSamples,
+      request.rPeri ?? 0,
     );
     return {
       // Copy: the returned view aliases WASM memory, which is invalidated
@@ -524,6 +568,45 @@ export class PhysicsBridge {
         sampleCount: this.engine.worldline_sample_count(),
       },
     };
+  }
+
+  /**
+   * wiki-globe fork (spec §6.3): classify a pair of apsides without
+   * integrating, so a drag can be told live whether it is describing an orbit
+   * or a capture.
+   *
+   * The same Rust solver the integration will use, asked one question early —
+   * not a TypeScript approximation of it. Cheap: closed form plus one
+   * bisection, microseconds, so a worker round trip per pointer-move is
+   * comfortably within budget.
+   */
+  public async solveApsides(
+    rPeri: number,
+    rApo: number,
+  ): Promise<ApsidesSolution> {
+    await this.ensureInitialized();
+
+    if (this.worker && this.workerReady) {
+      const id = ++this.apsidesRequestId;
+      const worker = this.worker;
+      return new Promise((resolve, reject) => {
+        const onMessage = (e: MessageEvent) => {
+          if (e.data?.id !== id) return;
+          if (e.data.type === "APSIDES") {
+            worker.removeEventListener("message", onMessage);
+            resolve(decodeApsides(e.data.values as number[]));
+          } else if (e.data.type === "APSIDES_ERROR") {
+            worker.removeEventListener("message", onMessage);
+            reject(new Error(e.data.error));
+          }
+        };
+        worker.addEventListener("message", onMessage);
+        worker.postMessage({ type: "SOLVE_APSIDES", data: { id, rPeri, rApo } });
+      });
+    }
+
+    if (!this.engine) throw new Error("physics engine unavailable");
+    return decodeApsides(Array.from(this.engine.solve_apsides(rPeri, rApo)));
   }
 
   /**

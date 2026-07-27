@@ -31,6 +31,12 @@ const PRESETS: { key: DropPresetName; label: string; hint: string }[] = [
   { key: "isco", label: "ISCO knife-edge", hint: "marginally stable; plunges" },
   { key: "eccentric", label: "Eccentric", hint: "periapsis precesses" },
   { key: "radialFall", label: "Radial free fall", hint: "dropped from rest" },
+  // §6.3: an addition, not a replacement — the presets stay.
+  {
+    key: "apsides",
+    label: "Apsides (drag)",
+    hint: "drag the two handles on the disk plane",
+  },
 ];
 
 export function TestObjectPanel({
@@ -40,6 +46,8 @@ export function TestObjectPanel({
   onMassPresetChange,
   params,
   onParamsChange,
+  preset,
+  onPresetChange,
 }: {
   object: UseTestObject;
   isVisible: boolean;
@@ -47,8 +55,10 @@ export function TestObjectPanel({
   onMassPresetChange: (id: string) => void;
   params?: SimulationParams;
   onParamsChange?: (patch: Partial<SimulationParams>) => void;
+  /** Lifted so the overlay knows whether to draw the drag handles (§6.3). */
+  preset: DropPresetName;
+  onPresetChange: (preset: DropPresetName) => void;
 }) {
-  const [preset, setPreset] = useState<DropPresetName>("circular");
   const [r0, setR0] = useState(20);
 
   if (!isVisible) return null;
@@ -105,7 +115,7 @@ export function TestObjectPanel({
       </label>
       <select
         value={preset}
-        onChange={(e) => setPreset(e.target.value as DropPresetName)}
+        onChange={(e) => onPresetChange(e.target.value as DropPresetName)}
         className="mb-1 w-full rounded-sm border border-white/10 bg-black/60 px-2 py-1 font-mono text-[10px] text-white/80"
         aria-label="Drop trajectory preset"
       >
@@ -119,7 +129,7 @@ export function TestObjectPanel({
         {PRESETS.find((p) => p.key === preset)?.hint}
       </p>
 
-      {preset !== "isco" && (
+      {preset !== "isco" && preset !== "apsides" && (
         <>
           <label className="mb-1 flex justify-between font-mono text-[8px] uppercase tracking-[0.15em] text-white/40">
             <span>Start radius</span>
@@ -138,10 +148,24 @@ export function TestObjectPanel({
         </>
       )}
 
+      {preset === "apsides" && <ApsidesSection object={object} />}
+
       <div className="mb-3 flex gap-2">
         <button
           type="button"
-          onClick={() => object.drop(preset, { r0, tangentialFraction: preset === "eccentric" ? 0.9 : 1 })}
+          onClick={() =>
+            object.drop(
+              preset,
+              preset === "apsides"
+                ? {
+                    // §6.3: the outer handle is the launch radius and the
+                    // inner one is the requested periapsis.
+                    r0: object.apsides.apoapsis,
+                    rPeri: object.apsides.periapsis,
+                  }
+                : { r0, tangentialFraction: preset === "eccentric" ? 0.9 : 1 },
+            )
+          }
           disabled={status === "integrating"}
           className="flex-1 rounded-sm border border-white/15 bg-white/5 px-2 py-1.5 font-mono text-[9px] uppercase tracking-[0.2em] text-white/80 transition-colors hover:border-white/40 hover:text-white disabled:opacity-40"
         >
@@ -207,6 +231,93 @@ export function TestObjectPanel({
         arrive with the mass presets.
       </p>
     </div>
+  );
+}
+
+/**
+ * The apsides controls (spec §6.3).
+ *
+ * Sliders as well as drag handles, for two reasons: a handle that is edge-on to
+ * the camera cannot be grabbed at all, and a drag is not keyboard-reachable.
+ * Both write the same state the overlay does.
+ *
+ * The verdict line is the honest part. It comes from the Rust solver rather
+ * than from a rule of thumb, and it says *why* — a periapsis inside the
+ * separatrix is a capture, and the separatrix is not the ISCO.
+ */
+function ApsidesSection({ object }: { object: UseTestObject }) {
+  const { apsides, setApsides, apsidesSolution, measuredApsides } = object;
+  const captures = apsidesSolution?.plunges ?? false;
+
+  return (
+    <>
+      <label className="mb-1 flex justify-between font-mono text-[8px] uppercase tracking-[0.15em] text-white/40">
+        <span>Periapsis</span>
+        <span className="text-white/70">{apsides.periapsis.toFixed(1)} M</span>
+      </label>
+      <input
+        type="range"
+        min={0.2}
+        max={400}
+        step={0.1}
+        value={apsides.periapsis}
+        onChange={(e) =>
+          setApsides({ ...apsides, periapsis: Number(e.target.value) })
+        }
+        className={`mb-2 w-full ${captures ? "accent-red-400" : "accent-cyan-300"}`}
+        aria-label="Periapsis in units of M"
+      />
+      <label className="mb-1 flex justify-between font-mono text-[8px] uppercase tracking-[0.15em] text-white/40">
+        <span>Apoapsis</span>
+        <span className="text-white/70">{apsides.apoapsis.toFixed(1)} M</span>
+      </label>
+      <input
+        type="range"
+        min={0.2}
+        max={400}
+        step={0.1}
+        value={apsides.apoapsis}
+        onChange={(e) =>
+          setApsides({ ...apsides, apoapsis: Number(e.target.value) })
+        }
+        className={`mb-2 w-full ${captures ? "accent-red-400" : "accent-cyan-300"}`}
+        aria-label="Apoapsis in units of M"
+      />
+
+      <p
+        className={`mb-3 font-mono text-[8px] leading-relaxed ${
+          captures ? "text-red-300/80" : "text-white/35"
+        }`}
+      >
+        {apsidesSolution === null ? (
+          "…"
+        ) : captures ? (
+          <>
+            Capture. No bound orbit reaches{" "}
+            {apsides.periapsis.toFixed(1)} M from{" "}
+            {apsides.apoapsis.toFixed(1)} M — the separatrix is at{" "}
+            {apsidesSolution.separatrix.toFixed(2)} M. Dropping here plunges,
+            which is the physics, not a limit of the control.
+          </>
+        ) : (
+          <>
+            Bound orbit. Separatrix for this apoapsis:{" "}
+            {apsidesSolution.separatrix.toFixed(2)} M — a periapsis inside the
+            ISCO can still be stable, so that is the real floor, not the ISCO.
+          </>
+        )}
+      </p>
+
+      {measuredApsides && (
+        <dl className="mb-3 space-y-0.5 font-mono text-[8px]">
+          {/* Measured, not requested: what the integration actually did. */}
+          <Row
+            label="reached"
+            value={`${measuredApsides.min.toFixed(2)} – ${measuredApsides.max.toFixed(2)} M`}
+          />
+        </dl>
+      )}
+    </>
   );
 }
 

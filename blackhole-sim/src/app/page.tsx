@@ -11,8 +11,11 @@ import { BackToGlobe } from "@/components/fork/BackToGlobe";
 import { DebugHooks } from "@/components/fork/DebugHooks";
 import { TestObjectOverlay } from "@/components/fork/TestObjectOverlay";
 import { TestObjectPanel } from "@/components/fork/TestObjectPanel";
+import { ApsisHandles } from "@/components/fork/ApsisHandles";
 import { SingularityCard } from "@/components/fork/SingularityCard";
 import { useTestObject } from "@/hooks/useTestObject";
+import { physicsBridge } from "@/engine/physics-bridge";
+import type { DropPresetName } from "@/physics/worldline";
 import { DEFAULT_MASS_PRESET, findPreset } from "@/configs/mass-presets";
 import { IdentityHUD } from "@/components/ui/IdentityHUD";
 import { CompatibilityHUD } from "@/components/ui/CompatibilityHUD";
@@ -191,8 +194,36 @@ const App = () => {
   const [massPresetId, setMassPresetId] = useState(DEFAULT_MASS_PRESET);
   const massPreset = findPreset(massPresetId);
 
+  // wiki-globe fork: keep the physics engine's metric on the UI's mass and
+  // spin.
+  //
+  // This used to happen only inside `usePhysicsState`, a useMemo in
+  // ControlPanel and Telemetry, and only once `physicsBridge.isReady()`. Both
+  // conditions fail during startup, and the memo does not re-run afterwards
+  // because `params` has not changed — so the engine kept the (1.0, 0.9) it
+  // was constructed with until the user happened to move a slider, while the
+  // shader rendered the UI's values. Anything asking the engine about the
+  // geometry got an answer for a different black hole: the analytic shadow
+  // curve, and §6.3's apsides solver.
+  //
+  // Declared **above** `useTestObject` on purpose. Effects run in the order
+  // they are registered, so this fires before the apsides solve that reads the
+  // metric back, and the worker sees UPDATE_PARAMS first.
+  useEffect(() => {
+    physicsBridge.updateParameters(params.mass, params.spin);
+  }, [params.mass, params.spin]);
+
   // wiki-globe fork (spec §1.5): dropped test object.
-  const testObject = useTestObject(params.mass, massPreset.solarMasses);
+  const testObject = useTestObject(
+    params.mass,
+    massPreset.solarMasses,
+    params.spin,
+  );
+
+  // §6.3: which trajectory the drop panel is on. Lifted out of the panel so
+  // the drag handles, which live in their own overlay above the canvas, know
+  // whether they should be on screen at all.
+  const [dropPreset, setDropPreset] = useState<DropPresetName>("circular");
 
   // §1.4: the jet default follows the mass preset — on for M87*, off for
   // Sgr A* and the stellar case — and the user can still override afterwards.
@@ -347,6 +378,18 @@ const App = () => {
           zoom={params.zoom}
           mass={params.mass}
         />
+        <ApsisHandles
+          object={testObject}
+          mouse={mouse}
+          zoom={params.zoom}
+          enabled={dropPreset === "apsides" && showUI && !isInfoExpanded}
+          onCommit={() =>
+            testObject.drop("apsides", {
+              r0: testObject.apsides.apoapsis,
+              rPeri: testObject.apsides.periapsis,
+            })
+          }
+        />
         <TestObjectPanel
           object={testObject}
           isVisible={showUI && !isInfoExpanded}
@@ -354,6 +397,8 @@ const App = () => {
           onMassPresetChange={setMassPresetId}
           params={params}
           onParamsChange={(patch) => setParams((prev) => ({ ...prev, ...patch }))}
+          preset={dropPreset}
+          onPresetChange={setDropPreset}
         />
         <SingularityCard object={testObject} mass={params.mass} />
 

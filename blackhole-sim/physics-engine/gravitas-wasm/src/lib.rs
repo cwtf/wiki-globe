@@ -21,7 +21,7 @@ use gravitas::geodesic::{
 use gravitas::invariants;
 use gravitas::metric::kerr::CoordinateSystem;
 use gravitas::metric::{Kerr, Metric, Orbit};
-use gravitas::physics::{disk, spectrum, tetrad, worldline};
+use gravitas::physics::{apsides, disk, spectrum, tetrad, worldline};
 
 use js_sys::Float32Array;
 use wasm_bindgen::prelude::*;
@@ -715,7 +715,13 @@ impl PhysicsEngine {
     /// stays valid through the horizon.
     ///
     /// `preset`: 0 = circular, 1 = ISCO knife-edge, 2 = radial free fall,
-    /// 3 = eccentric, 4 = custom.
+    /// 3 = eccentric, 4 = custom, 5 = from apsides (spec §6.3).
+    ///
+    /// Preset 5 reads `r0` as the apoapsis and `r_peri` as the periapsis;
+    /// every other preset ignores `r_peri`. It is a named parameter rather
+    /// than a reuse of `tangential_fraction` because a periapsis in M and a
+    /// dimensionless velocity fraction sharing a slot is exactly how a caller
+    /// ends up passing one where the other was meant.
     ///
     /// Returns a flat `Float32Array`, `WORLDLINE_STRIDE` floats per sample:
     /// `[tau, t, t_far, r, theta, phi]`.
@@ -739,6 +745,7 @@ impl PhysicsEngine {
         inner_radius: f64,
         max_steps: u32,
         max_samples: u32,
+        r_peri: f64,
     ) -> Result<Float32Array, JsValue> {
         if !(r0.is_finite() && r0 > 0.0) {
             return Err(JsValue::from_str(
@@ -765,6 +772,17 @@ impl PhysicsEngine {
                 tangential_fraction,
                 radial_velocity,
             },
+            5 => {
+                if !(r_peri.is_finite() && r_peri > 0.0) {
+                    return Err(JsValue::from_str(
+                        "integrate_test_object: r_peri must be positive and finite",
+                    ));
+                }
+                worldline::DropSpec::FromApsides {
+                    r_apo: r0,
+                    r_peri,
+                }
+            }
             other => {
                 return Err(JsValue::from_str(&format!(
                     "integrate_test_object: unknown preset {other}"
@@ -872,6 +890,33 @@ impl PhysicsEngine {
     /// Number of samples in the last returned buffer.
     pub fn worldline_sample_count(&self) -> u32 {
         LAST_WORLDLINE.with(|c| c.get().samples)
+    }
+
+    /// Resolve a requested pair of apsides against the current metric
+    /// (spec §6.3), without integrating anything.
+    ///
+    /// Returns six numbers:
+    /// `[energy, angular_momentum, apoapsis, periapsis, separatrix, kind]`,
+    /// where `periapsis` is `NaN` when there is no inner turning point and
+    /// `kind` is 0 for a bound orbit, 1 for a plunge.
+    ///
+    /// Exists so the drag UI can say *while dragging* whether the pair it is
+    /// being handed is an orbit or a capture, without either guessing or
+    /// re-implementing the solver in TypeScript. The integration remains the
+    /// authority; this is the same code it will run, asked one question early.
+    pub fn solve_apsides(&self, r_peri: f64, r_apo: f64) -> Vec<f64> {
+        let solution = apsides::solve_apsides(&self.metric_ks, r_peri, r_apo);
+        vec![
+            solution.energy,
+            solution.angular_momentum,
+            solution.apoapsis,
+            solution.periapsis.unwrap_or(f64::NAN),
+            solution.separatrix_periapsis,
+            match solution.kind {
+                apsides::ApsidesKind::BoundOrbit => 0.0,
+                apsides::ApsidesKind::Plunge => 1.0,
+            },
+        ]
     }
 
     /// Closed-form Schwarzschild proper time for radial free fall from rest at

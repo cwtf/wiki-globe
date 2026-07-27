@@ -1,5 +1,6 @@
 //! Physical observables and astrophysical models.
 
+pub mod apsides;
 pub mod disk;
 pub mod magnetosphere;
 pub mod plunge;
