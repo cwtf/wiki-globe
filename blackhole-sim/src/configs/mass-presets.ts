@@ -62,18 +62,25 @@ export const MASS_PRESETS: MassPreset[] = [
     hint: "Tides are lethal far outside the horizon",
     jetByDefault: false,
   },
+  // Relabelled for §6.4: these two used to be called "Sgr A*" and "M87*",
+  // but those names now belong to the cited entries in
+  // `real-black-holes.json`, which sit in the same dropdown. Two options
+  // called "M87*" — one sourced, one not — would defeat the entire point of
+  // the citation discipline, so the generic presets went back to describing
+  // the *scale* of hole they are, which is all they ever were: the masses
+  // below are round numbers for feeling the difference, not measurements.
   {
     id: "sgra",
-    label: "Sgr A*",
+    label: "Supermassive (4×10⁶ M☉)",
     solarMasses: 4.154e6,
-    hint: "The Milky Way's centre; survivable tides at the horizon",
+    hint: "Galactic-centre scale; survivable tides at the horizon",
     jetByDefault: false,
   },
   {
     id: "m87",
-    label: "M87*",
+    label: "Ultramassive (6.5×10⁹ M☉)",
     solarMasses: 6.5e9,
-    hint: "First imaged black hole; prominent jet",
+    hint: "The largest scale imaged so far; jet on by default",
     jetByDefault: true,
   },
 ];

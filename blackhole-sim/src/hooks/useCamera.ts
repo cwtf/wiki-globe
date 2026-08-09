@@ -653,6 +653,32 @@ export function useCamera(
     [stopCinematic],
   );
 
+  /**
+   * Point the orbit camera at a given polar angle (spec §6.4).
+   *
+   * wiki-globe fork. Selecting a real black hole applies that object's
+   * measured inclination — 17° for M87*, 69° for GRO J1655−40 — and the
+   * difference is dramatic, so this cannot be left to the user to dial in.
+   *
+   * Writes the physics ref rather than only the React state, because the ref
+   * is the source of truth the animation loop reads; setting state alone would
+   * be overwritten on the next frame. Velocities are zeroed so the camera
+   * arrives at the angle instead of drifting past it, and any running
+   * cinematic is stopped for the same reason.
+   */
+  const setPolarAngle = useCallback(
+    (radians: number) => {
+      stopCinematic();
+      const MIN_PHI = 0.05;
+      const MAX_PHI = Math.PI - 0.05;
+      physicsRef.current.phi = Math.min(MAX_PHI, Math.max(MIN_PHI, radians));
+      physicsRef.current.phiVelocity = 0;
+      physicsRef.current.thetaVelocity = 0;
+      setCameraState({ ...physicsRef.current });
+    },
+    [stopCinematic],
+  );
+
   const startCinematic = useCallback(
     (mode: "orbit" | "dive") => {
       // Honor the user-agent reduced-motion preference: WCAG 2.2 SC 2.3.3
@@ -914,6 +940,7 @@ export function useCamera(
     handleTouchMove,
     handleTouchEnd,
     nudgeCamera,
+    setPolarAngle,
     startCinematic,
     stopCinematic,
     resetCamera,

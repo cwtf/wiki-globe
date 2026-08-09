@@ -10,13 +10,18 @@ import { PowerControl } from "./PowerControl";
 import type { SimulationParams } from "@/types/simulation";
 import {
   MASS_PRESETS,
-  findPreset,
+  type MassPreset,
   formatDuration,
   formatLength,
   iscoPeriodSeconds,
   peakDiskTemperatureK,
   schwarzschildRadiusKm,
 } from "@/configs/mass-presets";
+import {
+  REAL_BLACK_HOLES,
+  type RealBlackHole,
+} from "@/configs/real-black-holes";
+import { RealObjectCard } from "./RealObjectCard";
 
 /**
  * Drop panel + test-object HUD (spec §1.5, §2.4).
@@ -43,7 +48,12 @@ export function TestObjectPanel({
   object,
   isVisible,
   massPresetId,
+  massPreset,
   onMassPresetChange,
+  realObject,
+  realObjectLocked,
+  onSelectRealObject,
+  onRestoreRealObject,
   params,
   onParamsChange,
   preset,
@@ -52,7 +62,19 @@ export function TestObjectPanel({
   object: UseTestObject;
   isVisible: boolean;
   massPresetId: string;
+  /**
+   * Resolved preset, which is *not* always `findPreset(massPresetId)`: with a
+   * real object selected it is synthesized from that object's mass, so the
+   * r_s / ISCO / temperature rows below describe M87* rather than falling back
+   * to the stellar default.
+   */
+  massPreset: MassPreset;
   onMassPresetChange: (id: string) => void;
+  /** §6.4: the real object this session is locked to, if any. */
+  realObject: RealBlackHole | null;
+  realObjectLocked: boolean;
+  onSelectRealObject: (id: string) => void;
+  onRestoreRealObject: () => void;
   params?: SimulationParams;
   onParamsChange?: (patch: Partial<SimulationParams>) => void;
   /** Lifted so the overlay knows whether to draw the drag handles (§6.3). */
@@ -64,7 +86,19 @@ export function TestObjectPanel({
   if (!isVisible) return null;
 
   const { readout, status, error, worldline } = object;
-  const massPreset = findPreset(massPresetId);
+
+  // §6.4: one control, two kinds of entry. The synthetic presets are shapes of
+  // black hole ("a stellar one"); the real objects are named things with
+  // citations. Prefixing the option values keeps them from colliding — a
+  // future preset called "sgra" would otherwise silently shadow Sgr A*.
+  const selection = realObject
+    ? `real:${realObject.id}`
+    : `preset:${massPresetId}`;
+
+  const handleSelection = (value: string) => {
+    if (value.startsWith("real:")) onSelectRealObject(value.slice(5));
+    else onMassPresetChange(value.slice(7));
+  };
 
   return (
     // top-48 clears the identity HUD stack above it: back pill, logo, title,
@@ -79,18 +113,39 @@ export function TestObjectPanel({
         Black hole
       </h3>
       <select
-        value={massPresetId}
-        onChange={(e) => onMassPresetChange(e.target.value)}
+        value={selection}
+        onChange={(e) => handleSelection(e.target.value)}
         className="mb-1 w-full rounded-sm border border-white/10 bg-black/60 px-2 py-1 font-mono text-[10px] text-white/80"
-        aria-label="Mass preset"
+        aria-label="Black hole"
       >
-        {MASS_PRESETS.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.label}
-          </option>
-        ))}
+        <optgroup label="Generic">
+          {MASS_PRESETS.map((p) => (
+            <option key={p.id} value={`preset:${p.id}`}>
+              {p.label}
+            </option>
+          ))}
+        </optgroup>
+        <optgroup label="Real objects">
+          {REAL_BLACK_HOLES.map((o) => (
+            <option key={o.id} value={`real:${o.id}`}>
+              {o.name}
+            </option>
+          ))}
+        </optgroup>
       </select>
-      <p className="mb-1 font-mono text-[8px] text-white/35">{massPreset.hint}</p>
+
+      {realObject ? (
+        <RealObjectCard
+          object={realObject}
+          locked={realObjectLocked}
+          onRestore={onRestoreRealObject}
+        />
+      ) : (
+        <p className="mb-1 font-mono text-[8px] text-white/35">
+          {massPreset.hint}
+        </p>
+      )}
+
       <dl className="mb-3 space-y-0.5 font-mono text-[8px]">
         <Row
           label="r_s"

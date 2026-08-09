@@ -52,6 +52,17 @@ export interface BlackHoleDebugApi {
    */
   camera: () => { distance: number; focalLength: number; mass: number; spin: number };
   /**
+   * Where the orbit camera is pointing, in degrees (spec §6.4).
+   *
+   * `phiDeg` is the polar angle: 0 looks down the spin axis (face-on), 90 is
+   * edge-on. Selecting a real black hole sets it to that object's measured
+   * inclination, and there is no other way to check that from outside — the
+   * angle lives in a ref inside `useCamera`, not in `params`, so
+   * `__bh.params().verticalAngle` reports the config default forever and is
+   * *not* the live value.
+   */
+  orientation: () => { thetaDeg: number; phiDeg: number };
+  /**
    * Load state of the Milky Way panorama (spec §6.2).
    *
    * A capture taken before the JPEG has been decoded silently records the
@@ -96,10 +107,13 @@ export function DebugHooks({
   params,
   setParams,
   metrics,
+  mouse,
 }: {
   params: SimulationParams;
   setParams: Dispatch<SetStateAction<SimulationParams>>;
   metrics?: PerformanceMetrics;
+  /** Normalised camera orientation from `useCamera`: x = θ/2π, y = φ/π. */
+  mouse: { x: number; y: number };
 }) {
   // Metrics update every frame; holding them in a ref keeps the debug handle
   // current without re-running the effect (and re-wrapping the API) 60 times
@@ -211,9 +225,10 @@ export function DebugHooks({
         mass: params.mass,
         spin: params.spin,
       }),
+      orientation: () => ({ thetaDeg: mouse.x * 360, phiDeg: mouse.y * 180 }),
       skybox: getSkyboxStatus,
     };
-  }, [params, setParams]);
+  }, [params, setParams, mouse]);
 
   return null;
 }

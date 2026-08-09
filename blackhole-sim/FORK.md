@@ -987,6 +987,86 @@ turns that into a one-line check.
   Once the PNGs are committed, drop `continue-on-error` from the QA step and
   add `shader:check` to CI so the baseline actually protects the render.
 
+## Real black hole presets (spec milestone 10)
+
+Seven named objects, each locked to published parameters, at
+`/blackhole/{slug}/`.
+
+**Where the data lives.** `src/data/real-black-holes.json` is canonical;
+`src/configs/real-black-holes.ts` types it and adapts it to the existing
+`MassPreset` shape so nothing downstream (unit readouts, comfort speed, the
+test object) had to learn that real objects exist. The globe's copy at
+`data/black-holes.json` is generated from it by
+`scripts/data/generate-black-holes.mjs`, and `validate-black-holes.mjs` fails
+`npm run data:validate` if the two drift — milestone 11 reads the same numbers
+this app does, by construction rather than by discipline.
+
+**Per-field citations, per-field uncertainty.** Every quantity carries
+`{value, uncertainty, source}`. The flag matters because it varies *within* a
+single object: Cygnus X-1's mass is known to 10% and its spin to three
+significant figures, while V404 Cygni's spin is not known at all. Three states:
+
+| flag | meaning |
+| --- | --- |
+| `measured` | published value with a real error bar |
+| `contested` | methods disagree beyond their stated errors; the value is one defensible choice |
+| `unconstrained` | no measurement worth quoting; the value is a placeholder so the renderer has something to draw, and the UI says "not measured" |
+
+Sgr A* and V404 Cygni are `unconstrained` in spin. GRS 1915+105 is `contested`
+in both spin and inclination (reflection fits want a* = 0.98 and i ≈ 71°;
+continuum fitting with the Reid distance wants lower, and the inner disk may
+simply be misaligned with the orbit). Several of the spec's starting figures
+moved once checked: Cyg X-1's spin to > 0.9985 (Zhao et al. 2021), GRO
+J1655−40's inclination to 69 ± 2°, A0620−00's mass to 6.61 ± 0.25 M☉.
+
+**Two deviations from the spec, both deliberate.**
+
+1. *Inclination does not break the lock.* §6.4 says mass/spin/inclination are
+   fixed and changing any one drops to "custom". Inclination is applied on
+   selection, but the 3rd-person camera is free-orbiting by design — making a
+   camera drag flip the badge to `CUSTOM` would train users to ignore it. The
+   badge tracks spin, which is the parameter the shader reads and the user can
+   actually edit. `matchesLockedParameters` carries the reasoning.
+2. *The generic presets were relabelled.* §1.8's "Sgr A*" and "M87*" became
+   "Supermassive (4×10⁶ M☉)" and "Ultramassive (6.5×10⁹ M☉)". Two options with
+   the same name, one cited and one not, in the same dropdown, would have
+   defeated the point of the citations. Ids are unchanged so URL state still
+   round-trips.
+
+**Routing.** `src/app/[object]/page.tsx` with `generateStaticParams` +
+`dynamicParams = false`. Under `output: "export"` this emits
+`out/<slug>/index.html` per object — confirmed against a real build, not just
+`next dev`. The 1000-line `src/app/page.tsx` moved to
+`src/components/fork/SimulatorApp.tsx` so both the bare route and the per-object
+routes can render it; `page.tsx` is now a five-line wrapper and nothing else
+changed in the move.
+
+**Two traps worth recording.**
+
+- `massPresetForRealBlackHole` builds a fresh object every render, so the §1.4
+  jet-default effect could not keep depending on the preset object identity —
+  it would have re-fired every render and its `setParams` would have made that
+  a render loop. It keys on `preset.id` and `preset.jetByDefault` instead.
+- `params.verticalAngle` is **not** the live camera angle. The angle lives in a
+  ref inside `useCamera` and `params.verticalAngle` reports the config default
+  forever, so verifying "did the inclination apply?" through `__bh.params()`
+  silently always says 97°. `useCamera` gained `setPolarAngle`, and
+  `window.__bh.orientation()` was added to expose the real value.
+
+**Verification.** 16 new unit tests (`src/__tests__/physics/real-black-holes.test.ts`),
+which mostly assert the *discipline* — no field without a citation, no slug
+that could collide with a route, no spin outside [0, 1) — rather than the
+astrophysics; 531 tests pass overall. In-browser, on the real routes: correct
+parameters and inclination applied per object, `CUSTOM` on a spin change and
+back to `DATA` on Restore, and the generic presets clearing the object card.
+
+Goldens are unaffected by construction: no shader, renderer, or default-param
+file is touched, and `/blackhole/?deterministic=1` still opens at spin 0.5 and
+polar angle 97° with the shader compiling. The golden suite itself could not be
+run here — its runner spawns `bun run dev`, which needs `wasm-pack`, and
+pointing it at an already-running server instead gets a Playwright browser that
+never produces a canvas in this environment.
+
 ## Known gaps (not yet addressed)
 
 - `src/app/page.tsx` carries a large `sr-only` keyword-stuffed SEO section from
