@@ -1,36 +1,76 @@
 export const BLACKBODY_CHUNK = `
   /**
-   * Analytic Blackbody Approximation (Reverted Phase 1.1)
-   * Restored to original behavior as per user request.
-   * 
-   * @param temp Observed temperature (K)
-   * @return Linear RGB color (normalized intensity)
+   * Blackbody colour from the Planckian locus (spec §1.3).
+   *
+   * wiki-globe fork. This replaces the Tanner-Helland / Mitchell Charity fit
+   * upstream used, which is only calibrated to roughly 40,000 K. A real thin
+   * disk around a stellar-mass black hole peaks near 10^7 K, three orders of
+   * magnitude outside that fit's range, where it kept driving red and green
+   * down and returned a saturated blue (about sRGB 71,121,255) that no
+   * blackbody of any temperature actually has.
+   *
+   * The physical answer: above ~20,000 K the visible band is deep in the
+   * Rayleigh-Jeans tail, so chromaticity stops changing and converges to a
+   * fixed point. Kim et al. (2002)'s cubic approximation of the Planckian
+   * locus gives that for free — its 1/T terms simply vanish, leaving the
+   * limit CIE xy = (0.2404, 0.2351), a pale blue-white. No clamp needed; the
+   * approximation asymptotes correctly on its own.
+   *
+   * Consequence worth understanding before "fixing" a flat-looking disk: a
+   * truthful hot disk has almost no colour variation across it, because every
+   * part of it is in the same tail. The visible structure is *brightness*
+   * from the delta^4 beaming, not hue. The orange-to-white gradient in most
+   * black hole renders is a false-colour choice, reachable here by dialling
+   * the disk temperature down.
+   *
+   * @param temp Observed temperature (K), already Doppler-shifted by delta
+   * @return Linear RGB colour, normalised so the largest channel is 1
    */
   vec3 blackbody(float temp) {
-    // Standard Tanner-Helland / Mitchell Charity approximation
-    // Adjusted for linear space
-    // Clamp to prevent log(0) at Event Horizon (Infinite Redshift)
-    float t = max(temp, 1.0) / 100.0;
-    float r, g, b;
+    // Clamp low to stay inside the fit (and to survive the infinite redshift
+    // at the horizon, where temp goes to zero).
+    float T = clamp(temp, 1000.0, 1.0e9);
 
-    if (t <= 66.0) {
-        r = 255.0;
-        g = 99.4708025861 * log(t) - 161.1195681661;
-        
-        if (t <= 19.0) {
-            b = 0.0;
-        } else {
-            b = 138.5177312231 * log(t - 10.0) - 305.0447927307;
-        }
+    // Kilo-kelvin reciprocal: the published coefficients are in 1e9/T^3,
+    // 1e6/T^2, 1e3/T, which is exactly u^3, u^2, u for u = 1000/T.
+    float u = 1000.0 / T;
+    float u2 = u * u;
+    float u3 = u2 * u;
+
+    float x;
+    if (T < 4000.0) {
+      x = -0.2661239 * u3 - 0.2343589 * u2 + 0.8776956 * u + 0.179910;
     } else {
-        r = 329.698727446 * pow(t - 60.0, -0.1332047592);
-        g = 288.1221695283 * pow(t - 60.0, -0.0755148492);
-        b = 255.0;
+      x = -3.0258469 * u3 + 2.1070379 * u2 + 0.2226347 * u + 0.240390;
     }
 
-    // Formula produces sRGB. Convert to Linear for HDR pipeline.
-    vec3 srgbCol = vec3(r, g, b) / 255.0;
-    return pow(max(srgbCol, 0.0), vec3(2.2));
+    float x2 = x * x;
+    float x3 = x2 * x;
+
+    float y;
+    if (T < 2222.0) {
+      y = -1.1063814 * x3 - 1.34811020 * x2 + 2.18555832 * x - 0.20219683;
+    } else if (T < 4000.0) {
+      y = -0.9549476 * x3 - 1.37418593 * x2 + 2.09137015 * x - 0.16748867;
+    } else {
+      y =  3.0817580 * x3 - 5.87338670 * x2 + 3.75112997 * x - 0.37001483;
+    }
+
+    // CIE xyY (Y = 1) -> XYZ -> linear sRGB.
+    float Y = 1.0;
+    float X = x / max(y, 1e-4);
+    float Z = (1.0 - x - y) / max(y, 1e-4);
+
+    vec3 rgb = vec3(
+       3.2404542 * X - 1.5371385 * Y - 0.4985314 * Z,
+      -0.9692660 * X + 1.8760108 * Y + 0.0415560 * Z,
+       0.0556434 * X - 0.2040259 * Y + 1.0572252 * Z
+    );
+
+    // Clip out-of-gamut negatives, then normalise on the largest channel so
+    // hue is preserved and brightness stays the job of beaming and density.
+    rgb = max(rgb, vec3(0.0));
+    return rgb / max(max(rgb.r, max(rgb.g, rgb.b)), 1e-4);
   }
 
   // Approximate star color from B-V color index

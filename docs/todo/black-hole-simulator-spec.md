@@ -53,6 +53,21 @@ click-through to each object's simulator page.
 three remaining optimisations need a machine that can benchmark rendering,
 which this one cannot (§6.1).
 
+**Post-milestone-10 correction: the disk is now rendered in physical colour.**
+`u_disk_temp` had been multiplied by a radial profile peaking at 0.488, so it
+never meant what it said; the default was 9,500 K (a star, not a disk) against
+a real ~10^7 K; and `blackbody()` used a fit only valid to 40,000 K that
+returned a saturated blue above it. All three are fixed, the temperature now
+follows the mass preset, and the panel states whether you are looking at
+physical or false colour. Consequence: a truthful disk is nearly featureless
+pale blue, since it all sits in the Rayleigh-Jeans tail — the visible structure
+is δ⁴ beaming (measured 1.38× brightness asymmetry at identical hue), not
+temperature. **All three goldens are stale as a result** and could not be
+re-captured here; see `blackhole-sim/tests/visual-regression/README.md`.
+Auto-spin was also framerate-dependent and 50× the globe's rate — it now
+integrates `dt` and matches `AUTOROTATE_RATE` exactly. Full write-up in
+`FORK.md`.
+
 A scientifically accurate interactive black hole, reachable from the body
 dropdown (new group below "Pluto system") and at `wikiglo.be/blackhole`.
 The user can drop a test object on a chosen orbital trajectory and watch it

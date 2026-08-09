@@ -1,5 +1,21 @@
 # Shader visual regression
 
+> **The three committed goldens are STALE and will fail.** They were captured
+> at commit `0d56446` (2026-07-26), before the disk was switched to physical
+> colour. Two changes since then alter every disk pixel by design:
+>
+> - `blackbody()` now uses the Planckian locus instead of the Tanner-Helland
+>   fit, which was only valid to ~40,000 K and returned a saturated blue above
+>   it that no blackbody has.
+> - The Novikov-Thorne radial profile is normalised to peak at 1, so
+>   `diskTemp` means the disk's peak temperature. Everything renders about
+>   2.05x hotter than the same `diskTemp` used to produce.
+>
+> Re-capture with `bun run shader:update-goldens` on a machine that can run
+> the suite, and delete this notice. This was not done at the time because the
+> capture environment could not produce a canvas (see FORK.md, milestone 10).
+> Until then a failure here is expected and proves nothing.
+
 Headless capture + SSIM/pixelmatch diff against committed PNG goldens.
 Runs out-of-band from the default vitest suite because it boots the
 Next.js dev server and drives Playwright per frame; expensive on CI,

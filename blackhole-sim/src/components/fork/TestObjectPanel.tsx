@@ -100,6 +100,12 @@ export function TestObjectPanel({
     else onMassPresetChange(value.slice(7));
   };
 
+  // Within 1% of the physical peak counts as true colour; the slider's 1000 K
+  // step cannot land exactly on 1.11e7.
+  const physicalPeakK = peakDiskTemperatureK(massPreset.solarMasses);
+  const trueColour =
+    !!params && Math.abs(params.diskTemp - physicalPeakK) / physicalPeakK < 0.01;
+
   return (
     // top-48 clears the identity HUD stack above it: back pill, logo, title,
     // and the "SIMULATION KERNEL / METRIC" status lines. At top-28 this panel
@@ -160,6 +166,30 @@ export function TestObjectPanel({
           value={`${peakDiskTemperatureK(massPreset.solarMasses).toExponential(1)} K`}
         />
       </dl>
+
+      {/*
+        Honesty rule (§6, "honesty over prettiness"). The row above states the
+        physical peak temperature; the shader now renders that same number by
+        default, so the colour on screen is the real visible-band colour of a
+        disk that hot — which is a nearly flat pale blue, because everything
+        above ~20,000 K sits in the same Rayleigh-Jeans tail. If the user drags
+        the temperature away from the physical value to get the familiar
+        orange gradient back, that is false colour and the UI has to say so
+        rather than letting the readout above imply otherwise.
+      */}
+      {params && (
+        <p
+          className={`mb-3 font-mono text-[8px] leading-relaxed ${
+            trueColour ? "text-white/35" : "text-amber-300/70"
+          }`}
+        >
+          {trueColour
+            ? "Physical colour: this is how a blackbody at the temperature above actually looks — almost featureless blue-white, with the visible structure coming from beaming rather than temperature."
+            : `False colour: rendering at ${params.diskTemp.toExponential(1)} K, not the ${peakDiskTemperatureK(
+                massPreset.solarMasses,
+              ).toExponential(1)} K above. Hue is exaggerated to show the Doppler shift.`}
+        </p>
+      )}
 
       <h3 className="mb-2 font-mono text-[9px] uppercase tracking-[0.25em] text-white/70">
         Test object

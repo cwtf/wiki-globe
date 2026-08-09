@@ -1067,6 +1067,95 @@ run here — its runner spawns `bun run dev`, which needs `wasm-pack`, and
 pointing it at an already-running server instead gets a Playwright browser that
 never produces a canvas in this environment.
 
+## Physical disk colour, and an honest auto-spin (post-milestone 10)
+
+Two corrections that came out of asking what the disk temperature actually is.
+
+### The disk is now rendered at the temperature the UI claims
+
+Three separate bugs were stacked here, and each one hid the next.
+
+1. **`u_disk_temp` was not the disk's temperature.** The Novikov-Thorne radial
+   profile `x^0.75 * (1 - sqrt(x))^0.25` (x = isco/r) peaks at **0.48787** at
+   r = 1.361 isco, and the shader multiplied `u_disk_temp` by it directly. So
+   the hottest pixel was always 0.49x whatever the UI said. The profile is now
+   divided by that constant, which makes `u_disk_temp` literally the peak
+   effective temperature. Everything renders 2.05x hotter than the same
+   `diskTemp` value used to produce.
+
+2. **The default was a star, not a disk.** `diskTemp` defaulted to 9,500 K,
+   giving a rendered peak of ~4,600 K — the familiar orange-to-white gradient,
+   and roughly the surface of a K-type star. A real Shakura-Sunyaev disk around
+   a 10 solar-mass black hole peaks near **10^7 K**, about 0.86 keV, which is
+   the X-ray band those objects are named for. Measured soft-state inner-disk
+   temperatures for Cygnus X-1 are 0.4-0.6 keV, so the module's existing
+   `peakDiskTemperatureK` (anchored 10^7 K at 10 M_sun, scaling M^-1/4, the
+   correct dependence at fixed Eddington ratio) was already right to within a
+   factor of ~1.5 — it just was not wired to anything. It now drives
+   `diskTemp` from the selected preset or real object.
+
+3. **`blackbody()` could not represent those temperatures.** Upstream used the
+   Tanner-Helland / Mitchell Charity fit, calibrated to roughly 40,000 K. At
+   10^7 K it kept driving red and green down and returned about sRGB
+   (71,121,255) — a saturated blue no blackbody has. Replaced with Kim et al.
+   (2002)'s cubic approximation of the Planckian locus, then CIE xy -> XYZ ->
+   linear sRGB. That fit's 1/T terms vanish as T grows, so it converges on its
+   own to the Rayleigh-Jeans chromaticity **xy = (0.2404, 0.2351)**, about
+   sRGB (148,176,255). No clamp, no special case.
+
+**What this looks like, and why it is not a regression.** A truthful hot disk
+is nearly featureless pale blue, because every part of it — 3x10^6 K at the
+outer edge to 10^7 K at the peak — sits in the same Rayleigh-Jeans tail where
+chromaticity no longer changes. The colour gradient in essentially every black
+hole render, this one included until now, is false colour.
+
+What survives is the thing that matters: the delta^4 beaming is an *intensity*
+effect, so the approaching/receding asymmetry the spec calls "the signature of
+a real render" is untouched. Measured on a real frame at 10^7 K: left half mean
+luminance 78.3 vs right half 56.6, a **1.38x brightness ratio, with identical
+hue on both sides** (69,79,101 vs 50,56,79 — same ratios, different brightness).
+That is exactly the physical prediction, and it is a better demonstration than
+the old version gave, because previously hue and brightness were confounded.
+
+A differential capture confirms the colour flip: mean lit-disk pixel is
+(62,71,95) at 10^7 K (blue-dominant) versus (91,86,84) at 9,500 K (warm).
+
+The false-colour look is still one slider away, and `TestObjectPanel` now says
+which of the two you are looking at rather than printing a physical peak
+temperature above a disk drawn at a thousandth of it.
+
+**Deliberately not fixed:** the simulator draws a thin disk for every object,
+but Sgr A* and M87* do not have one. Both are radiatively inefficient flows
+(~10^-9 and ~10^-5 Eddington), geometrically thick, optically thin, and
+two-temperature, radiating optically thin synchrotron from electrons at
+~10^9-10^11 K rather than blackbody from a photosphere — which is why the EHT
+images them at 230 GHz. The thin-disk temperature quoted for them is the right
+answer to "what if this were a quasar?" and not a description of the real
+object. Modelling a RIAF is a much larger job; the panel wording was narrowed
+to claim only that the colour matches the stated temperature.
+
+### Auto-spin was framerate-dependent and 50x the globe
+
+`state.theta += spinSpeed` was applied once per *frame*, with no `dt`, while
+the config labelled the unit `rad/s`. At 60 fps the default 0.005 meant
+0.3 rad/s — a full revolution every 21 seconds — and the whole scene visibly
+sped up or slowed down with the frame rate, which on this renderer changes with
+the quality preset.
+
+Now multiplied by the `dt` the loop already computes, and the default set to
+**0.006 rad/s** to match `AUTOROTATE_RATE` in the globe's `js/app.js`: one turn
+every 17.5 minutes in both apps. Measured over 9 seconds in a live frame:
+0.3438 deg/s = 0.006 rad/s exactly, which also confirms the integration is
+framerate-independent.
+
+### Goldens
+
+**All three goldens are stale and will fail** — the disk colour changed by
+design. They could not be re-captured here (the capture environment cannot
+produce a canvas), so `tests/visual-regression/README.md` carries a notice
+explaining what changed and how to regenerate. A failure there currently
+proves nothing.
+
 ## Known gaps (not yet addressed)
 
 - `src/app/page.tsx` carries a large `sr-only` keyword-stuffed SEO section from

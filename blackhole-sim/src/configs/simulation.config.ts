@@ -127,7 +127,13 @@ export const SIMULATION_CONFIG = {
 
   // System Kinetics
   autoSpin: {
-    default: 0.005, // Default to static for accuracy
+    // Matches AUTOROTATE_RATE in the globe's js/app.js so the simulator and
+    // the globe drift at the same speed — one full turn in about 17 minutes.
+    //
+    // This is genuinely rad/s now. It used to be added once per frame, so the
+    // effective rate was ~0.3 rad/s (a full turn every 21 seconds, 50x the
+    // globe) and varied with the display's refresh rate.
+    default: 0.006,
     min: -0.1,
     max: 0.1,
     step: 0.001,
@@ -161,13 +167,24 @@ export const SIMULATION_CONFIG = {
 
   // Thermodynamics
   diskTemp: {
-    default: 9500.0,
-    min: 1000.0, // Cool edge
-    max: 1000000.0, // High Energy X-Ray Limit (Scientific Accuracy)
+    // Peak effective temperature of the disk, in kelvin (the shader's radial
+    // profile is normalised to peak at 1, so this is literally the hottest
+    // point). The default is the physical value for the default stellar-mass
+    // preset; selecting a mass preset or a real object overwrites it with
+    // that object's own peak temperature.
+    //
+    // Was 9500 K, which is a hot star, not an accretion disk — it produced the
+    // familiar orange-to-white gradient because that is the range where
+    // blackbody colour still varies. Real thin disks are ~1000x hotter and
+    // are a flat pale blue-white. Dial this down to recover the false-colour
+    // look; the UI says which one you are looking at.
+    default: 1.0e7,
+    min: 1000.0, // Cool edge; below this the fit and the eye both give up
+    max: 2.0e7, // Above the ~1e7 K peak of a 10 solar-mass thin disk
     step: 1000,
     unit: "K",
     decimals: 0,
-    label: "Disk Temp",
+    label: "Peak disk temp",
   },
   diskDensity: {
     default: 4.0,

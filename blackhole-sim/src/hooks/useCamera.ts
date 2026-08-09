@@ -525,13 +525,21 @@ export function useCamera(
         state.phi += state.phiVelocity;
 
         // Auto-Spin
+        //
+        // wiki-globe fork: multiplied by `dt`. It used to be added per *frame*,
+        // which made the config's "rad/s" unit a lie and the rotation
+        // framerate-dependent — 0.005/frame is 0.3 rad/s at 60 fps but half
+        // that on a 30 fps display, and the whole scene visibly sped up
+        // whenever the quality preset let the frame rate rise. Now the unit is
+        // real, and the default matches the globe's own AUTOROTATE_RATE so the
+        // two apps drift at the same speed.
         const spinSpeed = paramsRef.current.autoSpin ?? DEFAULT_AUTO_SPIN;
         if (
           !isDragging.current &&
           touchState.current.touches.length === 0 &&
           Math.abs(state.thetaVelocity) < 0.0001
         ) {
-          state.theta += spinSpeed;
+          state.theta += spinSpeed * dt;
         }
 
         // Constraints

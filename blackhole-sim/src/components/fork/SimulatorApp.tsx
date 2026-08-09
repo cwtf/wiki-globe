@@ -16,7 +16,11 @@ import { SingularityCard } from "@/components/fork/SingularityCard";
 import { useTestObject } from "@/hooks/useTestObject";
 import { physicsBridge } from "@/engine/physics-bridge";
 import type { DropPresetName } from "@/physics/worldline";
-import { DEFAULT_MASS_PRESET, findPreset } from "@/configs/mass-presets";
+import {
+  DEFAULT_MASS_PRESET,
+  findPreset,
+  peakDiskTemperatureK,
+} from "@/configs/mass-presets";
 import {
   findRealBlackHole,
   massPresetForRealBlackHole,
@@ -268,6 +272,7 @@ export const SimulatorApp = ({
   // inside it would make that a render loop.
   const presetJetDefault = massPreset.jetByDefault;
   const presetId = massPreset.id;
+  const presetSolarMasses = massPreset.solarMasses;
   useEffect(() => {
     setParams((prev) => ({
       ...prev,
@@ -275,8 +280,14 @@ export const SimulatorApp = ({
         ...(prev.features ?? DEFAULT_FEATURES),
         relativisticJets: presetJetDefault,
       },
+      // The disk's peak temperature is a real consequence of the mass
+      // (T ∝ M^-1/4 at fixed Eddington ratio), so it follows the preset like
+      // the jet default does. A 10 M☉ hole peaks near 10^7 K and renders as a
+      // flat pale blue; a 6.5e9 M☉ one peaks near 6e4 K. The user can still
+      // drag it down to false colour, and the panel says so when they have.
+      diskTemp: peakDiskTemperatureK(presetSolarMasses),
     }));
-  }, [presetId, presetJetDefault]);
+  }, [presetId, presetJetDefault, presetSolarMasses]);
 
   // §6.4: applying a real object writes the parameters the shader actually
   // reads — spin, and the camera inclination. Mass is not written here: the

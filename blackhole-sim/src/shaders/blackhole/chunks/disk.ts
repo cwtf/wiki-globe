@@ -103,9 +103,18 @@ export const DISK_CHUNK = `
                   float beaming = 1.0;
 #endif
                   // 6. Novikov-Thorne Temperature Profile (Zero-Torque inner boundary)
+                  //
+                  // Normalised so the profile peaks at exactly 1, which makes
+                  // u_disk_temp mean "peak effective temperature of the disk"
+                  // rather than an arbitrary scale factor. The raw profile
+                  // x^0.75 * (1 - sqrt(x))^0.25 (x = isco/r) maxes at 0.48787
+                  // at r = 1.361 * isco, so without this the rendered disk was
+                  // barely half the temperature the UI claimed it was.
                   float isco_r = clamp(isco / sampleR, 0.0, 1.0);
                   float nt_factor = max(0.0, 1.0 - sqrt(isco_r));
-                  float radialTempGradient = pow(isco_r, 0.75) * pow(nt_factor, 0.25);
+                  const float NT_PEAK = 0.4878713392;
+                  float radialTempGradient =
+                      pow(isco_r, 0.75) * pow(nt_factor, 0.25) / NT_PEAK;
 
                   // Temperature natively shifted by full relativistic Doppler delta
                   // (Replacing the previous Euclidean gravRedshift multiplier)
