@@ -80,6 +80,17 @@ wall-clock seconds instead of 0.95 (playback only, §1.9). Verified in Rust: a
 drop from 1.02 r_h crosses and reaches 0.02 r_s with proper time matching the
 closed form, with samples either side of the horizon, at a* = 0 and 0.9.
 
+**Post-milestone-10 correction: the singularity card compared the wrong τ.**
+It printed proper time from *release* directly above "Interior bound πM", so a
+drop from 20 M read 98.020 against 3.142 and looked like a thirty-fold
+violation. The bound applies to the stretch from *horizon crossing*, which for
+that drop is 1.372. `Worldline.properTimeInsideHorizon()` computes it and the
+card shows both, labelled. πM is also flagged as Schwarzschild-only (a Kerr
+interior has an inner horizon and a ring singularity), and the card admits the
+run ends at 0.02 r_s rather than r = 0. It is also no longer a dead end — it
+dismisses, offers "watch from outside", and states plainly that there is no
+further in because the geodesic is incomplete, not because the integrator quit.
+
 A scientifically accurate interactive black hole, reachable from the body
 dropdown (new group below "Pluto system") and at `wikiglo.be/blackhole`.
 The user can drop a test object on a chosen orbital trajectory and watch it

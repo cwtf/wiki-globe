@@ -1236,6 +1236,75 @@ barely advances and `captureFrame` times out waiting for a draw. The playback
 path itself is milestone 5's and unchanged; what changed is where the drop
 starts, which is what the Rust tests cover.
 
+## The singularity card was comparing the wrong two numbers
+
+Reported from a screenshot: the card read
+
+    Total proper time tau      98.020
+    Interior bound piM          3.142
+
+which looks like a thirty-fold violation of a bound the card states one line
+below. It is not a physics error — it is a labelling one. `totalProperTime` is
+the proper time from **release**, and the piM bound applies to the stretch from
+**horizon crossing**. For the drop that produced that screenshot (r0 = 20 M)
+the two are:
+
+| quantity | value |
+| --- | --- |
+| proper time from release | 99.342 |
+| ...of which inside the horizon | **1.372** |
+| interior bound piM | 3.142 |
+
+1.372 is the number that belonged next to the bound, and it satisfies it
+comfortably. `Worldline.properTimeInsideHorizon(r_h)` computes it, interpolating
+the crossing tau between the bracketing samples, and returns null when the
+worldline never crossed — an orbiting object must not report an interior time
+at all. The card now shows both figures, labelled, and compares only the
+interior one.
+
+Two related corrections while in there:
+
+- **piM is the Schwarzschild bound.** A spinning hole has an inner (Cauchy)
+  horizon and a ring singularity, so the same number is not its bound. For
+  a* != 0 the card labels it "piM (Schwarzschild only)" and says why.
+- **The run ends at r = 0.02 r_s, not r = 0.** "Reached the singularity" was
+  overstating it by two percent of a Schwarzschild radius; the card now says so.
+
+### And it was a dead end
+
+The card was a full-screen dim with no way out: you could not look at where you
+had arrived, could not return to the outside view, could not do anything but
+reload. It dismisses now, with **Stay here** and **Watch from outside**, and it
+states the honest reason there is no "further in" on offer — the worldline does
+not stop because the integrator gave up, it stops because the geodesic is
+incomplete and general relativity has nothing to say past that point.
+
+(For a Kerr hole the maximal analytic extension *does* let a timelike geodesic
+pass through the ring into a negative-r region. It is not implemented, and not
+obviously worth implementing: the inner horizon is unstable to mass inflation,
+so that part of the extension is not believed to describe anything real. If it
+is ever added it needs to be labelled as a property of the idealised solution,
+not as a place you could go.)
+
+### Verification
+
+Rust (16 pass) checks the physics the card asserts: the interior stretch is
+under piM for both a 20 M drop and a release at 1.02 r_h, release at the
+horizon spends longer inside than a drop from far away, and both match the
+closed form `sqrt(r0^3/8M) (acos(2r/r0 - 1) + sqrt(4r/r0 (1 - r/r0)))`
+evaluated between r_h and the cutoff to better than 0.5%. Measured 2.6578 vs
+analytic 2.6574 for the horizon release; 1.3719 for the 20 M drop.
+
+Four TS tests cover `properTimeInsideHorizon` itself: interpolated crossing,
+a Kerr horizon smaller than 2M, null when never crossed, and empty-safe.
+
+**Not verified:** the card's own rendering — the new labels and the two
+buttons. The browser pane in this environment stopped accepting navigation
+part-way through the session (the dev server answers 200 to curl), on top of
+the rAF throttling that already made reaching the singularity through playback
+impossible. The arithmetic behind every figure it displays is covered above;
+the JSX is not.
+
 ## Known gaps (not yet addressed)
 
 - `src/app/page.tsx` carries a large `sr-only` keyword-stuffed SEO section from

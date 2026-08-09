@@ -237,3 +237,44 @@ describe("drop requests", () => {
     expect(req.innerRadius).toBe(0.04);
   });
 });
+
+describe("proper time inside the horizon", () => {
+  // The singularity card compares against the πM interior bound, and the
+  // quantity that bound applies to is the stretch from horizon crossing — not
+  // the total from release. Printing the wrong one made a drop from r = 20 M
+  // read 98.020 against 3.142 and look like a thirty-fold violation.
+  it("measures from the crossing, not from release", () => {
+    const w = infall();
+    expect(w.totalProperTime).toBe(6);
+    // Crossing r = 2 happens between tau = 4 (r = 2.1) and tau = 5 (r = 1.8),
+    // at fraction (2.1 - 2) / (2.1 - 1.8) = 1/3, so tau_cross = 4.3333.
+    const interior = w.properTimeInsideHorizon(2);
+    expect(interior).not.toBeNull();
+    expect(interior!).toBeCloseTo(6 - 4 - 1 / 3, 4);
+    // And it is a strict subset of the total.
+    expect(interior!).toBeLessThan(w.totalProperTime);
+  });
+
+  it("honours a Kerr horizon smaller than 2M", () => {
+    const w = infall();
+    const schwarzschild = w.properTimeInsideHorizon(2)!;
+    const spinning = w.properTimeInsideHorizon(1.4)!;
+    // A smaller horizon is crossed later, so less of the fall is inside it.
+    expect(spinning).toBeLessThan(schwarzschild);
+  });
+
+  it("returns null when the worldline never crossed", () => {
+    // A stable orbit must not report an interior time; the card would then be
+    // announcing an arrival that never happened.
+    const orbit = build([
+      [0, 0, 0, 10, HALF_PI, 0],
+      [1, 1.1, 1.1, 10, HALF_PI, 0.6],
+      [2, 2.2, 2.2, 10, HALF_PI, 1.2],
+    ]);
+    expect(orbit.properTimeInsideHorizon(2)).toBeNull();
+  });
+
+  it("is empty-safe", () => {
+    expect(build([]).properTimeInsideHorizon(2)).toBeNull();
+  });
+});

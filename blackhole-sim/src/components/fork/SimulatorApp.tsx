@@ -582,7 +582,11 @@ export const SimulatorApp = ({
           preset={dropPreset}
           onPresetChange={setDropPreset}
         />
-        <SingularityCard object={testObject} mass={params.mass} />
+        <SingularityCard
+          object={testObject}
+          mass={params.mass}
+          spin={params.spin}
+        />
 
         {/* ENTERPRISE-GRADE SEMANTIC CONTENT LAYER (High-Density Keyword Hub) */}
         <section className="sr-only" aria-hidden="false" id="physics-guide">

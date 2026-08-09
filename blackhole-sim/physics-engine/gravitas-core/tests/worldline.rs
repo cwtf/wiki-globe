@@ -544,3 +544,86 @@ fn handover_drop_works_for_a_spinning_hole_too() {
     assert!(w.proper_time.is_finite() && w.proper_time > 0.0);
     assert!(w.samples.last().unwrap().r < r_h);
 }
+
+#[test]
+fn interior_proper_time_respects_the_pi_m_bound() {
+    // The singularity card states "interior bound piM" and compares a number
+    // against it, so the number had better satisfy it. The bound applies to
+    // the stretch from horizon crossing to the end -- NOT to the total from
+    // release, which is unbounded and for a drop from 20 M is ~99.
+    //
+    // piM is attained in the limit of release from rest at the horizon, so
+    // dropping from just outside should come close to saturating it while a
+    // drop from far away uses far less.
+    let m = schwarzschild();
+    let r_h = m.event_horizon();
+
+    let interior_of = |r0: f64| -> f64 {
+        let w = run(
+            DropSpec::RadialFall { r: r0 },
+            WorldlineOptions {
+                inner_radius: 0.02 * RS,
+                max_steps: 800_000,
+                ..Default::default()
+            },
+        );
+        assert_eq!(w.end, WorldlineEnd::ReachedInnerRadius);
+
+        // Proper time at the crossing, interpolated between the bracketing
+        // samples the same way the TS side does it.
+        let mut tau_cross = None;
+        for pair in w.samples.windows(2) {
+            let (prev, cur) = (&pair[0], &pair[1]);
+            if prev.r >= r_h && cur.r < r_h {
+                let span = prev.r - cur.r;
+                let frac = if span > 0.0 { (prev.r - r_h) / span } else { 0.0 };
+                tau_cross = Some(prev.tau + frac * (cur.tau - prev.tau));
+                break;
+            }
+        }
+        w.proper_time - tau_cross.expect("worldline must cross the horizon")
+    };
+
+    let bound = std::f64::consts::PI * M;
+
+    let far = interior_of(20.0 * M);
+    let near = interior_of(1.02 * r_h);
+
+    assert!(
+        far < bound,
+        "interior time from a 20M drop ({far:.4}) must be under piM ({bound:.4})"
+    );
+    assert!(
+        near < bound,
+        "interior time from the horizon ({near:.4}) must be under piM ({bound:.4})"
+    );
+    // Releasing at the horizon is the maximising case, so it should spend
+    // markedly longer inside than a drop from far away.
+    assert!(
+        near > far,
+        "release at the horizon ({near:.4}) should spend longer inside than a \
+         drop from 20M ({far:.4})"
+    );
+
+    // Against the closed form rather than a guessed fraction of the bound.
+    // For release from rest at r0, tau elapsed on reaching r is
+    //   sqrt(r0^3 / 8M) * (acos(2r/r0 - 1) + sqrt(4r/r0 (1 - r/r0)))
+    // and the interior stretch is that evaluated at the cutoff minus at r_h.
+    // Note neither case can actually reach piM: the run stops at 0.02 r_s
+    // rather than r = 0, and the drop starts 2% outside rather than on the
+    // horizon. 84.6% is the honest ceiling here, not 100%.
+    let closed_form = |r0: f64, r: f64| -> f64 {
+        (r0.powi(3) / (8.0 * M)).sqrt()
+            * ((2.0 * r / r0 - 1.0).acos() + (4.0 * r / r0 * (1.0 - r / r0)).sqrt())
+    };
+    let cutoff = 0.02 * RS;
+    for (label, r0, measured) in [("20M", 20.0 * M, far), ("horizon", 1.02 * r_h, near)] {
+        let analytic = closed_form(r0, cutoff) - closed_form(r0, r_h);
+        let rel = (measured - analytic).abs() / analytic;
+        assert!(
+            rel < 5e-3,
+            "{label} interior time {measured:.4} vs closed form {analytic:.4} \
+             (rel err {rel:.2e})"
+        );
+    }
+}

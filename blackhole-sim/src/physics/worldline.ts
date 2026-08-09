@@ -131,9 +131,39 @@ export class Worldline {
     );
   }
 
-  /** Proper time at the last sample. */
+  /** Proper time at the last sample, measured from release. */
   get totalProperTime(): number {
     return this.count > 0 ? this.at(this.count - 1).tau : 0;
+  }
+
+  /**
+   * Proper time from crossing the horizon to the end of the worldline.
+   *
+   * This — not `totalProperTime` — is the quantity the πM interior bound
+   * applies to. Confusing the two makes a drop from r = 20 M report τ = 98
+   * against a bound of 3.142 and look like a thirty-fold violation, when the
+   * interior stretch is actually 1.372.
+   *
+   * Returns null if the worldline never crossed, which is the honest answer
+   * for an orbit that is still outside.
+   *
+   * The crossing τ is linearly interpolated between the bracketing samples;
+   * the sampling is fine enough near the horizon that the residual is far
+   * below the precision anything displays.
+   */
+  properTimeInsideHorizon(horizonRadius: number): number | null {
+    if (this.count === 0) return null;
+    for (let i = 1; i < this.count; i++) {
+      const prev = this.at(i - 1);
+      const cur = this.at(i);
+      if (prev.r >= horizonRadius && cur.r < horizonRadius) {
+        const span = prev.r - cur.r;
+        const frac = span > 0 ? (prev.r - horizonRadius) / span : 0;
+        const tauCross = prev.tau + frac * (cur.tau - prev.tau);
+        return this.totalProperTime - tauCross;
+      }
+    }
+    return null;
   }
 
   /**

@@ -10,6 +10,7 @@ import { getSkyboxStatus, type SkyboxStatus } from "@/rendering/skybox";
 import { fragmentShaderSource } from "@/shaders/blackhole/fragment.glsl";
 import type { SimulationParams } from "@/types/simulation";
 import type { UseTestObject } from "@/hooks/useTestObject";
+import { horizonRadius } from "@/hooks/useCamera";
 import type { FeatureToggles } from "@/types/features";
 
 export interface FrameCapture {
@@ -80,6 +81,10 @@ export interface BlackHoleDebugApi {
     properTime: number;
     paused: boolean;
     speed: number;
+    /** Proper time along the whole worldline, measured from release. */
+    totalProperTime: number | null;
+    /** Proper time from horizon crossing — what the πM bound constrains. */
+    interiorProperTime: number | null;
     r: number | null;
   };
   /**
@@ -262,6 +267,12 @@ export function DebugHooks({
         properTime: riderRef.current.properTime,
         paused: riderRef.current.paused,
         speed: riderRef.current.speed,
+        totalProperTime: riderRef.current.worldline?.totalProperTime ?? null,
+        // The quantity the singularity card's πM bound actually applies to.
+        interiorProperTime:
+          riderRef.current.worldline?.properTimeInsideHorizon(
+            horizonRadius(params.mass, params.spin),
+          ) ?? null,
         // readout is in Schwarzschild radii; r_s = 2M, so this is r in M.
         r: riderRef.current.readout
           ? riderRef.current.readout.rOverRs * 2
