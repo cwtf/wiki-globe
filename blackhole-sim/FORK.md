@@ -1305,6 +1305,98 @@ the rAF throttling that already made reaching the singularity through playback
 impossible. The arithmetic behind every figure it displays is covered above;
 the JSX is not.
 
+## The 1st-person view computed the crossing correctly and then hid it
+
+Asked what the sky *should* look like crossing the horizon, worked out the
+answer, then checked whether the fork produced it. The physics was right. The
+lens was not.
+
+### What the sky should do
+
+A static observer at r sees the shadow with half-angle
+`sin psi = (3 sqrt3 M / r) sqrt(1 - 2M/r)` (obtuse branch inside the photon
+sphere), which tends to **180 degrees** at the horizon — the hole swallows
+everything and only a pinprick of universe remains overhead. The rider is
+moving inward at beta -> 1 relative to that observer, and aberration sweeps the
+sky forward, so the shadow *contracts*. The limit is finite and depends on
+where the fall started:
+
+| released from rest at | shadow at crossing | sky still visible |
+| --- | --- | --- |
+| far away | 42.1 deg | 87% |
+| 6 M | 50.5 deg | 82% |
+| 2.04 M (the camera handover) | 140.0 deg | 12% |
+
+So for an ordinary infall the black hole does **not** swallow the sky. It grows
+monotonically all the way down and saturates at a 42 degree disc.
+
+### The frame was 45 degrees wide
+
+`uv` runs to 0.5 on the short axis, and the ray was `normalize(vec3(uv, 1.2))`.
+That is a 45.2 degree vertical FOV whose *corner* sits at 40.4 degrees — inside
+the 42.1 degree shadow. Every pixel of the frame, corners included, was shadow
+at the moment of crossing. The tetrad, the aberration and the redshift were all
+computed correctly and rendered as a completely black screen, which reads as
+the view breaking rather than as physics.
+
+`FP_FOCAL_LENGTH = 0.45` puts the vertical half-angle at 48.0 degrees and the
+corner at 66.2, so the shadow's edge and the ring of sky around it are both on
+screen. Rectilinear projection stretches the corners 2.5x at that width; that
+is the price of showing an effect 84 degrees across. Only the 1st-person branch
+changed — the 3rd-person branches keep their own focal lengths, and the goldens
+are all 3rd-person.
+
+**The handover case is genuinely dark and no focal length fixes it.** Releasing
+from rest at 1.02 r_h gives a real 140 degree shadow: 88% of the sky is black
+because there was no room to pick up the speed that does the aberrating. That
+is the correct view for that trajectory. The drop panel's radial-fall preset
+from 20 M is the one that shows the classic 42 degrees.
+
+### Verification
+
+`cargo test -p gravitas-core --test infall_sky` (4 tests) pins the physics, and
+it is worth being precise about what it covers, because the existing
+`tetrad.rs` suite could not have caught a wrong boost — a frame boosted by the
+wrong amount is still orthonormal, still has the 4-velocity as its time leg,
+and still round-trips through projection.
+
+- The rider's beta relative to the local static observer, read out of the
+  worldline's own 4-velocity as `gamma = -g(u, n)`, matches the closed form
+  `sqrt((2M/r - 2M/r0)/(1 - 2M/r0))` at every radius from 10 M down to 2.001 M.
+- The aberrated shadow angle matches the closed form at the sampled radius,
+  is far from the static observer's value, and its horizon limit is 42.1 deg.
+- The ordering far < 6 M < handover holds, at 42 / 50.5 / 140 degrees.
+- A guard test confirms that beta = 0 would give 180 degrees, so the above
+  cannot pass by accident if the boost is ever dropped.
+
+Two traps hit while writing those, both worth knowing:
+
+- `measured_beta` must assert it is outside the horizon. Inside, `-g_tt` is
+  negative, `sqrt` gives NaN, and **`f64::NAN.max(0.0)` is `0.0` in Rust** — so
+  a silent zero reads as "not moving" and makes an unboosted frame look
+  correct. The first run of these tests failed exactly that way.
+- `samples.last()` is not the closest sample to the horizon: the integrator
+  overshoots `inner_radius` by up to a step, so the final sample can sit
+  *inside* while the run was asked to stop just outside.
+
+`infall-fov.test.ts` (7 tests) pins the lens: it parses `FP_FOCAL_LENGTH` out
+of the shader, asserts the short-axis half-angle clears 42.1 degrees with more
+than 3 degrees to spare, asserts the old 1.2 would have failed, caps the corner
+at 75 degrees so nobody "fixes" this by going fisheye, and checks the
+3rd-person focal lengths are untouched.
+
+The shader compiles with the change (`window.__bh.compileShader()` -> ok).
+
+**Not verified:** the rendered frame. The preview tab still runs rAF at ~0.5
+fps here, so `captureFrame` cannot get a draw and the on-screen shadow fraction
+could not be measured. What is checked is that the frame's angular extent now
+exceeds the shadow's, and that the shadow angle is right.
+
+Gotcha for the next person: `fragment.glsl.ts` is a JS template literal, so a
+backtick anywhere in a GLSL comment terminates the string. Writing a filename
+in backticks in the comment above broke the build instantly. Vitest caught it,
+but it is the same class of fault the `compileShader` hook exists for.
+
 ## Known gaps (not yet addressed)
 
 - `src/app/page.tsx` carries a large `sr-only` keyword-stuffed SEO section from

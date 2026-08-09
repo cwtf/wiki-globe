@@ -91,6 +91,19 @@ run ends at 0.02 r_s rather than r = 0. It is also no longer a dead end — it
 dismisses, offers "watch from outside", and states plainly that there is no
 further in because the geodesic is incomplete, not because the integrator quit.
 
+**Post-milestone-10 correction: the 1st-person lens was narrower than the
+thing it existed to show.** Aberration contracts the shadow from the static
+observer's 180° to **42.1°** at the crossing for a fall from far away — the
+hole does not swallow the sky, and ~87% of it is still stars. But the ray was
+`normalize(vec3(uv, 1.2))`, a 45° vertical FOV whose *corner* sits at 40.4°, so
+every pixel was inside the shadow and a correct computation rendered as a black
+screen. `FP_FOCAL_LENGTH = 0.45` opens it to 48° on the short axis. The tetrad
+itself was already right — verified by a new Rust suite that checks the boost
+against the closed form, which `tetrad.rs` could not have caught since a
+wrongly-boosted frame is still orthonormal. Note the §1.6 handover releases
+from 1.02 r_h, where the shadow really is 140° and the sky really is 88% black;
+that view is correct and no focal length changes it.
+
 A scientifically accurate interactive black hole, reachable from the body
 dropdown (new group below "Pluto system") and at `wikiglo.be/blackhole`.
 The user can drop a test object on a chosen orbital trajectory and watch it

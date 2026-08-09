@@ -55,8 +55,31 @@ void main() {
 
     if (firstPerson) {
         // Ray built in the rider's own frame (spec §1.6). Fixed focal length:
-        // a variable FOV would masquerade as aberration (§2.4).
-        vec3 n = normalize(vec3(uv, 1.2));
+        // a variable FOV would masquerade as aberration (§2.4). Fixed, not
+        // narrow — the value still has to be wide enough to contain what the
+        // frame is there to show.
+        //
+        // wiki-globe fork: this was 1.2, giving a 45.2 degree vertical FOV
+        // whose *corner* sits at 40.4 degrees. The shadow at the moment of
+        // horizon crossing has a half-angle of 42.1 degrees for a fall from
+        // far away, so every pixel of the frame — corners included — was
+        // inside it. The tetrad, the aberration and the redshift were all
+        // computed correctly and then rendered as a completely black screen,
+        // which reads as the view breaking rather than as physics.
+        //
+        // FP_FOCAL_LENGTH = 0.45 puts the vertical half-angle at 48.0 degrees
+        // and the corner at 66.2, so the shadow's edge and the ring of sky
+        // around it are both on screen. Rectilinear projection stretches the
+        // corners at this width; that is the price of showing an effect that
+        // is 84 degrees across. The infall-fov test pins the relationship so
+        // a future tweak cannot quietly re-close the aperture.
+        //
+        // Note the near-horizon handover (§1.6) releases from rest at
+        // 1.02 r_h, where the shadow really is 140 degrees and the sky really
+        // is 88% black. No focal length fixes that one — it is the correct
+        // view for that trajectory. Drop from 20M for the classic 42 degrees.
+        const float FP_FOCAL_LENGTH = 0.45;
+        vec3 n = normalize(vec3(uv, FP_FOCAL_LENGTH));
         ro = u_fp_pos;
         rd = normalize(u_fp_e0.xyz + n.x * u_fp_e1.xyz + n.y * u_fp_e2.xyz + n.z * u_fp_e3.xyz);
         // Contravariant p^t from the same legs; the conserved energy follows.
