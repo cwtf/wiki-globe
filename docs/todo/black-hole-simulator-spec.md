@@ -36,9 +36,22 @@ against the figures this spec states. The leftovers from milestones 3 and 4
 Actions, but nothing has been pushed — `wikiglo.be/blackhole` does not exist
 yet, and CI has never run. That is the outstanding item from milestone 1.
 
-**Milestones 7-11 (v2) are specified in §6 and start only after 6:**
-performance, Milky Way skybox, draggable orbits, real black hole presets at
-`/blackhole/{name}`, and those objects as clickable sky dots on the globe.
+**MILESTONE 10 DONE.** Seven real black holes with a cited source and an
+uncertainty flag *per field*, static routes at `/blackhole/{name}/`, and a
+`DATA`/`CUSTOM` badge that drops the moment a locked parameter is changed.
+Two deviations from §6.4, both recorded there and in `FORK.md`: inclination is
+applied on selection but is not part of the lock check (orbiting the camera is
+the viewer's business, not a claim about the black hole), and the generic
+"Sgr A*"/"M87*" mass presets were relabelled to describe their mass scale so
+they cannot be confused with the cited entries of the same name.
+
+**MILESTONE 11 DONE.** The same seven objects are sky dots on the globe,
+universal-scope, direction-only, with mass/distance/spin tooltips and
+click-through to each object's simulator page.
+
+**Milestone 7 (performance) is the only v2 item left**, and deliberately: the
+three remaining optimisations need a machine that can benchmark rendering,
+which this one cannot (§6.1).
 
 A scientifically accurate interactive black hole, reachable from the body
 dropdown (new group below "Pluto system") and at `wikiglo.be/blackhole`.
@@ -449,11 +462,16 @@ Each lands independently runnable; verify per §4 before moving on.
    the dropdown to the focused body and navigates to `/blackhole/`,
    `?focus=blackhole` redirects there, `?focus=mars` parks the camera on Mars.
 
-   Remaining: run the build (needs Bun + Rust + `wasm-pack`; CI does it first),
-   switch the repo's Pages source to "GitHub Actions", then confirm §4's
-   deployment checks — `self.crossOriginIsolated === true` once the service
-   worker controls the page, and a correct render on the very first
-   uncontrolled load via `window.__bh.transport() === "main-thread"`.
+   Update (milestone 10): **the Next build has now been run** — `next build`
+   completes and static-exports cleanly, including the new per-object routes.
+   It was run against the already-present `public/wasm` artifacts, so the
+   `wasm-pack` half of the pipeline is still unexercised locally (wasm-pack is
+   not installed on this machine; CI does it first).
+
+   Remaining: the wasm build itself, then confirm §4's deployment checks —
+   `self.crossOriginIsolated === true` once the service worker controls the
+   page, and a correct render on the very first uncontrolled load via
+   `window.__bh.transport() === "main-thread"`. Both need the deployed site.
 2. **Audit & baseline** *(done — see `blackhole-sim/FORK.md` "Physics audit")* — run the §4 lensing/shadow checks against the
    stock fork at `a = 0`; document what the base's disk/redshift pipeline
    already satisfies from §1.3 and patch the gaps (`g⁴` beaming,
@@ -908,7 +926,45 @@ grab the **apoapsis and periapsis** and drag them.
   which is the interesting case and should be reachable.
 - The drop panel keeps its presets — this is an addition, not a replacement.
 
-### 6.4 Real black hole presets (milestone 10)
+### 6.4 Real black hole presets (milestone 10) — done
+
+Shipped. What landed, and the two places it departs from the plan below:
+
+- **Data.** `blackhole-sim/src/data/real-black-holes.json` holds all seven
+  candidates, each field a `{value, uncertainty, source}` triple.
+  `uncertainty` is `measured` / `contested` / `unconstrained`, and
+  `unconstrained` means *the number is a placeholder so the renderer has
+  something to draw* — Sgr A* and V404 Cygni have no usable spin measurement
+  and the UI says "not measured" rather than showing 0.5 as if it were a fact.
+  Every figure in the table below was checked against a paper before shipping;
+  several moved (Cyg X-1 spin to > 0.9985 from Zhao et al. 2021, GRO J1655−40
+  inclination to 69 ± 2°, A0620−00 mass to 6.61 ± 0.25).
+- **Single source of truth.** `scripts/data/generate-black-holes.mjs` copies
+  that file to `data/black-holes.json` for milestone 11, and
+  `validate-black-holes.mjs` (wired into `npm run data:validate`) fails on
+  drift *and* on any field missing a citation or an uncertainty flag. The
+  discipline is enforced by the build, not by good intentions.
+- **Deviation 1 — inclination is not part of the lock.** §6.4 says
+  mass/spin/inclination are all fixed and changing one drops to custom.
+  Inclination *is* applied on selection (M87* opens at 17°, GRO J1655−40 at
+  69°, and the difference is dramatic) but it does not break the lock, because
+  the 3rd-person camera is free-orbiting by design: dropping to "custom" every
+  time the user dragged the view would make the badge meaningless. Mass is not
+  user-editable while an object is selected, so the live check is on spin.
+- **Deviation 2 — the generic presets were renamed.** §1.8's presets were
+  labelled "Sgr A*" and "M87*". With the cited entries in the same dropdown
+  that would have put two differently-sourced options with the same name side
+  by side, defeating the entire point. They are now "Supermassive (4×10⁶ M☉)"
+  and "Ultramassive (6.5×10⁹ M☉)" — which is all they ever were. Their ids are
+  unchanged, so URL state still round-trips.
+- **Verified in a browser** on every route: parameters applied, camera
+  inclination reaching the object's value (`window.__bh.orientation()`, a new
+  debug hook — `params.verticalAngle` is the config default and is *not* the
+  live angle), badge flipping to `CUSTOM` on a spin change and back on
+  Restore, and `bun run next build` emitting all seven `out/<slug>/index.html`
+  directories under `output: "export"`.
+
+The plan as written follows.
 
 Presets locked to measured parameters for named objects, reachable from a
 dropdown and at `/blackhole/{name}`.
@@ -951,7 +1007,36 @@ Implementation notes:
 - Inclination matters visually: several of these are near face-on and will
   look nothing like the edge-on default.
 
-### 6.5 Black holes in the globe's sky (milestone 11)
+### 6.5 Black holes in the globe's sky (milestone 11) — done
+
+Shipped as `js/layers/blackholes.js`, following the plan below. Notes worth
+keeping:
+
+- **Placement is camera-relative, not world-fixed.** Each dot is drawn at a
+  fixed 1e12 m from the *camera* along its real direction, re-placed every
+  tick. That is what an object at infinity actually does — zero parallax — and
+  it is the only way the dots stay correct from Neptune as well as from Earth.
+  A world-fixed position anywhere inside the 1e13 m far plane would swing by
+  tens of degrees as the camera moved between bodies.
+- **Orientation proof** (per CLAUDE.md's transpose-catch discipline): pushing
+  astronomy-engine's J2000 solar RA/Dec through the same RA/Dec → ICRF → fixed
+  pipeline puts the sub-solar point at 15.77°N, 16.46°E, against a solar
+  declination of 15.885° and a mean-solar-time longitude of 15.08° — the 1.4°
+  longitude residual is the equation of time. The same vector through a
+  transposed matrix lands 113° away, so the check genuinely discriminates. The
+  RA/Dec → ICRF step separately agrees with Cesium's own Simon1994 sun
+  ephemeris to 0.005°.
+- **Universal scope confirmed**: focusing Mars suspends the Earth-orbit layers
+  but leaves the dots on, and from a camera 1.96 AU from Earth every dot's
+  round-tripped RA/Dec is still exact.
+- **Not checked:** this section's suggestion that Sgr A* should visibly land in
+  the bright band of the milestone-8 panorama. It has to be true if the skybox
+  orientation is right — Sgr A* *is* the galactic centre — which is exactly why
+  it would be a good independent test of the skybox, and it needs a rendered
+  frame to confirm. Screenshots do not work in this environment (the browser
+  pane never composites), so it is left as an open visual check.
+
+The plan as written follows.
 
 Show the §6.4 objects on the wiki-globe main page as clickable sky dots,
 alongside the existing planet dots, linking to `/blackhole/{name}`.

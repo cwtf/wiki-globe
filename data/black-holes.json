@@ -1,0 +1,278 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "sourceLabel": "Curated real black hole parameters, one citation per field",
+    "notes": [
+      "Spec §6.4: every parameter carries its own citation string and an uncertainty flag. Where a quantity is poorly constrained the UI says so rather than picking a number that looks confident.",
+      "uncertainty is one of: measured (a published value with a real error bar), contested (published values disagree beyond their stated errors), unconstrained (no measurement worth quoting; the value is a plausible placeholder chosen so the renderer has something to draw).",
+      "spin is the dimensionless Kerr parameter a* = Jc/GM^2, always in [0, 1) here — every object listed is prograde or unconstrained, so no negative (retrograde) values appear.",
+      "inclinationDeg is the viewing angle of the accretion flow: 0 is face-on (looking down the spin axis), 90 is edge-on. For the X-ray binaries this is the orbital inclination, which is not necessarily the inner-disk inclination; for M87* it is the jet axis angle. That distinction is stated per object in the inclination source string.",
+      "raDeg/decDeg are J2000 in degrees and exist for milestone 11 (sky dots on the globe), not for the simulator. Positions are direction-only: nothing is ever placed at a true distance.",
+      "distanceKpc is kiloparsecs. Multiply by 3261.564 for light-years."
+    ],
+    "generatedAt": "2026-08-09T10:54:40.418Z",
+    "generatedFrom": "blackhole-sim/src/data/real-black-holes.json",
+    "generatedBy": "scripts/data/generate-black-holes.mjs"
+  },
+  "objects": [
+    {
+      "id": "sgr-a-star",
+      "name": "Sagittarius A*",
+      "shortName": "Sgr A*",
+      "constellation": "Sagittarius",
+      "kind": "supermassive",
+      "blurb": "The Milky Way's own black hole, 26,000 light-years away behind the galactic centre. Big enough that the tides at the horizon would not tear a person apart.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Sagittarius_A*",
+      "solarMasses": {
+        "value": 4297000,
+        "uncertainty": "measured",
+        "source": "GRAVITY Collaboration (2022), 'Mass distribution in the Galactic Center based on interferometric astrometry of multiple stellar orbits' — 4.297e6 M☉ with R0 = 8277 pc"
+      },
+      "spin": {
+        "value": 0.5,
+        "uncertainty": "unconstrained",
+        "source": "EHT Collaboration (2022), Sgr A* Paper V — the data prefer non-zero prograde spin but do not pin a value; 0.5 is a placeholder, not a measurement"
+      },
+      "inclinationDeg": {
+        "value": 30,
+        "uncertainty": "contested",
+        "source": "EHT Collaboration (2022), Sgr A* Paper V — models with inclination ≤ 50° are preferred and low-inclination MAD models perform best; 30° sits inside that band"
+      },
+      "distanceKpc": {
+        "value": 8.277,
+        "uncertainty": "measured",
+        "source": "GRAVITY Collaboration (2022) — R0 = 8277 ± 9 (stat) ± 33 (sys) pc"
+      },
+      "raDeg": 266.41684,
+      "decDeg": -29.00781,
+      "positionSource": "SIMBAD J2000 (17h45m40.04s, −29°00′28.1″)",
+      "jets": {
+        "value": false,
+        "uncertainty": "measured",
+        "source": "No prominent large-scale jet is observed from Sgr A*; it is a strikingly under-luminous accretor"
+      }
+    },
+    {
+      "id": "cygnus-x-1",
+      "name": "Cygnus X-1",
+      "shortName": "Cyg X-1",
+      "constellation": "Cygnus",
+      "kind": "stellar",
+      "blurb": "The first object widely accepted as a black hole, and the subject of a famous Hawking–Thorne bet. It is fed by the wind of a blue supergiant companion.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Cygnus_X-1",
+      "solarMasses": {
+        "value": 21.2,
+        "uncertainty": "measured",
+        "source": "Miller-Jones et al. (2021), Science 371, 1046 — 21.2 ± 2.2 M☉, revised upward with the new parallax distance"
+      },
+      "spin": {
+        "value": 0.998,
+        "uncertainty": "measured",
+        "source": "Zhao et al. (2021), 'Re-estimating the Spin Parameter of the Black Hole in Cygnus X-1' — a* > 0.9985 (3σ) by continuum fitting with the revised mass and distance"
+      },
+      "inclinationDeg": {
+        "value": 27.5,
+        "uncertainty": "measured",
+        "source": "Miller-Jones et al. (2021) — orbital inclination 27.5 ± 0.8°, close to face-on"
+      },
+      "distanceKpc": {
+        "value": 2.22,
+        "uncertainty": "measured",
+        "source": "Miller-Jones et al. (2021) — 2.22 (+0.18/−0.17) kpc by radio parallax (VLBA)"
+      },
+      "raDeg": 299.59032,
+      "decDeg": 35.20161,
+      "positionSource": "SIMBAD J2000 (19h58m21.68s, +35°12′05.8″)",
+      "jets": {
+        "value": true,
+        "uncertainty": "measured",
+        "source": "A compact, resolved radio jet is seen in the hard state; it is not a superluminal ejector like GRS 1915+105"
+      }
+    },
+    {
+      "id": "grs-1915-105",
+      "name": "GRS 1915+105",
+      "shortName": "GRS 1915+105",
+      "constellation": "Aquila",
+      "kind": "stellar",
+      "blurb": "The archetypal microquasar: a stellar-mass black hole that fires superluminal radio ejections, the reason the word 'microquasar' exists at all.",
+      "wikipedia": "https://en.wikipedia.org/wiki/GRS_1915%2B105",
+      "solarMasses": {
+        "value": 12.4,
+        "uncertainty": "measured",
+        "source": "Reid et al. (2014), ApJ 796, 2 — 12.4 (+2.0/−1.8) M☉, revised down from earlier ~14 M☉ estimates by the parallax distance"
+      },
+      "spin": {
+        "value": 0.98,
+        "uncertainty": "contested",
+        "source": "Reflection fits give a* = 0.98 ± 0.01 while continuum fitting with the Reid distance gives substantially lower values — the methods disagree beyond their quoted errors"
+      },
+      "inclinationDeg": {
+        "value": 60,
+        "uncertainty": "contested",
+        "source": "Reid et al. (2014) give 60 ± 5° for the binary; X-ray reflection fits prefer ~71°, so the inner disk may be misaligned with the orbit"
+      },
+      "distanceKpc": {
+        "value": 8.6,
+        "uncertainty": "measured",
+        "source": "Reid et al. (2014) — 8.6 (+2.0/−1.6) kpc by trigonometric parallax (VLBA)"
+      },
+      "raDeg": 288.79813,
+      "decDeg": 10.9457,
+      "positionSource": "SIMBAD J2000 (19h15m11.55s, +10°56′44.8″)",
+      "jets": {
+        "value": true,
+        "uncertainty": "measured",
+        "source": "Mirabel & Rodríguez (1994) reported apparently superluminal ejections; the source has fired repeated relativistic jets since"
+      }
+    },
+    {
+      "id": "v404-cygni",
+      "name": "V404 Cygni",
+      "shortName": "V404 Cyg",
+      "constellation": "Cygnus",
+      "kind": "stellar",
+      "blurb": "A transient that spends decades quiet and then erupts — its 2015 outburst was bright enough to be followed by amateur telescopes.",
+      "wikipedia": "https://en.wikipedia.org/wiki/V404_Cygni",
+      "solarMasses": {
+        "value": 9,
+        "uncertainty": "measured",
+        "source": "Khargharia et al. (2010) — 9.0 (+0.2/−0.6) M☉ from near-infrared spectroscopy of the K3 III donor"
+      },
+      "spin": {
+        "value": 0.5,
+        "uncertainty": "unconstrained",
+        "source": "No agreed spin measurement; published constraints span most of the allowed range. 0.5 is a placeholder, not a measurement"
+      },
+      "inclinationDeg": {
+        "value": 67,
+        "uncertainty": "measured",
+        "source": "Khargharia et al. (2010), consistent with Casares & Charles (1994) and Shahbaz et al. (1994) — 67°, well toward edge-on"
+      },
+      "distanceKpc": {
+        "value": 2.39,
+        "uncertainty": "measured",
+        "source": "Miller-Jones et al. (2009) — 2.39 ± 0.14 kpc by radio parallax, one of the most accurate distances to any black hole binary"
+      },
+      "raDeg": 306.01585,
+      "decDeg": 33.86722,
+      "positionSource": "SIMBAD J2000 (20h24m03.83s, +33°52′02.0″)",
+      "jets": {
+        "value": true,
+        "uncertainty": "measured",
+        "source": "Resolved, rapidly changing radio jets were imaged during the 2015 outburst"
+      }
+    },
+    {
+      "id": "a0620-00",
+      "name": "A0620−00",
+      "shortName": "A0620−00",
+      "constellation": "Monoceros",
+      "kind": "stellar",
+      "blurb": "The nearest known black hole to Earth, quiet since its 1975 outburst — and one of the few with a spin measured to be genuinely low.",
+      "wikipedia": "https://en.wikipedia.org/wiki/A0620-00",
+      "solarMasses": {
+        "value": 6.61,
+        "uncertainty": "measured",
+        "source": "Cantrell et al. (2010), ApJ 710, 1127 — 6.61 ± 0.25 M☉ from ~30 years of photometry with the variable disk component removed"
+      },
+      "spin": {
+        "value": 0.12,
+        "uncertainty": "measured",
+        "source": "Gou et al. (2010), ApJL 718, L122 — a* = 0.12 ± 0.19 by continuum fitting (a* < 0.49 at 3σ); a genuinely slowly spinning black hole"
+      },
+      "inclinationDeg": {
+        "value": 51,
+        "uncertainty": "measured",
+        "source": "Cantrell et al. (2010) — orbital inclination 51.0 ± 0.9°"
+      },
+      "distanceKpc": {
+        "value": 1.06,
+        "uncertainty": "measured",
+        "source": "Cantrell et al. (2010) — 1.06 ± 0.12 kpc"
+      },
+      "raDeg": 95.68542,
+      "decDeg": -0.34575,
+      "positionSource": "SIMBAD J2000 (06h22m44.54s, −00°20′44.3″)",
+      "jets": {
+        "value": false,
+        "uncertainty": "contested",
+        "source": "A compact radio jet is detected even in quiescence despite the low spin — evidence the jet is disk-driven rather than spin-driven — but there is no prominent large-scale jet to render"
+      }
+    },
+    {
+      "id": "gro-j1655-40",
+      "name": "GRO J1655−40",
+      "shortName": "GRO J1655−40",
+      "constellation": "Scorpius",
+      "kind": "stellar",
+      "blurb": "The second superluminal source found in the galaxy, and the textbook case for measuring spin from the thermal disk continuum.",
+      "wikipedia": "https://en.wikipedia.org/wiki/GRO_J1655-40",
+      "solarMasses": {
+        "value": 5.4,
+        "uncertainty": "measured",
+        "source": "Optical dynamical mass, 5.4 ± 0.3 M☉ (Beer & Podsiadlowski 2002 and subsequent redeterminations)"
+      },
+      "spin": {
+        "value": 0.7,
+        "uncertainty": "contested",
+        "source": "Shafee et al. (2006) find a* = 0.65–0.75 by continuum fitting; X-ray timing analyses have argued for markedly different values, so the intermediate spin is not settled"
+      },
+      "inclinationDeg": {
+        "value": 69,
+        "uncertainty": "measured",
+        "source": "69 ± 2° — a high-inclination system, close to edge-on, which is why its eclipses and dips are so pronounced"
+      },
+      "distanceKpc": {
+        "value": 3.2,
+        "uncertainty": "contested",
+        "source": "~3.2 kpc is the commonly adopted value; there is no parallax and published estimates range from roughly 1.7 to 3.2 kpc"
+      },
+      "raDeg": 253.50058,
+      "decDeg": -39.8458,
+      "positionSource": "SIMBAD J2000 (16h54m00.14s, −39°50′44.9″)",
+      "jets": {
+        "value": true,
+        "uncertainty": "measured",
+        "source": "Apparently superluminal radio jets were resolved during the 1994 outburst"
+      }
+    },
+    {
+      "id": "m87-star",
+      "name": "M87*",
+      "shortName": "M87*",
+      "constellation": "Virgo",
+      "kind": "supermassive",
+      "blurb": "The first black hole ever imaged, in the giant elliptical M87 — and not in the Milky Way. Its jet is visible from Earth in an amateur telescope's reach of the galaxy's core.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Messier_87",
+      "solarMasses": {
+        "value": 6500000000,
+        "uncertainty": "measured",
+        "source": "EHT Collaboration (2019), First M87 EHT Results I & VI — (6.5 ± 0.7)e9 M☉ from the measured shadow diameter"
+      },
+      "spin": {
+        "value": 0.9,
+        "uncertainty": "contested",
+        "source": "EHT modelling requires non-zero spin to power the jet, and a precessing jet nozzle (Cui et al. 2023) implies a spinning hole, but no measurement pins a* — ~0.9 is a frequently quoted claim, not a settled value"
+      },
+      "inclinationDeg": {
+        "value": 17,
+        "uncertainty": "measured",
+        "source": "Jet axis inclination ≈ 17° to the line of sight from superluminal motion in the jet — nearly face-on, which is why the shadow appears so circular"
+      },
+      "distanceKpc": {
+        "value": 16800,
+        "uncertainty": "measured",
+        "source": "EHT Collaboration (2019) adopt D = 16.8 (+0.8/−0.7) Mpc"
+      },
+      "raDeg": 187.70593,
+      "decDeg": 12.39112,
+      "positionSource": "SIMBAD J2000 (12h30m49.42s, +12°23′28.0″)",
+      "jets": {
+        "value": true,
+        "uncertainty": "measured",
+        "source": "The M87 jet is one of the most studied relativistic jets in astronomy, resolved from radio to X-ray"
+      }
+    }
+  ]
+}

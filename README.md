@@ -78,6 +78,7 @@ or make the globe more interesting:
 | Submarine cables | [TeleGeography](https://www.submarinecablemap.com) submarine cable routes (committed GeoJSON, updated via data pipeline). Thin glowing polylines colored per-cable. Hover shows cable name. | None (static dataset, badge `DATA`) |
 | Power plants | [WRI](https://datasets.wri.org/datasets/global-power-plant-database) Global Power Plant Database (~35k plants, committed JSON, updated via data pipeline). Points colored by fuel type (solar yellow, hydro blue, wind teal, coal grey, nuclear violet, etc.), sized by capacity. Hover shows name, fuel, capacity, and country. | None (static dataset, badge `DATA`) |
 | Time zones | [Natural Earth](https://www.naturalearthdata.com) 10m time zone polygons (committed GeoJSON, updated via data pipeline). Translucent polygon bands colored by UTC offset (cyclic palette). Hover shows UTC offset and local time. | None (static dataset, badge `DATA`) |
+| Black holes | Seven real black holes (Sgr A*, Cygnus X-1, GRS 1915+105, V404 Cygni, A0620−00, GRO J1655−40, M87*) as fixed sky dots at their J2000 RA/Dec, visible from every body since they are direction-only markers — nothing is placed at a true distance. Hover shows mass, distance in light-years, constellation, and spin (explicitly labelled when a spin is disputed or not measured). Click opens that object's simulator page at `/blackhole/{name}/` with its measured parameters locked in. Mass/spin/inclination/distance each carry their own published citation. | None (curated from published papers, badge `DATA`) |
 
 OpenSky's public REST API does not currently expose `states/all` to arbitrary
 browser origins, and anonymous requests are also credit-limited. Static
@@ -178,6 +179,7 @@ js/layers/planets.js    generic sky-dot/proxy-focus layers for planets
 js/layers/moons.js      Parent-relative major moon body layers
 js/wiki-panel.js        geosearch + Nominatim context articles, radius slider
 data/shipping-lanes.latest.geojson  curated shipping corridor baseline
+data/black-holes.json    real black hole parameters, generated from the fork's copy
 assets/earth-night.jpg  night base texture
 assets/milky-way-panorama-hires.jpg  6000×3000 ESO source panorama
 assets/skybox/          Cesium cube-map faces for the Milky Way background
@@ -185,5 +187,6 @@ assets/moon.jpg         NASA LRO color mosaic (CGI Moon Kit)
 assets/sun.jpg ...      solar-system textures used by the body layers
 scripts/data/generate-skybox.ps1  rebuilds the skybox from the panorama
 scripts/data/generate-blackhole-skybox.ps1  same panorama → the simulator's equirect sky
+scripts/data/generate-black-holes.mjs  fork's black hole list → data/black-holes.json
 proxy/                  optional Cloudflare Worker: OpenSky OAuth2+CORS proxy, AIS relay
 ```

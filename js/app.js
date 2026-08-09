@@ -9,6 +9,7 @@ import { EarthquakesLayer } from "./layers/earthquakes.js";
 import { EventsLayer } from "./layers/events.js";
 import { LaunchesLayer, formatCountdown } from "./layers/launches.js";
 import { CablesLayer } from "./layers/cables.js";
+import { BlackHolesLayer, formatLightYears, formatSolarMasses } from "./layers/blackholes.js";
 import { PowerPlantsLayer } from "./layers/power-plants.js";
 import { TimeZonesLayer } from "./layers/timezones.js";
 import { HeatmapLayer, METRICS, heatStressLabel, RES_STEPS, loadHeatmapMetrics } from "./layers/heatmap.js";
@@ -118,6 +119,9 @@ async function boot() {
   const cables = new CablesLayer(viewer);
   const plants = new PowerPlantsLayer(viewer);
   const timezones = new TimeZonesLayer(viewer);
+  // Universal scope: sky dots for the simulator objects, correct from any body
+  // (black-hole-simulator-spec.md §6.5).
+  const blackholes = new BlackHolesLayer(viewer);
   const heat = new HeatmapLayer(viewer); // lazy: fetches when a mode is selected
   const truesize = new TrueSizeLayer(viewer);
   const sun = new SunLayer(viewer);
@@ -142,6 +146,7 @@ async function boot() {
     cables: document.getElementById("chk-cables"),
     plants: document.getElementById("chk-plants"),
     timezones: document.getElementById("chk-timezones"),
+    blackholes: document.getElementById("chk-blackholes"),
   };
   sats.setVisible(layerToggles.sats.checked);
   flights.setVisible(layerToggles.flights.checked);
@@ -152,6 +157,7 @@ async function boot() {
   cables.setVisible(layerToggles.cables.checked);
   plants.setVisible(layerToggles.plants.checked);
   timezones.setVisible(layerToggles.timezones.checked);
+  blackholes.setVisible(layerToggles.blackholes.checked);
 
   ships.init();
   sats.init();
@@ -162,6 +168,7 @@ async function boot() {
   cables.init();
   plants.init();
   timezones.init();
+  blackholes.init();
   sun.init();
   moon.init();
   mars.init();
@@ -477,6 +484,9 @@ async function boot() {
     quakes.tick(now);
     events.tick(now);
     launches.tick(now);
+    // Not suspended on body focus: these are direction-only sky markers and
+    // stay correct from every body, which is the whole point of §6.5.
+    blackholes.tick();
     for (const layer of Object.values(bodyLayers)) layer.tick();
 
     const height = viewer.camera.positionCartographic.height;
@@ -593,6 +603,13 @@ async function boot() {
       wiki.open(l.lat, l.lon);
       return;
     }
+    if (id?.kind === "blackhole") {
+      // §6.5: the same handoff as the dropdown's simulator entry — restore the
+      // body selector first so browser-back lands on a consistent globe.
+      selBody.value = focusedBody;
+      location.href = blackholes.urlFor(id.bh);
+      return;
+    }
     if (id?.kind === "wiki") {
       wiki.focusArticle(id.article, { openPopup: true }); // highlight row + open article
       return;
@@ -690,6 +707,7 @@ async function boot() {
   bind("chk-cables", (v) => cables.setVisible(v));
   bind("chk-plants", (v) => plants.setVisible(v));
   bind("chk-timezones", (v) => timezones.setVisible(v));
+  bind("chk-blackholes", (v) => blackholes.setVisible(v));
   document.getElementById("sel-quake-feed").addEventListener("change", (e) => quakes.setFeed(e.target.value));
   document.querySelectorAll(".chk-event-cat").forEach((cb) => {
     cb.addEventListener("change", () => events.setCategory(cb.dataset.cat, cb.checked));
@@ -844,6 +862,7 @@ async function boot() {
     cables: document.getElementById("badge-cables"),
     plants: document.getElementById("badge-plants"),
     timezones: document.getElementById("badge-timezones"),
+    blackholes: document.getElementById("badge-blackholes"),
     heat: document.getElementById("badge-heat"),
     moon: document.getElementById("badge-moon"),
     mars: document.getElementById("badge-mars"),
@@ -859,6 +878,7 @@ async function boot() {
     cables: document.getElementById("count-cables"),
     plants: document.getElementById("count-plants"),
     timezones: document.getElementById("count-timezones"),
+    blackholes: document.getElementById("count-blackholes"),
     heat: document.getElementById("count-heat"),
     moon: document.getElementById("count-moon"),
     mars: document.getElementById("count-mars"),
@@ -922,13 +942,17 @@ async function boot() {
     const pc = bodyLayers[focusedBody]?.counts() ?? { source: "idle", count: 0 };
     setBadge(badgeEls.planet, pc.source);
     countEls.planet.textContent = pc.count;
+
+    const bhc = blackholes.counts();
+    setBadge(badgeEls.blackholes, bhc.source);
+    countEls.blackholes.textContent = bhc.count;
   }, 1000);
 
   // fade the onboarding hint after a while
   setTimeout(() => document.getElementById("hint").classList.add("faded"), 15000);
 
   // handy for debugging from the console
-  window.__globe = { viewer, sats, flights, ships, quakes, events, launches, cables, plants, timezones, heat, wiki, truesize, search, agent, sun, moon, mars, planets, childMoons, bodyLayers };
+  window.__globe = { viewer, sats, flights, ships, quakes, events, launches, cables, plants, timezones, blackholes, heat, wiki, truesize, search, agent, sun, moon, mars, planets, childMoons, bodyLayers };
 }
 
 function setupResponsiveSideMenus() {
@@ -1487,6 +1511,22 @@ function tooltipHtml(id) {
       <div class="tt-line">${esc(v.typeName || "Vessel")}${v.flag ? " · " + esc(v.flag) : ""}</div>
       <div class="tt-line">${speed} · heading ${hdg}${v.destination ? " · → " + esc(v.destination) : ""}</div>
       <div class="tt-note">${v.live ? "live AIS" : "simulated vessel"}</div>`;
+  }
+  if (id.kind === "blackhole") {
+    const b = id.bh;
+    // Mass and distance, per §6.5 — enough to make the point that this is not
+    // a planet dot without opening the Wikipedia panel. The distance is what
+    // separates it from every other dot on the globe: these are direction-only
+    // markers for objects thousands of light-years away.
+    const spin = b.spin.uncertainty === "unconstrained"
+      ? "spin not measured"
+      // Three decimals, not two: Cygnus X-1's a* = 0.998 rounds to "1.00" at
+      // two, which reads as exactly extremal — a value no black hole can have.
+      : `spin a* ${b.spin.value.toFixed(3)}${b.spin.uncertainty === "contested" ? " (disputed)" : ""}`;
+    return `<div class="tt-title">${esc(b.name)}</div>
+      <div class="tt-line">${esc(formatSolarMasses(b.solarMasses.value))} · ${esc(formatLightYears(b.distanceKpc.value))}</div>
+      <div class="tt-line">${esc(b.constellation)} · ${esc(spin)}</div>
+      <div class="tt-note">click to open the simulator</div>`;
   }
   if (id.kind === "heat") {
     const s = id.sample;

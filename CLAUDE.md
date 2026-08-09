@@ -133,6 +133,14 @@ etc. as parent-relative children).
   fallback in `js/layers/shipping.js` / `js/demo-data.js`.
 - `js/country-data.js` — bundled per-country GDP/HDI/IHDI/GNI estimates used
   as a heatmap fallback.
+- `js/layers/blackholes.js` — the black hole simulator's seven real objects as
+  fixed sky dots. Deliberately **not** in `BODIES`: no ephemeris, no `geoGlobe`
+  QID, no IAU orientation. Placement is camera-relative (a fixed 1e12 m along
+  the J2000 RA/Dec direction, re-placed every tick) so the dots have zero
+  parallax and stay correct from every body — hence a universal sidebar row
+  with no `data-scope`. Data comes from `data/black-holes.json`, generated from
+  the fork's canonical copy; edit `blackhole-sim/src/data/real-black-holes.json`
+  and re-run `npm run data:update:black-holes`, never the generated file.
 
 ### Design principles carried through the whole codebase
 
