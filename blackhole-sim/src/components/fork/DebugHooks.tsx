@@ -9,6 +9,7 @@ import { physicsBridge } from "@/engine/physics-bridge";
 import { getSkyboxStatus, type SkyboxStatus } from "@/rendering/skybox";
 import { fragmentShaderSource } from "@/shaders/blackhole/fragment.glsl";
 import type { SimulationParams } from "@/types/simulation";
+import type { UseTestObject } from "@/hooks/useTestObject";
 import type { FeatureToggles } from "@/types/features";
 
 export interface FrameCapture {
@@ -63,6 +64,25 @@ export interface BlackHoleDebugApi {
    */
   orientation: () => { thetaDeg: number; phiDeg: number };
   /**
+   * State of the infalling rider (spec §1.6).
+   *
+   * Exists because the horizon handover — flying the free camera to the
+   * horizon and pushing further, which converts it into a fall — has no
+   * outside-visible signal otherwise. The view toggle renders its active state
+   * purely through Tailwind classes, so asserting on the DOM would be
+   * asserting on styling.
+   */
+  rider: () => {
+    view: string;
+    status: string;
+    canRideAlong: boolean;
+    reachedSingularity: boolean;
+    properTime: number;
+    paused: boolean;
+    speed: number;
+    r: number | null;
+  };
+  /**
    * Load state of the Milky Way panorama (spec §6.2).
    *
    * A capture taken before the JPEG has been decoded silently records the
@@ -108,18 +128,26 @@ export function DebugHooks({
   setParams,
   metrics,
   mouse,
+  rider,
 }: {
   params: SimulationParams;
   setParams: Dispatch<SetStateAction<SimulationParams>>;
   metrics?: PerformanceMetrics;
   /** Normalised camera orientation from `useCamera`: x = θ/2π, y = φ/π. */
   mouse: { x: number; y: number };
+  /** The dropped object, for the §1.6 horizon-handover check. */
+  rider: UseTestObject;
 }) {
   // Metrics update every frame; holding them in a ref keeps the debug handle
   // current without re-running the effect (and re-wrapping the API) 60 times
   // a second.
   const metricsRef = useRef(metrics);
   metricsRef.current = metrics;
+
+  // Same reasoning as metricsRef: the rider updates every frame, and rebuilding
+  // the debug handle that often would be pointless churn.
+  const riderRef = useRef(rider);
+  riderRef.current = rider;
 
   useEffect(() => {
     const captureFrame = (): Promise<FrameCapture> =>
@@ -226,6 +254,19 @@ export function DebugHooks({
         spin: params.spin,
       }),
       orientation: () => ({ thetaDeg: mouse.x * 360, phiDeg: mouse.y * 180 }),
+      rider: () => ({
+        view: riderRef.current.view,
+        status: riderRef.current.status,
+        canRideAlong: riderRef.current.canRideAlong,
+        reachedSingularity: riderRef.current.reachedSingularity,
+        properTime: riderRef.current.properTime,
+        paused: riderRef.current.paused,
+        speed: riderRef.current.speed,
+        // readout is in Schwarzschild radii; r_s = 2M, so this is r in M.
+        r: riderRef.current.readout
+          ? riderRef.current.readout.rOverRs * 2
+          : null,
+      }),
       skybox: getSkyboxStatus,
     };
   }, [params, setParams, mouse]);

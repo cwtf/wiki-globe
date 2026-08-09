@@ -1156,6 +1156,86 @@ produce a canvas), so `tests/visual-regression/README.md` carries a notice
 explaining what changed and how to regenerate. A failure there currently
 proves nothing.
 
+## Flying to the horizon, and through it (spec §1.6)
+
+The free camera used to stop dead well outside the black hole. Three separate
+fences did it, and each was hit before the next became relevant:
+
+1. **`MIN_ZOOM = 2.5` in `useCamera`.** `renderer.ts` sets
+   `u_zoom = params.zoom * 2`, so this fenced the camera at **r = 5M** — two
+   and a half Schwarzschild horizon radii — for no physical reason. This was
+   the wall a user actually hit by scrolling.
+2. **The dive cinematic's "horizon crossing" test, `newR < 2.0`.** Same unit
+   confusion as the auto-spin bug: `newR` is a zoom value, so the test fired
+   at a true radius of **4M**, twice the horizon. Worse, on reaching it the
+   dive *bounced* — an animated "recovery" back out to where it started, which
+   is the one trajectory a black hole does not permit.
+3. **The shader's "kamikaze protection", `length(ro) < rh * 1.5`.** Silently
+   teleported the free camera back out to 1.5 r_h, so the view from just above
+   the horizon — where the shadow swells to swallow most of the sky — was
+   unreachable even if the other two had allowed it.
+
+### What replaced them
+
+**A horizon-aware floor.** `minZoomFor(mass, spin)` derives the limit from the
+actual Kerr horizon `r_h = M(1 + sqrt(1 - a*^2))`, which moves from 2M at zero
+spin to M at extremal, plus a 2% standoff. A constant could never have
+expressed that. The shader standoff drops to 1.01 r_h, and a test asserts the
+UI floor stays outside it by parsing the constant out of the shader source —
+if they ever cross, the camera would be silently relocated and every readout,
+including the handover radius, would describe a position the render is not
+using.
+
+**Crossing became a fall.** This is the physically load-bearing part. A
+hovering camera at fixed r is a static observer, and static observers exist for
+every r > r_h but *nowhere* inside: r is timelike in there, nothing holds
+station, everything is carried inward. So the camera cannot simply be flown
+further in. Pushing inward at the floor now hands over to the infalling rider
+that milestone 5 already built — which owns the tetrad, the aberration, the
+redshift, the horizon crossing and the singularity card. The dive does the same
+thing instead of bouncing.
+
+The plumbing has one wrinkle worth recording: `setView("first")` refuses while
+`canRideAlong` is false, and the drop it depends on is integrated
+asynchronously in the physics worker, so asking for the ride in the same tick
+as the drop silently does nothing. The radius is latched and an effect
+completes the handover once the worldline exists.
+
+**The plunge is paced.** The comfort speed makes one *ISCO orbit* take 30
+seconds, but a fall starting at the horizon is a different timescale entirely:
+from rest at r0 the remaining proper time is `(pi/2) sqrt(r0^3 / 2M)`, which at
+the handover radius is 2.917 M — **0.95 wall seconds** at comfort speed. Blink
+and the singularity card is already up. The handover retargets playback so the
+descent takes 12 seconds. Playback only, per §1.9: the worldline is integrated
+once and is identical at every speed.
+
+### Verification
+
+Rust (`cargo test -p gravitas-core --test worldline`, 15 pass) covers the part
+that actually matters, since the handover drop starts at 1.02 r_h — far harsher
+than the r = 20M start every previous test used:
+
+- a radial fall from 1.02 r_h reaches 0.02 r_s rather than stalling at the
+  horizon, with proper time matching `(pi/2) sqrt(r0^3/2M)` to 5%;
+- there are samples on **both sides** of the horizon, so the crossing has
+  frames to render rather than being stepped over in one jump;
+- the same holds at a* = 0.9, where r_h is only 1.436 M.
+
+In the browser: scrolling in reaches r = 1.9033 M against a horizon at
+1.8660 M (spin 0.5) where it used to stop at 5M; one further push flips
+`view` to `"first"` with the worldline ready at that radius; and playback is
+retargeted from 1.516e-4 to 1.197e-5, a predicted ride of exactly 12.0 s.
+`window.__bh.rider()` was added for this — the view toggle renders its active
+state purely through Tailwind classes, so asserting on the DOM would have been
+asserting on styling.
+
+**Not verified here:** the descent actually playing on screen, and the
+near-horizon view. The preview tab in this environment runs rAF at ~0.3 fps
+(even `setInterval` is throttled to ~1 tick in 5 s), so the playback clock
+barely advances and `captureFrame` times out waiting for a draw. The playback
+path itself is milestone 5's and unchanged; what changed is where the drop
+starts, which is what the Rust tests cover.
+
 ## Known gaps (not yet addressed)
 
 - `src/app/page.tsx` carries a large `sr-only` keyword-stuffed SEO section from

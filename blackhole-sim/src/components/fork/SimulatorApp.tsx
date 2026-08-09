@@ -13,14 +13,16 @@ import { TestObjectOverlay } from "@/components/fork/TestObjectOverlay";
 import { TestObjectPanel } from "@/components/fork/TestObjectPanel";
 import { ApsisHandles } from "@/components/fork/ApsisHandles";
 import { SingularityCard } from "@/components/fork/SingularityCard";
-import { useTestObject } from "@/hooks/useTestObject";
+import { useTestObject, type UseTestObject } from "@/hooks/useTestObject";
 import { physicsBridge } from "@/engine/physics-bridge";
 import type { DropPresetName } from "@/physics/worldline";
 import {
   DEFAULT_MASS_PRESET,
   findPreset,
   peakDiskTemperatureK,
+  timeUnitSeconds,
 } from "@/configs/mass-presets";
+import { MAX_LOG_SPEED, MIN_LOG_SPEED } from "@/physics/playback";
 import {
   findRealBlackHole,
   massPresetForRealBlackHole,
@@ -96,6 +98,15 @@ import { DEFAULT_FEATURES, type PresetName } from "@/types/features";
 import { settingsStorage } from "@/storage/settings";
 import { useWebGPUSupport } from "@/hooks/useWebGPUSupport";
 
+/**
+ * Wall-clock seconds the horizon plunge should take (spec §1.6, §1.9).
+ *
+ * Long enough to watch the sky close up behind you and the shadow swallow the
+ * view, short enough not to feel like waiting. Playback only — the worldline
+ * is integrated once and is identical at every speed.
+ */
+const HORIZON_FALL_SECONDS = 12;
+
 export const SimulatorApp = ({
   initialObjectId,
 }: {
@@ -164,6 +175,28 @@ export const SimulatorApp = ({
     settingsStorage.savePreset(params.performancePreset ?? "ultra-quality");
   }, [params.features, params.performancePreset]);
 
+  // §1.6: the camera can be flown to the horizon but not past it — there is no
+  // static frame in there to render from. Pushing further converts the camera
+  // into an infalling rider instead of stopping dead. `useTestObject` is
+  // declared below this hook, so the handover reaches it through a ref.
+  const testObjectRef = useRef<UseTestObject | null>(null);
+
+  // `setView("first")` refuses while `canRideAlong` is false, and the drop it
+  // depends on is integrated asynchronously in the physics worker — so asking
+  // for the ride in the same tick as the drop silently does nothing. The
+  // radius is latched here and the effect below finishes the job once the
+  // worldline actually exists.
+  const [pendingRideFrom, setPendingRideFrom] = useState<number | null>(null);
+
+  const handleCrossHorizon = useCallback((radius: number) => {
+    const rider = testObjectRef.current;
+    // Already falling: a second trigger would restart the drop and throw away
+    // the crossing the user is in the middle of.
+    if (!rider || rider.view === "first") return;
+    rider.drop("radialFall", { r0: radius });
+    setPendingRideFrom(radius);
+  }, []);
+
   const {
     mouse,
     handleMouseDown,
@@ -179,7 +212,7 @@ export const SimulatorApp = ({
     resetCamera,
     isCinematic,
     cinematicMode,
-  } = useCamera(params, setParams);
+  } = useCamera(params, setParams, { onCrossHorizon: handleCrossHorizon });
 
   // Phase 9.5: Debug Overlay
   const [showDebug, setShowDebug] = useState(false);
@@ -257,6 +290,44 @@ export const SimulatorApp = ({
     massPreset.solarMasses,
     params.spin,
   );
+  // Published for `handleCrossHorizon`, which is declared above this line
+  // because `useCamera` needs it.
+  testObjectRef.current = testObject;
+
+  // Second half of the horizon handover: the worldline has arrived, so the
+  // ride can actually begin. Also clears the latch if the drop failed, rather
+  // than leaving it armed to fire on some unrelated later drop.
+  useEffect(() => {
+    if (pendingRideFrom === null) return;
+
+    if (testObject.canRideAlong) {
+      // Pace the plunge (§1.9 — playback only, the trajectory is already
+      // integrated and is identical at every speed).
+      //
+      // The comfort speed is calibrated to make one *ISCO orbit* take 30
+      // seconds, but a fall that starts at the horizon is a completely
+      // different timescale: from rest at r0 the remaining proper time is
+      // (π/2)√(r0³/2M), which at the handover radius is under 3 M — about
+      // 0.95 wall seconds at comfort speed. That is a blink, not a crossing.
+      // Retarget so the descent is actually watchable.
+      const tauToSingularity =
+        (Math.PI / 2) *
+        Math.sqrt(Math.pow(pendingRideFrom, 3) / (2 * params.mass));
+      const geometricRate = tauToSingularity / HORIZON_FALL_SECONDS;
+      const speed = geometricRate * timeUnitSeconds(massPreset.solarMasses);
+      testObject.setSpeed(
+        Math.min(
+          Math.pow(10, MAX_LOG_SPEED),
+          Math.max(Math.pow(10, MIN_LOG_SPEED), speed),
+        ),
+      );
+
+      testObject.setView("first");
+      setPendingRideFrom(null);
+    } else if (testObject.status === "error") {
+      setPendingRideFrom(null);
+    }
+  }, [pendingRideFrom, testObject, params.mass, massPreset.solarMasses]);
 
   // §6.3: which trajectory the drop panel is on. Lifted out of the panel so
   // the drag handles, which live in their own overlay above the canvas, know
@@ -437,6 +508,7 @@ export const SimulatorApp = ({
         setParams={setParams}
         metrics={metrics}
         mouse={mouse}
+        rider={testObject}
       />
 
       <ErrorBoundary>

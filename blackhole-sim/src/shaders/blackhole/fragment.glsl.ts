@@ -103,11 +103,18 @@ void main() {
     vec3 p = ro;
     vec3 v = rd;
 
-    // Kamikaze protection. Skipped in 1st person: the whole point of that view
-    // is to get close to and then through the horizon, so shoving the camera
-    // back out to 1.5 r_h would silently prevent the crossing (§1.6).
-    if(!firstPerson && length(ro) < rh * 1.5) {
-       ro = normalize(ro) * rh * 1.5;
+    // Standoff for the free camera. Skipped in 1st person: the whole point of
+    // that view is to get close to and then through the horizon, so shoving
+    // the camera back out would silently prevent the crossing (§1.6).
+    //
+    // wiki-globe fork: was 1.5 r_h, which fenced the third-person camera off
+    // half a horizon radius out and quietly teleported it if it got closer —
+    // so the view from just above the horizon, where the shadow swells to fill
+    // most of the sky, was unreachable. A static observer exists everywhere
+    // outside r_h, so there is nothing to protect against down to the horizon
+    // itself; only the coordinate singularity right at r_h has to be avoided.
+    if(!firstPerson && length(ro) < rh * 1.01) {
+       ro = normalize(ro) * rh * 1.01;
        p = ro;
     }
 

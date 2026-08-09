@@ -68,6 +68,18 @@ Auto-spin was also framerate-dependent and 50× the globe's rate — it now
 integrates `dt` and matches `AUTOROTATE_RATE` exactly. Full write-up in
 `FORK.md`.
 
+**Post-milestone-10 correction: the free camera can reach the horizon, and
+crossing it is a fall.** Three fences stopped it well outside the hole — a
+`MIN_ZOOM` of 2.5 (r = 5M), the dive cinematic's "horizon" test firing at 4M
+and then *bouncing* back out, and a shader standoff that teleported the camera
+out to 1.5 r_h. The floor is now derived from the actual Kerr horizon, and
+pushing inward at it hands over to milestone 5's infalling rider rather than
+stopping dead — which is the only honest continuation, since static observers
+exist for every r > r_h and nowhere inside. The plunge is retargeted to take 12
+wall-clock seconds instead of 0.95 (playback only, §1.9). Verified in Rust: a
+drop from 1.02 r_h crosses and reaches 0.02 r_s with proper time matching the
+closed form, with samples either side of the horizon, at a* = 0 and 0.9.
+
 A scientifically accurate interactive black hole, reachable from the body
 dropdown (new group below "Pluto system") and at `wikiglo.be/blackhole`.
 The user can drop a test object on a chosen orbital trajectory and watch it

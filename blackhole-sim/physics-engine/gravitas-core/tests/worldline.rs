@@ -458,3 +458,89 @@ fn spinning_hole_shifts_the_isco_and_the_orbit_still_conserves() {
         w.max_angular_momentum_drift
     );
 }
+
+#[test]
+fn released_just_outside_the_horizon_still_reaches_the_singularity() {
+    // Spec §1.6, the horizon handover: flying the free camera to the horizon
+    // and pushing further converts it into a fall, and the drop happens at
+    // 1.02 r_h -- far harsher than the r = 20 M start every other test uses.
+    //
+    // From rest at r0 the proper time to the singularity is
+    // (pi/2) sqrt(r0^3 / 2M), which at r0 = 2M is exactly pi M -- the same
+    // bound the singularity card displays. Starting a hair outside gives a
+    // hair more, and it must stay finite: an integrator that stalls at the
+    // horizon would leave the rider frozen there forever.
+    let m = schwarzschild();
+    let r_h = m.event_horizon();
+    let r0 = 1.02 * r_h;
+
+    let w = run(
+        DropSpec::RadialFall { r: r0 },
+        WorldlineOptions {
+            inner_radius: 0.02 * RS,
+            max_steps: 800_000,
+            ..Default::default()
+        },
+    );
+
+    assert_eq!(
+        w.end,
+        WorldlineEnd::ReachedInnerRadius,
+        "a drop from just outside the horizon must fall all the way in, ended {:?}",
+        w.end
+    );
+
+    let r_final = w.samples.last().unwrap().r;
+    assert!(
+        r_final < r_h,
+        "final radius {r_final:.5} should be well inside the horizon {r_h:.5}"
+    );
+
+    // Finite, positive, and under the interior bound with a little slack for
+    // the 2% head start outside.
+    assert!(w.proper_time.is_finite() && w.proper_time > 0.0);
+    let analytic = std::f64::consts::FRAC_PI_2 * (r0.powi(3) / (2.0 * M)).sqrt();
+    let rel = (w.proper_time - analytic).abs() / analytic;
+    assert!(
+        rel < 5e-2,
+        "proper time {:.6} vs closed form {:.6} (rel err {:.2e})",
+        w.proper_time,
+        analytic,
+        rel
+    );
+
+    // The crossing itself has to be represented, not skipped over in one step:
+    // the rider needs frames on both sides to render it.
+    let outside = w.samples.iter().filter(|s| s.r > r_h).count();
+    let inside = w.samples.iter().filter(|s| s.r < r_h).count();
+    assert!(
+        outside > 0 && inside > 10,
+        "expected samples either side of the horizon, got {outside} outside / {inside} inside"
+    );
+}
+
+#[test]
+fn handover_drop_works_for_a_spinning_hole_too() {
+    // The handover radius follows the Kerr horizon, which shrinks with spin,
+    // so the same drop has to behave at a= 0.9 where r_h is only 1.436 M.
+    let m = Kerr::kerr_schild(M, 0.9);
+    let r_h = m.event_horizon();
+    let w = integrate_worldline(
+        &m,
+        DropSpec::RadialFall { r: 1.02 * r_h },
+        &WorldlineOptions {
+            inner_radius: 0.05 * M,
+            max_steps: 800_000,
+            ..Default::default()
+        },
+    );
+
+    assert_eq!(
+        w.end,
+        WorldlineEnd::ReachedInnerRadius,
+        "spinning-hole handover drop ended {:?}",
+        w.end
+    );
+    assert!(w.proper_time.is_finite() && w.proper_time > 0.0);
+    assert!(w.samples.last().unwrap().r < r_h);
+}

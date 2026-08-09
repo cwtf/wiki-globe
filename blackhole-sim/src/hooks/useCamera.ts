@@ -56,8 +56,60 @@ export interface ViewportDimensions {
 
 // Constants for camera positioning
 const DEFAULT_ZOOM = SIMULATION_CONFIG.zoom.default;
-const MIN_ZOOM = 2.5;
+/**
+ * Absolute floor, only a backstop — the real limit is `minZoomFor` below.
+ *
+ * wiki-globe fork: this used to be 2.5, and since `renderer.ts` sets
+ * `u_zoom = zoom * 2`, that fenced the camera off at r = 5M — two and a half
+ * times the Schwarzschild horizon, with nothing physical about it. You could
+ * not fly up to the horizon at all.
+ */
+const MIN_ZOOM = 0.05;
 const MAX_ZOOM = 50.0;
+
+/**
+ * Lower bound for the *opening* shot, which is a different question from how
+ * close the user may fly.
+ *
+ * `calculateInitialZoom` frames the disk on load; starting the session pinned
+ * against the horizon would be a strange way to introduce the scene even
+ * though flying there is now allowed. This keeps the old 2.5 for framing while
+ * `minZoomFor` governs interaction.
+ */
+const MIN_FRAMING_ZOOM = 2.5;
+
+/** `renderer.ts` sets `u_zoom = params.zoom * 2`, so r = 2 * zoom. */
+const ZOOM_TO_RADIUS = 2.0;
+
+/**
+ * Kerr outer horizon r_h = M (1 + sqrt(1 - a*^2)), in units of M.
+ *
+ * 2M for a Schwarzschild hole, shrinking to M as the spin approaches
+ * extremal — which is why the zoom floor cannot be a constant.
+ */
+export function horizonRadius(mass: number, spin: number): number {
+  const a = Math.min(Math.abs(spin), 0.9999);
+  return mass * (1 + Math.sqrt(1 - a * a));
+}
+
+/**
+ * How close the free camera may hover, as a zoom value.
+ *
+ * A static observer exists for every r > r_h (it needs an ever-larger proper
+ * acceleration as r approaches r_h, but it exists), so hovering just outside
+ * is physically meaningful and the renderer handles it. Inside the horizon no
+ * static observer exists at all — r becomes timelike and nothing can hold
+ * station — so the camera cannot simply be flown further in. Crossing has to
+ * become a fall, which is what `onCrossHorizon` is for.
+ *
+ * The 2% standoff keeps the ray march off the coordinate singularity itself.
+ */
+export function minZoomFor(mass: number, spin: number): number {
+  return Math.max(
+    MIN_ZOOM,
+    (horizonRadius(mass, spin) * 1.02) / ZOOM_TO_RADIUS,
+  );
+}
 const FOV_DEGREES = 45;
 const TARGET_VIEWPORT_COVERAGE = 0.7; // 70% of viewport (60-80% range)
 const ACCRETION_DISK_OUTER_RADIUS_MULTIPLIER = 12.0; // Outer disk is ~12x event horizon
@@ -106,7 +158,12 @@ export function calculateInitialZoom(
     const finalDistance = adjustedDistance * aspectRatioAdjustment;
     const normalizedZoom = (finalDistance / diskOuterRadius) * (mass * 3.5);
 
-    return clampAndValidate(normalizedZoom, MIN_ZOOM, MAX_ZOOM, DEFAULT_ZOOM);
+    return clampAndValidate(
+      normalizedZoom,
+      MIN_FRAMING_ZOOM,
+      MAX_ZOOM,
+      DEFAULT_ZOOM,
+    );
   } catch (error) {
     // eslint-disable-next-line no-console
     console.warn("Error calculating initial zoom:", error);
@@ -133,7 +190,23 @@ import { physicsBridge } from "@/engine/physics-bridge";
 export function useCamera(
   params: SimulationParams,
   setParams: React.Dispatch<React.SetStateAction<SimulationParams>>,
+  options: {
+    /**
+     * The camera has been pushed to the horizon and the user is still going
+     * in. There is no static frame further in, so the only honest way to
+     * continue is to stop hovering and fall: the host converts the camera
+     * into an infalling rider (spec §1.6), which already knows how to cross
+     * the horizon and end at the singularity.
+     *
+     * `radius` is where the handover happens, in units of M.
+     */
+    onCrossHorizon?: (radius: number) => void;
+  } = {},
 ) {
+  // Held in a ref so the wheel/touch handlers do not need to be rebuilt (and
+  // re-bound) every time the host re-renders with a new closure.
+  const onCrossHorizonRef = useRef(options.onCrossHorizon);
+  onCrossHorizonRef.current = options.onCrossHorizon;
   // Sync auto-spin state to physics bridge
   useEffect(() => {
     physicsBridge.setAutoSpin(!!params.autoSpin);
@@ -475,31 +548,50 @@ export function useCamera(
             state.phi += phiWobble;
           }
 
-          // --- HORIZON CROSSING LOGIC ---
-          if (newR < 2.0) {
-            // Horizon crossing -> Begin smooth recovery to pre-dive position
+          // --- HORIZON CROSSING ---
+          //
+          // wiki-globe fork, two fixes.
+          //
+          // Units: `r` here is `params.zoom`, but the renderer sets
+          // `u_zoom = zoom * 2`, so the camera's actual radius is twice this.
+          // The old test `newR < 2.0` therefore fired at a true radius of 4M —
+          // two horizon radii out — while the comment claimed it was the
+          // horizon. It compares true radii now.
+          //
+          // Behaviour: reaching the horizon used to bounce, playing a
+          // "recovery" animation back out to where the dive started. That is
+          // the one thing that cannot happen. Nothing crosses back out, and
+          // more to the point nothing *hovers* in there either — so the dive
+          // now hands over to the infalling rider, which is the only frame
+          // that exists inside and already knows how to reach the singularity.
+          const trueRadius = newR * ZOOM_TO_RADIUS;
+          const horizon = horizonRadius(
+            paramsRef.current.mass,
+            paramsRef.current.spin,
+          );
+
+          if (trueRadius <= horizon * 1.02) {
             cinematicRef.current.active = false;
             cinematicRef.current.mode = null;
             cinematicRef.current.velocity = 0;
             cinematicRef.current.angularMomentum = 0;
-            cinematicRef.current.recovering = true;
-            cinematicRef.current.recoverStartTime = now;
+            cinematicRef.current.recovering = false;
 
-            // Clear velocities so recovery isn't fighting residual momentum
             state.thetaVelocity = 0;
             state.phiVelocity = 0;
             state.zoomVelocity = 0;
 
-            // Restore autoSpin and unpause
             setParams((prev) => ({
               ...prev,
               autoSpin: DEFAULT_AUTO_SPIN,
               paused: false,
+              zoom: (horizon * 1.02) / ZOOM_TO_RADIUS,
             }));
 
-            // Sync UI State
             setIsCinematic(false);
             setCinematicMode(null);
+
+            onCrossHorizonRef.current?.(horizon * 1.02);
           } else {
             // Apply Zoom (only during active dive)
             setParams((prev) => ({ ...prev, zoom: Math.max(0.2, newR) }));
@@ -567,11 +659,17 @@ export function useCamera(
           !cinematicRef.current.active &&
           Math.abs(state.zoomVelocity) > 0.0001
         ) {
+          // Same horizon floor as the gesture handlers: scroll momentum must
+          // not coast the camera into a region where its frame does not exist.
+          const floor = minZoomFor(
+            paramsRef.current.mass,
+            paramsRef.current.spin,
+          );
           setParams((prev) => ({
             ...prev,
             zoom: clampAndValidate(
               prev.zoom + state.zoomVelocity,
-              MIN_ZOOM,
+              floor,
               MAX_ZOOM,
               prev.zoom,
             ),
@@ -659,6 +757,39 @@ export function useCamera(
       physicsRef.current.phiVelocity += dPhi;
     },
     [stopCinematic],
+  );
+
+  /**
+   * Single entry point for every zoom gesture (spec §1.6).
+   *
+   * Zooming in stops at the horizon rather than at an arbitrary radius, and
+   * pushing further does not silently do nothing — it hands over to the
+   * infalling view, because falling is the only way anything gets further in.
+   * Checked against `paramsRef` rather than inside the `setParams` updater so
+   * the handover is not fired twice under StrictMode's double invocation.
+   */
+  const applyZoomDelta = useCallback(
+    (zoomDelta: number) => {
+      const p = paramsRef.current;
+      const floor = minZoomFor(p.mass, p.spin);
+      const pinnedAtHorizon = p.zoom <= floor + 1e-6;
+
+      if (zoomDelta < 0 && pinnedAtHorizon) {
+        onCrossHorizonRef.current?.(p.zoom * ZOOM_TO_RADIUS);
+        return;
+      }
+
+      setParams((prev) => ({
+        ...prev,
+        zoom: clampAndValidate(
+          prev.zoom + zoomDelta,
+          floor,
+          MAX_ZOOM,
+          prev.zoom,
+        ),
+      }));
+    },
+    [setParams],
   );
 
   /**
@@ -776,20 +907,11 @@ export function useCamera(
       const sensitivity = 0.005;
       const zoomDelta = e.deltaY * sensitivity;
 
-      // Direct param update for Zoom (it's less physics-dependent in this logic)
-      setParams((prev) => ({
-        ...prev,
-        zoom: clampAndValidate(
-          prev.zoom + zoomDelta,
-          MIN_ZOOM,
-          MAX_ZOOM,
-          prev.zoom,
-        ),
-      }));
+      applyZoomDelta(zoomDelta);
       // Add velocity for "feel"
       physicsRef.current.zoomVelocity = zoomDelta * 0.3;
     },
-    [setParams, stopCinematic],
+    [applyZoomDelta, stopCinematic],
   );
 
   const handleTouchStart = useCallback(
@@ -853,15 +975,7 @@ export function useCamera(
         if (touchState.current.initialDistance > 0) {
           const ratio = currentDistance / touchState.current.initialDistance;
           const zoomDelta = (1 - ratio) * 2.0;
-          setParams((prev) => ({
-            ...prev,
-            zoom: clampAndValidate(
-              prev.zoom + zoomDelta,
-              MIN_ZOOM,
-              MAX_ZOOM,
-              prev.zoom,
-            ),
-          }));
+          applyZoomDelta(zoomDelta);
           touchState.current.initialDistance = currentDistance;
         }
 
