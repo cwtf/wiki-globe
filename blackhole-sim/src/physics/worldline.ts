@@ -50,8 +50,22 @@ export interface WorldlinePoint {
    * Taken from the nearest recorded sample rather than interpolated:
    * blending two frames component-wise does not generally produce an
    * orthonormal one, and a subtly non-orthonormal frame is exactly the
-   * "ad-hoc" failure spec §5 warns about. Sample density is high enough that
-   * the nearest frame is accurate to well under a pixel.
+   * "ad-hoc" failure spec §5 warns about.
+   *
+   * This used to claim the nearest frame was "accurate to well under a pixel".
+   * It was not. A bound orbit ran until the step budget was exhausted — 1162
+   * revolutions — so stored samples sat 46 degrees of orbital phase apart, and
+   * because the frame is held and then jumps, the 1st-person view swung by
+   * that much in one step: about **344 px** at the current field of view. That
+   * was the judder.
+   *
+   * `WorldlineOptions::max_orbits` caps the run at 32 revolutions, which puts
+   * samples ~1.7 degrees apart and the snap at ~13 px (worst case near
+   * periapsis, ~41 px). Much better, not zero. Removing it entirely means
+   * interpolating in the Lorentz group and re-orthonormalising against the
+   * metric rather than blending components — worth doing, but it needs to be
+   * watched at full frame rate to confirm it helps, which is not possible in
+   * the environment this note was written in.
    */
   tetrad: number[];
 }

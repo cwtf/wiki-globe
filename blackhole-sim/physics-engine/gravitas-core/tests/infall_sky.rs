@@ -102,6 +102,11 @@ fn fall_to(r0: f64, target_r: f64) -> (f64, f64, [f64; 4]) {
             // brackets it rather than stopping short.
             inner_radius: (target_r * 0.98).max(0.04 * M),
             max_steps: 4_000_000,
+            // Explicit, not inherited: the thinning is uniform in step count,
+            // so the default budget spread over a fall from 1000 M leaves the
+            // retained samples tens of a radius apart right where this test
+            // needs them closest. Keep every step.
+            max_samples: usize::MAX,
             ..Default::default()
         },
     );

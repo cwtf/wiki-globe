@@ -119,6 +119,13 @@ pub enum WorldlineEnd {
     StepBudget,
     /// The state could not be held on the H = −1/2 shell.
     NormalizationFailure,
+    /// Swept `max_orbits` revolutions. A bound orbit neither escapes nor falls
+    /// in, so without this it runs until the step budget is gone — see the
+    /// note on [`WorldlineOptions::max_orbits`].
+    ///
+    /// Appended deliberately: the wasm bridge maps these to integers and 0..3
+    /// are already in use.
+    CompletedOrbits,
 }
 
 /// An integrated test-object trajectory plus its conservation audit.
@@ -332,6 +339,23 @@ pub struct WorldlineOptions {
     pub renormalize_interval: usize,
     /// Keep at most this many samples, thinning uniformly in step count.
     pub max_samples: usize,
+    /// Stop after this many revolutions.
+    ///
+    /// A bound orbit hits neither `inner_radius` nor `outer_radius`, so before
+    /// this existed it ran until `max_steps` was exhausted — 1162 revolutions
+    /// for a 20 M / 5.5 M apsides drop. `max_samples` is then thinned across
+    /// all of them, leaving about 6 samples per orbit: consecutive stored
+    /// points 46 degrees apart in phase.
+    ///
+    /// That is invisible in the conserved quantities and fatal to everything
+    /// that reads the samples back. The trail polyline chords between them and
+    /// renders as an octagon, and the 1st-person view is worse — the tetrad is
+    /// taken from the *nearest* sample rather than blended, so the rider's
+    /// orientation snapped by tens of degrees at every midpoint.
+    ///
+    /// 32 keeps the §4 twenty-orbit conservation check comfortable while
+    /// giving ~250 samples per orbit at the app's 8000-sample budget.
+    pub max_orbits: f64,
 }
 
 impl Default for WorldlineOptions {
@@ -343,9 +367,25 @@ impl Default for WorldlineOptions {
             tolerance: 1e-10,
             initial_step: 1e-3,
             min_step: 1e-8,
-            max_step: 5.0,
             renormalize_interval: 10,
             max_samples: 20_000,
+            max_orbits: 32.0,
+            // 0.5, not 5.0. The step size is chosen by *accuracy*, and a
+            // smooth orbit in a weak field meets a 1e-10 tolerance while
+            // striding at whatever ceiling it is given — so the ceiling, not
+            // the tolerance, sets how densely the trajectory gets recorded.
+            //
+            // At 5.0 a tight orbit was sampled 20 degrees of phase apart (18
+            // points per revolution at the ISCO), which is a polygon however
+            // exact each vertex is. At 0.5 the same orbit gets ~185 points per
+            // revolution. Cost is bounded: the widest orbit anyone drops from
+            // the panel is ~35k steps against a 200k budget.
+            //
+            // This is a rendering-resolution choice, not a physical limit.
+            // Long-range runs that do not need to be drawn — the precession
+            // measurements at r_apo = 300 M and 1000 M — override it back to
+            // 5.0 and should keep doing so.
+            max_step: 0.5,
         }
     }
 }
@@ -540,6 +580,12 @@ pub fn integrate_worldline(
 
     worldline.samples.push(sample_at(tau, &state));
 
+    // Revolutions swept so far, accumulated on the short arc so a wrap in phi
+    // cannot read as a full turn backwards.
+    let mut swept = 0.0_f64;
+    let mut last_phi = state.x[3];
+    let sweep_limit = std::f64::consts::TAU * options.max_orbits.max(0.0);
+
     for step in 0..options.max_steps {
         let r = state.x[1];
         if r <= inner {
@@ -548,6 +594,10 @@ pub fn integrate_worldline(
         }
         if r >= options.outer_radius {
             worldline.end = WorldlineEnd::Escaped;
+            break;
+        }
+        if options.max_orbits.is_finite() && swept.abs() >= sweep_limit {
+            worldline.end = WorldlineEnd::CompletedOrbits;
             break;
         }
 
@@ -585,6 +635,22 @@ pub fn integrate_worldline(
         }
 
         tau += accepted;
+
+        // Accumulate the revolution count on the short arc, so a wrap through
+        // ±π adds a small angle rather than a full turn in the wrong
+        // direction. Done here, against the state the step just produced.
+        {
+            let phi = state.x[3];
+            let mut d = phi - last_phi;
+            while d > std::f64::consts::PI {
+                d -= std::f64::consts::TAU;
+            }
+            while d < -std::f64::consts::PI {
+                d += std::f64::consts::TAU;
+            }
+            swept += d;
+            last_phi = phi;
+        }
 
         if step % options.renormalize_interval == 0
             && renormalize_timelike(&mut state, metric).is_err()

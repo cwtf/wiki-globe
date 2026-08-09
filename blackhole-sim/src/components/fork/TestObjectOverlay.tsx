@@ -72,12 +72,22 @@ export function TestObjectOverlay({
     trailIndex = i;
   }
   const trailPoints = worldline
-    // 512, not upstream's 192. §6.3's draggable apsides make long, strongly
+    // 1024, not upstream's 192. §6.3's draggable apsides make long, strongly
     // eccentric orbits the easy thing to ask for, and at 192 points spread
     // over a dozen precessing loops the polyline reads as a wireframe
     // polygon rather than a rosette — the chords cut visibly across
     // periapsis, which is exactly where the interesting curvature is.
-    .trail(trailIndex, 512)
+    //
+    // Raising it from 512 was the *second* half of that fix. The first was in
+    // the integrator: a bound orbit used to run until the step budget was
+    // gone (1162 revolutions for a 20 M / 5.5 M drop), so `max_samples` was
+    // thinned across all of them and the stored samples were 46 degrees of
+    // phase apart. `trail` only ever strides — it cannot invent points a
+    // coarse worldline never had. With `max_orbits` capping the run at 32 the
+    // samples are ~1.7 degrees apart, and 1024 keeps the polyline under
+    // 2 degrees per point for the first ~5.7 orbits, which is far longer than
+    // anyone watches before the rosette becomes visual soup anyway.
+    .trail(trailIndex, 1024)
     .map((p) => projectToScreen(p, cam, size.width, size.height))
     .filter((p) => p.visible)
     .map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`)

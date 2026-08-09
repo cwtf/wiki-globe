@@ -1397,6 +1397,100 @@ backtick anywhere in a GLSL comment terminates the string. Writing a filename
 in backticks in the comment above broke the build instantly. Vitest caught it,
 but it is the same class of fault the `compileShader` hook exists for.
 
+## The orbit was an octagon, and it was the same bug as the 1st-person judder
+
+Reported from a screenshot: the integrated orbit overlay drawn as a visibly
+straight-edged polygon, with a suspicion that it was also why the 1st-person
+view was not smooth. It was.
+
+### Integration accuracy is not output resolution
+
+The conserved quantities were clean to 1e-10. The stored samples were 46
+degrees of orbital phase apart. Nothing in the physics notices; everything that
+reads the samples back does.
+
+Measured on the pictured drop (apo 20 M, peri 5.5 M):
+
+| | before | after |
+| --- | --- | --- |
+| revolutions integrated | **1162** | 32 |
+| samples | 7694 | 6384 |
+| median gap between samples | **45.8 deg** | **0.90 deg** |
+| worst gap (at periapsis) | 109.6 deg | 7.09 deg |
+
+Two independent causes, and fixing only one leaves the other:
+
+1. **A bound orbit ran until the step budget was exhausted.** It hits neither
+   `inner_radius` nor `outer_radius`, so `max_steps` was the only thing
+   stopping it — 1162 revolutions, 229,192 of proper time, about twenty hours
+   of playback at comfort speed. `max_samples` was then thinned uniformly
+   across all of it, leaving ~6 samples per revolution. New
+   `WorldlineOptions::max_orbits` (default 32) stops on swept azimuth, with a
+   new `WorldlineEnd::CompletedOrbits` appended to the enum so the wasm
+   bridge's existing 0..3 codes stay stable.
+2. **`max_step` was 5.0.** Step size is chosen by *accuracy*, and a smooth
+   orbit in a weak field meets a 1e-10 tolerance while striding at whatever
+   ceiling it is given — so the ceiling set the recording density, not the
+   tolerance. This is why capping the orbit count alone was not enough: a
+   circular orbit at 8 M still came out at 16 degrees per sample, and at the
+   ISCO it would have been 20. Lowered to 0.5, which costs ~35k steps for the
+   widest orbit anyone drops from the panel against a 200k budget.
+
+Circular orbits, same fix: 8 M went 16.01 -> 1.60 degrees per sample, 6 M
+(ISCO, the worst case) to 2.76.
+
+### Why it hit the 1st-person view harder than the trail
+
+`Worldline.interpolate` blends position and 4-velocity linearly between
+bracketing samples, but the **tetrad is taken from the nearest sample and never
+blended** — deliberately, because component-wise blending of two frames does
+not generally produce an orthonormal one, which is the "ad-hoc" failure §5
+warns about.
+
+That is fine when samples are dense and catastrophic when they are not. The
+frame is *held* and then *jumps*, so the rider's whole view swung by the
+inter-sample angle in one step:
+
+| sample gap | view jump at the current FOV |
+| --- | --- |
+| 45.8 deg (before) | **344 px** |
+| 0.90 deg (after) | 7 px |
+| 7.09 deg (worst case) | 53 px |
+
+The docstring on that field claimed the nearest frame was "accurate to well
+under a pixel". It was off by two and a half orders of magnitude. Corrected in
+place, with the residual stated rather than rounded away: this is much better,
+not zero, and removing it entirely means interpolating in the Lorentz group and
+re-orthonormalising against the metric rather than blending components. Worth
+doing, but it needs to be watched at full frame rate to confirm it helps.
+
+`trail()` only ever strides — it cannot invent points a coarse worldline never
+had — so the overlay cap went 512 -> 1024 as the second half, keeping the
+polyline under 2 degrees per point for the first ~5.7 revolutions.
+
+### Verification
+
+`sample_density.rs` (5 tests) pins it: the apsides drop ends on
+`CompletedOrbits` at ~32 revolutions with median gap under 3 degrees and worst
+under 10; a near-circular orbit holds the same; a radial fall still ends on
+`ReachedInnerRadius` (it sweeps no azimuth, so the cap must never be what stops
+it); and the cap stays overridable, because the precession runs at r_apo =
+300 M and 1000 M integrate for their own reasons and already set their own
+`max_step`.
+
+One test of my own needed fixing rather than the code: `infall_sky.rs` reads
+the sample closest to the horizon, and the denser stepping changed which one
+survives thinning, so it now asks for `max_samples: usize::MAX` explicitly
+instead of inheriting a budget that thins uniformly in step count.
+
+All Rust suites pass; 562 TS tests pass.
+
+**The running app will not show any of this until the wasm is rebuilt.** The
+worldline integrator lives in `gravitas-wasm`, `public/wasm` is gitignored, and
+`wasm-pack` is not installed on this machine — so the prebuilt artifacts here
+are stale. `bun run build:wasm` (which CI runs as part of `bun run build`)
+picks it up; nothing else is needed.
+
 ## Known gaps (not yet addressed)
 
 - `src/app/page.tsx` carries a large `sr-only` keyword-stuffed SEO section from

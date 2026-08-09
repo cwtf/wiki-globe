@@ -104,6 +104,19 @@ wrongly-boosted frame is still orthonormal. Note the §1.6 handover releases
 from 1.02 r_h, where the shadow really is 140° and the sky really is 88% black;
 that view is correct and no focal length changes it.
 
+**Post-milestone-10 correction: the stored worldline was far too coarse to
+draw.** A bound orbit hits neither termination radius, so it ran until the step
+budget was gone — 1162 revolutions for a 20 M / 5.5 M drop — and `max_samples`
+was thinned across all of them, leaving samples **46° of orbital phase apart**.
+The conserved quantities were clean to 1e-10 throughout; integration accuracy
+and output resolution are different things. Separately, `max_step = 5.0` let
+the integrator stride through smooth regions, so even a circular orbit recorded
+at 16-20° per sample. New `max_orbits` (32) plus `max_step = 0.5` bring the
+pictured orbit to 0.90° median. This was also the 1st-person judder: the tetrad
+is taken from the *nearest* sample and never blended, so the rider's view
+jumped by the full inter-sample angle — **344 px** before, 7 px after. Requires
+a wasm rebuild to reach the running app.
+
 A scientifically accurate interactive black hole, reachable from the body
 dropdown (new group below "Pluto system") and at `wikiglo.be/blackhole`.
 The user can drop a test object on a chosen orbital trajectory and watch it
